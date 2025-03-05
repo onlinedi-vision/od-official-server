@@ -1,7 +1,7 @@
 [package]
-name = "cdn"
-version = "0.1.0"
-edition = "2021"
+name = "api"
+version = "0.0.1"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,5 +11,9 @@ actix-files = "0.6"
 rustls = "0.23"
 tokio-rustls = "0.23"
 rustls-pemfile = "2"
+serde = {version="1.0.218", features=["serde_derive"]}
+uuid = {version="1.15.1", featurs=["v4"]}
+scylla = "1.0.0"
+
 
 [features]
