@@ -15,6 +15,11 @@ $ cd /root/od-official-server
 $ git clone 'https://github.com/onlinedi-vision/od-official-server.git'
 ```
 The server's database is ScyllaDB as such this must also be installed and setup. More info about the installation can be found within ScyllaDB's [official docs](https://opensource.docs.scylladb.com/stable/getting-started/install-scylla/index.html).
+## Environment Variables
+Make sure to set the following environment variables before running the '''build.sh''' script.
+```sh
+ $ export SCYLLA_CASSANDRA_PASSWORD="the password of the 'cassandra' superuser of the scylladb instance"
+```
 ## Usage
 After installing the server and setting up the env vars and ScyllaDB, running it should be easy, from within the cloned directory:
 ```

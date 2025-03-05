@@ -12,6 +12,8 @@ serve -s build > ~/od-logs/ws.log &
 # Build / Run the CDN server
 cd ../cdn
 cargo build --release
-./target/cdn > ~/od-logs/cdn.log &
+./target/release/cdn > ~/od-logs/cdn.log &
 
+# Run WebSocket server
+python ws/src/main.py
 

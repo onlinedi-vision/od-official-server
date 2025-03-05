@@ -21,7 +21,7 @@ pub async fn insert_new_user(
     user: structures::User
 ) -> Result<()> {
     session 
-        .query_unpaged(statics::INSERT_NEW_USER, (user,))
+        .query_unpaged(statics::INSERT_NEW_USER, (user.username, user.password_hash, user.email, user.key, user.bio))
         .await
         .map(|_|())
         .map_err(From::from)
