@@ -79,6 +79,17 @@ pub async fn try_login(
                 }
             )
         }
-    }
-    
+    }   
+}
+
+#[actix_web::get("/servers/{server_name}/api/get_messages")] 
+pub async fn get_server_messages(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    req: actix_web::web::Query<structures::TokenHolder>
+) -> impl actix_web::Responder {
+    actix_web::HttpResponse::Ok().json(
+        &structures::TokenHolder {
+            token: "".to_string()
+        }
+    )
 }

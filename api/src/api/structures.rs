@@ -17,7 +17,7 @@ pub struct LoginUser {
     pub password: String
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct TokenHolder {
     pub token: String
 }
