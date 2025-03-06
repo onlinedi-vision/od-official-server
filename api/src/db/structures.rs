@@ -8,4 +8,27 @@ pub struct User {
     pub bio: Option<String>
 }
 
+impl User {
+    
+    pub fn new(username: String, email: String, password_hash: String, key: String) -> Self {
+        Self {
+            username: Some(username),
+            email: Some(email),
+            password_hash: Some(password_hash),
+            key: Some(key),
+            bio: Some("".to_string())
+        }
+    }
 
+}
+
+#[derive(Debug, scylla::SerializeValue)]
+pub struct KeyUser {
+    pub username: Option<String>,
+    pub key: Option<String>
+}
+
+#[derive(scylla::SerializeRow)]
+pub struct UserUsername {
+    pub username: Option<String>
+}

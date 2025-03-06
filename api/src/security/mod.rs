@@ -1,3 +1,6 @@
+use sha2::Digest;
+pub mod structures;
+use rand::Rng;
 
 pub fn obtain_tls_config() -> rustls::ServerConfig {
     rustls::crypto::aws_lc_rs::default_provider()
@@ -19,4 +22,23 @@ pub fn obtain_tls_config() -> rustls::ServerConfig {
         .with_no_client_auth()
         .with_single_cert(tls_certificates, rustls::pki_types::PrivateKeyDer::Pkcs8(tls_key))
         .unwrap()
+}
+
+pub fn sha512(secret: String) -> String {   
+    let mut hasher = sha2::Sha512::new();
+    hasher.update(secret.into_bytes());
+    match std::str::from_utf8(&(hasher.finalize()[..])) {
+        Ok(hash) => hash.to_string(),
+        Err(_) => "".to_string()
+    }
+}
+
+pub fn token() -> String {
+    let salt = rand::rng().random::<i32>();
+    let mut hasher = sha2::Sha256::new();
+    hasher.update(format!("{}", salt).to_string().into_bytes());
+    match std::str::from_utf8(&(hasher.finalize()[..])) {
+        Ok(hash) => hash.to_string(),
+        Err(_) => "".to_string()
+    }
 }
