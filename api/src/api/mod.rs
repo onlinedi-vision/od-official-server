@@ -59,7 +59,8 @@ pub async fn try_login(
                     db::structures::KeyUser{
                         key: Some(new_token_holder.token.clone()), 
                         username: Some(form.username.clone())
-                }).await;
+                    }
+                ).await;
                 actix_web::HttpResponse::Ok().json(
                     &new_token_holder
                 )
