@@ -27,18 +27,17 @@ pub fn obtain_tls_config() -> rustls::ServerConfig {
 pub fn sha512(secret: String) -> String {   
     let mut hasher = sha2::Sha512::new();
     hasher.update(secret.into_bytes());
-    match std::str::from_utf8(&(hasher.finalize()[..])) {
-        Ok(hash) => hash.to_string(),
-        Err(_) => "".to_string()
-    }
+    format!("{:x}", hasher.finalize())
 }
 
 pub fn token() -> String {
     let salt = rand::rng().random::<i32>();
+    println!("{}", salt);
     let mut hasher = sha2::Sha256::new();
     hasher.update(format!("{}", salt).to_string().into_bytes());
+    format!("{:x}", hasher.finalize())/*
     match std::str::from_utf8(&(hasher.finalize()[..])) {
         Ok(hash) => hash.to_string(),
-        Err(_) => "".to_string()
-    }
+        Err(err) => {println!("{}",err);return "".to_string();}
+    }*/
 }

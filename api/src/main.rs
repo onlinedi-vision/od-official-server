@@ -2,12 +2,14 @@ mod api;
 mod security;
 mod db;
 mod env;
-
+use actix_web::{middleware::Logger};
 //use crate::security::structures::ScyllaSession;
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
     // obtaining the TLS certificate configuration
     let tls_config = security::obtain_tls_config();
     
@@ -36,10 +38,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
+            .wrap(Logger::new("%a %{User-Agent}i %U"))
             .app_data(session.clone())
             .service(actix_files::Files::new("/cdn", "/root/cdn"))   // CDN route
             .service(api::get_test)                                  // test API route
             .service(api::new_user_login)                            // API route for signing up
+            .service(api::try_login)
+            .service(api::json_test)
     })
     .bind_rustls_0_23(("0.0.0.0", 1313),tls_config)?
     .workers(8)

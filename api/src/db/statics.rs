@@ -1,3 +1,8 @@
+pub static SELECT_USER_USERNAME: &str = r#"
+    SELECT username FROM division_online.users
+        WHERE username = ?;
+"#;
+
 pub static INSERT_NEW_USER: &str = r#"
     INSERT INTO division_online.users (username, password_hash, email, key, bio)
         VALUES (?,?,?,?,?);
@@ -9,6 +14,6 @@ pub static UPDATE_USER_KEY: &str = r#"
 "#;
 
 pub static SELECT_USER_PASSWORD_HASH: &str = r#"
-    SELECT password_hash FORM division_online.users
+    SELECT password_hash FROM division_online.users
         WHERE username = ?;
 "#;

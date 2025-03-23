@@ -1,26 +1,34 @@
+#![allow(unused_variables)]
+
 mod structures;
 use crate::security;
 use crate::db;
-
 
 #[actix_web::get("/api/test")]
 pub async fn get_test(
     _: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Query<structures::TestParamsStruct>
 ) -> impl actix_web::Responder {  
+    println!("working");
     actix_web::HttpResponse::Ok().body(
         format!("{:?}{:?}", req.param1, req.param2)
     )
 }
 
+#[actix_web::post("/api/json_test")]
+pub async fn json_test(bytes: actix_web::web::Bytes) -> impl actix_web::Responder {
+    println!("{:?}", std::str::from_utf8(&bytes[..]));
+    actix_web::HttpResponse::Ok()
+}
+
 #[actix_web::post("/api/new_user")]
 pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    form: actix_web::web::Form<structures::NewUser>
+    form: actix_web::web::Json<structures::NewUser>
 ) -> impl actix_web::Responder {
-    
+    println!("test"); 
     let password_hash = security::sha512(form.password.clone());
-    let token_holder = structures::TokenHolder {
+    let mut token_holder = structures::TokenHolder {
         token: security::token()
     };
     let user_instance = db::structures::User::new(
@@ -31,16 +39,25 @@ pub async fn new_user_login(
     );
     
     let scylla_session = session.lock.lock().unwrap();
-    let _ = db::insert_new_user(&scylla_session, user_instance).await;
-    actix_web::HttpResponse::Ok().json(
-        &token_holder
-    )
+    match db::insert_new_user(&scylla_session, user_instance).await {
+        None => {
+            token_holder.token = "".to_string();
+            return actix_web::HttpResponse::Ok().json(
+                &token_holder
+            );
+        },
+        Some(_) => {
+            return actix_web::HttpResponse::Ok().json(
+                &token_holder
+            );
+        }
+    }
 }
 
 #[actix_web::post("/api/try_login")]
 pub async fn try_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    form: actix_web::web::Form<structures::LoginUser>
+    form: actix_web::web::Json<structures::LoginUser>
 ) -> impl actix_web::Responder {
 
     let new_token_holder = structures::TokenHolder {
@@ -65,6 +82,7 @@ pub async fn try_login(
                     &new_token_holder
                 )
             } else {
+                println!("not matchy");
                 actix_web::HttpResponse::Ok().json(
                     &structures::TokenHolder {
                         token: "".to_string()
@@ -73,6 +91,7 @@ pub async fn try_login(
             }
         },
         None => {
+            println!("no hash");
             actix_web::HttpResponse::Ok().json(
                 &structures::TokenHolder {
                     token: "".to_string()

@@ -4,7 +4,6 @@ pub mod statics;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-
 pub async fn new_scylla_session(
     uri: &str
 ) -> Result<scylla::client::session::Session> {
@@ -19,12 +18,29 @@ pub async fn new_scylla_session(
 pub async fn insert_new_user(
     session: &scylla::client::session::Session,
     user: structures::User
-) -> Result<()> {
-    session 
-        .query_unpaged(statics::INSERT_NEW_USER, (user.username, user.password_hash, user.email, user.key, user.bio))
-        .await
-        .map(|_|())
-        .map_err(From::from)
+) -> Option<Result<()>> {
+    let query_rows = session.query_unpaged(statics::SELECT_USER_USERNAME, (user.username.clone(),))
+        .await.ok()?
+        .into_rows_result().ok()?;
+    match query_rows.rows::<(Option<&str>,)>() {
+        Ok(row) => {
+            if row.rows_remaining() > 0 { return None; }
+            else {
+                return Some(session
+                    .query_unpaged(statics::INSERT_NEW_USER, (user.username, user.password_hash, user.email, user.key, user.bio))
+                    .await
+                    .map(|_|())
+                    .map_err(From::from)); 
+            }
+        },
+        _ => {
+            return Some(session
+                .query_unpaged(statics::INSERT_NEW_USER, (user.username, user.password_hash, user.email, user.key, user.bio))
+                .await
+                .map(|_|())
+                .map_err(From::from));
+        }
+    }
 }
 
 pub async fn update_user_key(
@@ -42,7 +58,6 @@ pub async fn get_user_password_hash(
     session: &scylla::client::session::Session,
     user: structures::UserUsername
 ) -> Option<String> {
-    todo!("Handle User Inexistent");
     let query_rows = session
         .query_unpaged(statics::SELECT_USER_PASSWORD_HASH, ((user.username),))
         .await.ok()?
@@ -50,9 +65,9 @@ pub async fn get_user_password_hash(
     for row in query_rows.rows::<(Option<&str>,)>().ok()?{
         let (password_hash_str,): (Option<&str>,) = row.ok()?;
         match password_hash_str {
-            Some(str) => {return Some(str.to_string());}
-            None => {return None;}
-        }
+            Some(str) => {return Some(str.to_string());},
+            _ => {println!("?");return None;}
+        };
     }
     None
 }
