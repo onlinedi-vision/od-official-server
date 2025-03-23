@@ -21,3 +21,10 @@ pub struct LoginUser {
 pub struct TokenHolder {
     pub token: String
 }
+
+use crate::db::structures::Channel;
+
+#[derive(serde::Serialize)]
+pub struct Channels {
+    pub c_list: Vec<Channel>
+}

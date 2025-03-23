@@ -3,6 +3,15 @@ pub static SELECT_USER_USERNAME: &str = r#"
         WHERE username = ?;
 "#;
 
+pub static CHECK_TOKEN: &str = r#"
+    SELECT key FROM division_online.users 
+        WHER key = ?;
+"#;
+
+pub static SELECT_SERVER_CHANNELS: &str = r#"
+    SELECT channel_name WHERE sid = ?;
+"#;
+
 pub static INSERT_NEW_USER: &str = r#"
     INSERT INTO division_online.users (username, password_hash, email, key, bio)
         VALUES (?,?,?,?,?);

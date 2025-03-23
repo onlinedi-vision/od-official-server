@@ -72,4 +72,46 @@ pub async fn get_user_password_hash(
     None
 }
 
+pub async fn check_token(
+    session: &scylla::client::session::Session,
+    token: String
+) -> Option<()> {
+    let query_rows = session.query_unpaged(statics::CHECK_TOKEN, (token,))
+        .await.ok()?
+        .into_rows_result().ok()?;
+    match query_rows.rows::<(Option<&str>,)>() {
+        Ok(row) => {
+            if row.rows_remaining() > 0 {
+                return Some(());
+            } else {
+                return None;
+            }
+        },
+        _ => None
+    }
+
+}
+
+pub async fn fetch_server_channels(
+    session: &scylla::client::session::Session,
+    sid: String
+) -> Option<Vec<structures::Channel>> {
+     let query_rows = session
+        .query_unpaged(statics::SELECT_SERVER_CHANNELS, ((sid),))
+        .await.ok()?
+        .into_rows_result().ok()?;
+    let mut channels = Vec::<structures::Channel>::new();
+    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+        let (channel_name,): (Option<&str>,) = row.ok()?;
+        match channel_name {
+            Some(str) => {
+                channels.push(structures::Channel{channel_name: Some(str.to_string())});
+            },
+            None => {
+                return None;
+            }
+        }
+    }
+    Some(channels)
+}
 

@@ -28,6 +28,11 @@ pub struct KeyUser {
     pub key: Option<String>
 }
 
+#[derive(Debug, scylla::SerializeValue, serde::Serialize)]
+pub struct Channel {
+    pub channel_name: Option<String>
+}
+
 #[derive(scylla::SerializeRow)]
 pub struct UserUsername {
     pub username: Option<String>
