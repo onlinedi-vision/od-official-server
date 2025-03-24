@@ -133,7 +133,7 @@ pub async fn fetch_server_channel_messages(
                 messages.push(
                     structures::Message{
                         username: Some(un.to_string()),
-                        datetime: Some(format!("{:?}", dt)),
+                        datetime: Some(format!("{:?}", dt.0)),
                         m_content: Some(mc.to_string())
                     }
                 );

@@ -46,6 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::try_login)
             .service(api::json_test)
             .service(api::get_channels)
+            .service(api::get_channel_messages)
     })
     .bind_rustls_0_23(("0.0.0.0", 1313),tls_config)?
     .workers(8)

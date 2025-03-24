@@ -167,8 +167,8 @@ pub async fn get_channel_messages(
                 None => {
                     println!("SERVERS FAIL: fetch_server_channel_messages");
                     return actix_web::HttpResponse::Ok().json(
-                        &structures::Channels {
-                            c_list: Vec::new()
+                        &structures::Messages {
+                            m_list: Vec::new()
                         }
                     );
                 }
@@ -178,8 +178,8 @@ pub async fn get_channel_messages(
         None => {
             println!("SERVERS FAIL: invalid token in fetch_server_channel_messages");
             actix_web::HttpResponse::Ok().json(
-                &structures::TokenHolder {
-                    token: "".to_string()
+                &structures::Messages {
+                    m_list: Vec::new()
                 }
             )
         }
