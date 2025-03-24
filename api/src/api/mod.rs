@@ -1,5 +1,9 @@
 #![allow(unused_variables)]
 
+/* !TODO: 
+ *  -- check out passing secrets with GET requests (to replace weird POST request implementation)
+ * */
+
 mod structures;
 use crate::security;
 use crate::api::structures::TokenHolder;
@@ -102,19 +106,17 @@ pub async fn try_login(
     }   
 }
 
-#[actix_web::post("/servers/{server_name}/api/get_channels")]
+#[actix_web::post("/servers/{sid}/api/get_channels")]
 pub async fn get_channels (
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<TokenHolder>,
     http: actix_web::HttpRequest
 ) -> impl actix_web::Responder {
-    
-    let server_name: String = http.match_info().get("server_name").unwrap().to_string();
+    let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
     match db::check_token(&scylla_session, req.token.clone()).await {
         Some(_) => {
-            
-            match db::fetch_server_channels(&scylla_session, server_name).await {
+            match db::fetch_server_channels(&scylla_session, sid).await {
                 Some(channels) => {
                         return actix_web::HttpResponse::Ok().json(
                             &structures::Channels {
@@ -133,7 +135,7 @@ pub async fn get_channels (
             }
         },
         _ => {
-            println!("SERVERS FAIL: invalid token");
+            println!("SERVERS FAIL: invalid token in fetch_server_channels");
             return actix_web::HttpResponse::Ok().json(
                 &structures::Channels {
                     c_list: Vec::new()
@@ -143,15 +145,43 @@ pub async fn get_channels (
     };
 }
 
-#[actix_web::get("/servers/{server_name}/api/get_messages")] 
+#[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages")] 
 pub async fn get_channel_messages(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    req: actix_web::web::Query<structures::TokenHolder>
+    req: actix_web::web::Json<TokenHolder>,
+    http: actix_web::HttpRequest
 ) -> impl actix_web::Responder {
+    let sid: String = http.match_info().get("sid").unwrap().to_string();
+    let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
+    let scylla_session = session.lock.lock().unwrap();
+    match db::check_token(&scylla_session, req.token.clone()).await {
+        Some(_) => {
+            match db::fetch_server_channel_messages(&scylla_session, sid, channel_name).await {
+                Some(messages) => {
+                        return actix_web::HttpResponse::Ok().json(
+                            &structures::Messages {
+                                m_list: messages
+                            }
+                        );
+                },
+                None => {
+                    println!("SERVERS FAIL: fetch_server_channel_messages");
+                    return actix_web::HttpResponse::Ok().json(
+                        &structures::Channels {
+                            c_list: Vec::new()
+                        }
+                    );
+                }
+            }
 
-    actix_web::HttpResponse::Ok().json(
-        &structures::TokenHolder {
-            token: "".to_string()
+        },
+        None => {
+            println!("SERVERS FAIL: invalid token in fetch_server_channel_messages");
+            actix_web::HttpResponse::Ok().json(
+                &structures::TokenHolder {
+                    token: "".to_string()
+                }
+            )
         }
-    )
+    }
 }

@@ -98,7 +98,7 @@ pub async fn fetch_server_channels(
     session: &scylla::client::session::Session,
     sid: String
 ) -> Option<Vec<structures::Channel>> {
-     let query_rows = session
+    let query_rows = session
         .query_unpaged(statics::SELECT_SERVER_CHANNELS, ((sid),))
         .await.ok()?
         .into_rows_result().ok()?;
@@ -117,3 +117,31 @@ pub async fn fetch_server_channels(
     Some(channels)
 }
 
+pub async fn fetch_server_channel_messages(
+    session: &scylla::client::session::Session,
+    sid: String,
+    channel_name: String
+) -> Option<Vec<structures::Message>> {
+    let query_rows = session
+        .query_unpaged(statics::SELECT_SERVER_CHANNEL_MESSAGES, (sid,channel_name))
+        .await.ok()?
+        .into_rows_result().ok()?;
+    let mut messages = Vec::<structures::Message>::new();
+    for row in query_rows.rows::<(Option<&str>, Option<scylla::value::CqlTimestamp>,Option<&str>)>().ok()? {
+        match row.ok()? {
+            (Some(un), Some(dt), Some(mc)) => {
+                messages.push(
+                    structures::Message{
+                        username: Some(un.to_string()),
+                        datetime: Some(format!("{:?}", dt)),
+                        m_content: Some(mc.to_string())
+                    }
+                );
+            },
+            _ => {
+                return None;
+            }
+        }
+    }
+    Some(messages)
+}

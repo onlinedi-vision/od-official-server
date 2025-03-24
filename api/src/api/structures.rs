@@ -22,9 +22,15 @@ pub struct TokenHolder {
     pub token: String
 }
 
-use crate::db::structures::Channel;
 
+use crate::db::structures::Channel;
 #[derive(serde::Serialize)]
 pub struct Channels {
     pub c_list: Vec<Channel>
+}
+
+use crate::db::structures::Message;
+#[derive(serde::Serialize)]
+pub struct Messages {
+    pub m_list: Vec<Message>
 }

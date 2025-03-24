@@ -36,7 +36,7 @@ pub static INSERT_NEW_SERVER_CHANNEL_MESSAGE: &str = r#"
 "#;
 
 pub static SELECT_SERVER_CHANNEL_MESSAGES: &str = r#"
-    SELECT * FROM division_online.o_server_messages 
+    SELECT username, datetime, m_content FROM division_online.o_server_messages 
         WHERE sid='1313' AND channel_name='main' 
         ALLOW FILTERING; 
 "#;

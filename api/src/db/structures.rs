@@ -37,3 +37,10 @@ pub struct Channel {
 pub struct UserUsername {
     pub username: Option<String>
 }
+
+#[derive(Debug, scylla::SerializeValue, serde::Serialize)]
+pub struct Message {
+    pub username: Option<String>,
+    pub datetime: Option<String>,
+    pub m_content: Option<String>,
+}
