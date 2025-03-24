@@ -123,6 +123,7 @@ pub async fn get_channels (
                         );
                 },
                 None => {
+                    println!("SERVERS FAIL: fetch_server_channels");
                     return actix_web::HttpResponse::Ok().json(
                         &structures::Channels {
                             c_list: Vec::new()
@@ -132,6 +133,7 @@ pub async fn get_channels (
             }
         },
         _ => {
+            println!("SERVERS FAIL: invalid token");
             return actix_web::HttpResponse::Ok().json(
                 &structures::Channels {
                     c_list: Vec::new()

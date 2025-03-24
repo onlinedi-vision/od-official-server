@@ -5,11 +5,14 @@ pub static SELECT_USER_USERNAME: &str = r#"
 
 pub static CHECK_TOKEN: &str = r#"
     SELECT key FROM division_online.users 
-        WHER key = ?;
+        WHERE key = ?
+        ALLOW FILTERING;
 "#;
 
 pub static SELECT_SERVER_CHANNELS: &str = r#"
-    SELECT channel_name WHERE sid = ?;
+    SELECT channel_name FROM division_online.o_server_channels
+        WHERE sid = ?
+        ALLOW FILTERING;
 "#;
 
 pub static INSERT_NEW_USER: &str = r#"
@@ -25,4 +28,15 @@ pub static UPDATE_USER_KEY: &str = r#"
 pub static SELECT_USER_PASSWORD_HASH: &str = r#"
     SELECT password_hash FROM division_online.users
         WHERE username = ?;
+"#;
+
+pub static INSERT_NEW_SERVER_CHANNEL_MESSAGE: &str = r#"
+    INSERT INTO division_online.o_server_messages(mid,channel_name,datetime,m_content,sid,username) 
+        VALUES(?,?,dateof(now()),?,?,?); 
+"#;
+
+pub static SELECT_SERVER_CHANNEL_MESSAGES: &str = r#"
+    SELECT * FROM division_online.o_server_messages 
+        WHERE sid='1313' AND channel_name='main' 
+        ALLOW FILTERING; 
 "#;

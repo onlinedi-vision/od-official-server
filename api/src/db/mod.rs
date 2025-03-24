@@ -76,9 +76,11 @@ pub async fn check_token(
     session: &scylla::client::session::Session,
     token: String
 ) -> Option<()> {
-    let query_rows = session.query_unpaged(statics::CHECK_TOKEN, (token,))
+    let query_rows = session
+        .query_unpaged(statics::CHECK_TOKEN, (token.clone(),))
         .await.ok()?
         .into_rows_result().ok()?;
+    println!(" db/check_token {:?}", token);
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
