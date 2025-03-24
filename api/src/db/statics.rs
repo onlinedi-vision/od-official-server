@@ -9,6 +9,12 @@ pub static CHECK_TOKEN: &str = r#"
         ALLOW FILTERING;
 "#;
 
+pub static CHECK_TOKEN_USER: &str = r#"
+    SELECT key FROM division_online.users 
+        WHERE key = ? AND username = ?
+        ALLOW FILTERING;
+"#;
+
 pub static SELECT_SERVER_CHANNELS: &str = r#"
     SELECT channel_name FROM division_online.o_server_channels
         WHERE sid = ?
@@ -30,7 +36,7 @@ pub static SELECT_USER_PASSWORD_HASH: &str = r#"
         WHERE username = ?;
 "#;
 
-pub static INSERT_NEW_SERVER_CHANNEL_MESSAGE: &str = r#"
+pub static INSERT_SERVER_CHANNEL_MESSAGE: &str = r#"
     INSERT INTO division_online.o_server_messages(mid,channel_name,datetime,m_content,sid,username) 
         VALUES(?,?,dateof(now()),?,?,?); 
 "#;

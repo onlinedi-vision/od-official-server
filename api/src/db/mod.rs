@@ -74,12 +74,21 @@ pub async fn get_user_password_hash(
 
 pub async fn check_token(
     session: &scylla::client::session::Session,
-    token: String
+    token: String,
+    un: Option<String>
 ) -> Option<()> {
-    let query_rows = session
-        .query_unpaged(statics::CHECK_TOKEN, (token.clone(),))
-        .await.ok()?
-        .into_rows_result().ok()?;
+    let query_rows: scylla::response::query_result::QueryRowsResult;
+    if let Some(username) = un {
+        query_rows = session
+            .query_unpaged(statics::CHECK_TOKEN_USER, (token.clone(),username))
+            .await.ok()?
+            .into_rows_result().ok()?;
+    } else {
+        query_rows = session
+            .query_unpaged(statics::CHECK_TOKEN, (token.clone(),))
+            .await.ok()?
+            .into_rows_result().ok()?;
+    }
     println!(" db/check_token {:?}", token);
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
@@ -91,7 +100,6 @@ pub async fn check_token(
         },
         _ => None
     }
-
 }
 
 pub async fn fetch_server_channels(
@@ -144,4 +152,21 @@ pub async fn fetch_server_channel_messages(
         }
     }
     Some(messages)
+}
+
+pub async fn send_message(
+    session: &scylla::client::session::Session,
+    sid: String,
+    channel_name: String,
+    m_content: String,
+    username: String
+) -> Option<Result<()>> {
+    let mid = uuid::Uuid::new_v4().to_string();
+    Some(
+         session 
+            .query_unpaged(statics::INSERT_SERVER_CHANNEL_MESSAGE, (mid, channel_name, m_content,sid,username ))
+            .await
+            .map(|_|())
+            .map_err(From::from)
+    )
 }

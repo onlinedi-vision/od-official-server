@@ -3,7 +3,6 @@ mod security;
 mod db;
 mod env;
 use actix_web::{middleware::Logger};
-//use crate::security::structures::ScyllaSession;
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -18,35 +17,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         lock: std::sync::Mutex::new(db::new_scylla_session("127.0.0.1:9042").await.expect(""))
     });
 
-    /*let test_user: db::structures::User = db::structures::User {
-        email: Some("test".to_string()),
-        password_hash: Some("test".to_string()),
-        key: Some("test".to_string()),
-        bio: Some("test".to_string()),
-        username: Some("test".to_string())
-    }; 
-
-
-    let scylla_session = session.lock.lock().unwrap();
-    let i = db::insert_new_user(&scylla_session, test_user).await;
-    match i {
-        Ok(_) => println!("yes"),
-        Err(e) => println!("{:?}", e),
-    }
-    */
-    
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
             .wrap(Logger::new("%a %{User-Agent}i %U"))
-            .app_data(session.clone())
-            .service(actix_files::Files::new("/cdn", "/root/cdn"))   // CDN route
-            .service(api::get_test)                                  // test API route
-            .service(api::new_user_login)                            // API route for signing up
-            .service(api::try_login)
-            .service(api::json_test)
-            .service(api::get_channels)
-            .service(api::get_channel_messages)
+            .app_data(session.clone())                              // sharing scyllaDB session
+            .service(actix_files::Files::new("/cdn", "/root/cdn"))  // CDN route
+            .service(api::user::new_user_login)                     // API route for signing up
+            .service(api::user::try_login)
+            .service(api::channel::get_channels)
+            .service(api::message::get_channel_messages)
+            .service(api::message::send_message)
     })
     .bind_rustls_0_23(("0.0.0.0", 1313),tls_config)?
     .workers(8)

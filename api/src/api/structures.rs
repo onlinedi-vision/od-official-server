@@ -34,3 +34,10 @@ use crate::db::structures::Message;
 pub struct Messages {
     pub m_list: Vec<Message>
 }
+
+#[derive(serde::Deserialize)]
+pub struct SendMessage {
+    pub token: String,
+    pub m_content: String,
+    pub username: String
+}
