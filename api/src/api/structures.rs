@@ -17,6 +17,13 @@ pub struct LoginUser {
     pub password: String
 }
 
+#[derive(serde::Deserialize)]
+pub struct TokenLoginUser {
+    pub username: String,
+    pub password: String,
+    pub token: String
+}
+
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct TokenHolder {
     pub token: String
@@ -39,5 +46,12 @@ pub struct Messages {
 pub struct SendMessage {
     pub token: String,
     pub m_content: String,
+    pub username: String
+}
+
+#[derive(serde::Deserialize)]
+pub struct CreateChannel {
+    pub token: String,
+    pub channel_name: String,
     pub username: String
 }

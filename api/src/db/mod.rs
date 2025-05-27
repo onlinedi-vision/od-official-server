@@ -170,3 +170,50 @@ pub async fn send_message(
             .map_err(From::from)
     )
 }
+
+pub async fn create_channel(
+    session: &scylla::client::session::Session,
+    sid: String,
+    channel_name: String,
+) -> Option<Result<()>> {
+    Some(
+         session 
+            .query_unpaged(statics::INSERT_SERVER_CHANNEL, (sid, channel_name))
+            .await
+            .map(|_|())
+            .map_err(From::from)
+    )
+}
+
+pub async fn check_user_is_in_server(
+    session: &scylla::client::session::Session,
+    sid: String,
+    token: String,
+    un: String
+) -> Option<Vec<structures::UserUsername>> {
+    
+    if let Some(_) = check_token(&session, token.clone(), Some(un.clone())).await {
+        let query_rows = session
+            .query_unpaged(statics::SELECT_SERVER_USER, (sid,un.clone()))
+            .await.ok()?
+            .into_rows_result().ok()?;
+        let mut ret_vec = Vec::new();
+        for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+            match row.ok()? {
+                (Some(user),) => {
+                    ret_vec.push(
+                        structures::UserUsername {
+                            username: Some(user.to_string())
+                        }
+                    );
+                },
+                _ => {
+                    return None;
+                }
+            }
+        }
+        Some(ret_vec)
+    } else {
+        None
+    }
+}

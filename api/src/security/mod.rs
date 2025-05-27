@@ -1,6 +1,5 @@
 use sha2::Digest;
 pub mod structures;
-use rand::Rng;
 
 pub fn obtain_tls_config() -> rustls::ServerConfig {
     rustls::crypto::aws_lc_rs::default_provider()
@@ -31,13 +30,11 @@ pub fn sha512(secret: String) -> String {
 }
 
 pub fn token() -> String {
-    let salt = rand::rng().random::<i32>();
-    println!("{}", salt);
+    let salt = uuid::Uuid::new_v4().to_string();
+    println!("t{}", salt);
     let mut hasher = sha2::Sha256::new();
     hasher.update(format!("{}", salt).to_string().into_bytes());
-    format!("{:x}", hasher.finalize())/*
-    match std::str::from_utf8(&(hasher.finalize()[..])) {
-        Ok(hash) => hash.to_string(),
-        Err(err) => {println!("{}",err);return "".to_string();}
-    }*/
+    format!("{:x}", hasher.finalize())
 }
+
+
