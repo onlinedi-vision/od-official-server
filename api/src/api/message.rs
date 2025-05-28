@@ -1,7 +1,8 @@
 use crate::api::structures;
 use crate::api::structures::{
     TokenHolder,
-    TokenLoginUser
+    TokenLoginUser,
+    TokenUser
 };
 use crate::security;
 use crate::db;
@@ -9,7 +10,7 @@ use crate::db;
 #[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages")] 
 pub async fn get_channel_messages(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    req: actix_web::web::Json<TokenLoginUser>,
+    req: actix_web::web::Json<TokenUser>,
     http: actix_web::HttpRequest
 ) -> impl actix_web::Responder {
     let sid: String = http.match_info().get("sid").unwrap().to_string();

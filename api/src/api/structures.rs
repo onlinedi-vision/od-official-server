@@ -24,6 +24,12 @@ pub struct TokenLoginUser {
     pub token: String
 }
 
+#[derive(serde::Deserialize)]
+pub struct TokenUser {
+    pub username: String,
+    pub token: String
+}
+
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct TokenHolder {
     pub token: String

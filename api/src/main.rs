@@ -23,13 +23,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .wrap(Logger::new("%a %{User-Agent}i %U"))
             .app_data(session.clone())                              // sharing scyllaDB session
             .service(actix_files::Files::new("/cdn", "/root/cdn"))  // CDN route
+            
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)
+            
             .service(api::channel::get_channels)
+            .service(api::channel::create_channel)
+
             .service(api::message::get_channel_messages)
             .service(api::message::send_message)
+            .service(api::message::get_channel_messages)
     })
-    .bind_rustls_0_23(("0.0.0.0", 1313),tls_config)?
+    .bind(("127.0.0.1", 1313))?
     .workers(8)
     .run()
     .await;

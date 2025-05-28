@@ -45,6 +45,8 @@ pub async fn get_channels (
     };
 }
 
+// TODO! Update token before sending it !
+// TODO! This should use check_user_is_in_server(..)
 #[actix_web::post("/servers/{sid}/api/create_channel")]
 pub async fn create_channel (
     session: actix_web::web::Data<security::structures::ScyllaSession>,
