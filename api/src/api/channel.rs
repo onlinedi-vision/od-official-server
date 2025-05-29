@@ -1,7 +1,8 @@
 use crate::api::structures;
 use crate::api::structures::{
     TokenHolder,
-    CreateChannel
+    CreateChannel,
+    TokenUser
 };
 use crate::security;
 use crate::db;
@@ -14,7 +15,7 @@ pub async fn get_channels (
 ) -> impl actix_web::Responder {
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::check_user_is_in_server(&scylla_session, req.token.clone(), Some(req.username.clone())).await {
+    match db::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
         Some(_) => {
             match db::fetch_server_channels(&scylla_session, sid).await {
                 Some(channels) => {
@@ -54,7 +55,7 @@ pub async fn create_channel (
 
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), Some(req.username.clone())).await {
+    match db::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
         Some(_) => {
             
             match db::create_channel(&scylla_session, sid, req.channel_name.clone()).await {
@@ -67,7 +68,7 @@ pub async fn create_channel (
                         &scylla_session, 
                         db::structures::KeyUser{
                             key: Some(new_token_holder.token.clone()), 
-                            username: Some(form.username.clone())
+                            username: Some(req.username.clone())
                         }
                     ).await;
                     return actix_web::HttpResponse::Ok().json(
