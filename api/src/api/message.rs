@@ -16,7 +16,7 @@ pub async fn get_channel_messages(
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
+    match db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
         Some(_) => {
             match db::fetch_server_channel_messages(&scylla_session, sid.clone(), channel_name).await {
                 Some(messages) => {
@@ -57,9 +57,9 @@ pub async fn send_message(
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
+    match db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
         Some(_) => {
-            match db::send_message(
+            match db::server::send_message(
                 &scylla_session,
                 sid,
                 channel_name,

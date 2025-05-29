@@ -35,6 +35,11 @@ pub struct TokenHolder {
     pub token: String
 }
 
+#[derive(serde::Serialize)]
+pub struct Status {
+    pub status: String
+}
+
 
 use crate::db::structures::Channel;
 #[derive(serde::Serialize)]
@@ -60,4 +65,24 @@ pub struct CreateChannel {
     pub token: String,
     pub channel_name: String,
     pub username: String
+}
+
+#[derive(serde::Serialize)]
+pub struct ServersList {
+    pub token: String,
+    pub s_list: Vec<String>
+}
+
+#[derive(serde::Deserialize)]
+pub struct CreateServer {
+    pub token: String,
+    pub desc: String,
+    pub img_url: String,
+    pub name: String,
+    pub username: String
+}
+
+#[derive(serde::Serialize)]
+pub struct UsersList {
+    pub u_list: Vec<String>
 }

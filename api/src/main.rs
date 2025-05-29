@@ -9,12 +9,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    // obtaining the TLS certificate configuration
-    let tls_config = security::obtain_tls_config();
-    
     // connection to scylla-server
     let session = actix_web::web::Data::new(security::structures::ScyllaSession {
-        lock: std::sync::Mutex::new(db::new_scylla_session("127.0.0.1:9042").await.expect(""))
+        lock: std::sync::Mutex::new(db::prelude::new_scylla_session("127.0.0.1:9042").await.expect(""))
     });
 
     // setting up the API server
@@ -26,7 +23,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)
-            
+            .service(api::user::get_user_servers)                   // [U]
+ 
+            .service(api::server::create_server)                    // [U]
+            .service(api::server::join_server)                      // [U]
+            .service(api::server::get_server_users)                 // [U]
+
             .service(api::channel::get_channels)
             .service(api::channel::create_channel)
 

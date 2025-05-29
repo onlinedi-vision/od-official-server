@@ -57,7 +57,8 @@ pub static INSERT_SERVER: &str = r#"
 
 pub static SELECT_USER_SID_LIST: &str = r#"
     SELECT sid FROM division_online.o_server_users
-        WHERE username = ?;
+        WHERE username = ?
+        ALLOW FILTERING;
 "#;
 
 pub static INSERT_SERVER_CHANNEL: &str = r#"
@@ -68,5 +69,21 @@ pub static INSERT_SERVER_CHANNEL: &str = r#"
 pub static SELECT_SERVER_USER: &str = r#"
     SELECT username FROM division_online.o_server_users
         WHERE sid = ? AND username = ?
+        ALLOW FILTERING;
+"#;
+
+pub static INSERT_NEW_SERVER: &str = r#"
+    INSERT INTO division_online.o_servers(sid, desc, img_url, name, owner)
+        VALUES(?,?,?,?,?);
+"#;
+
+pub static INSERT_USER_INTO_SERVER: &str = r#"
+    INSERT INTO division_online.o_server_users(sid, username)
+        VALUES(?,?);
+"#;
+
+pub static SELECT_SERVER_USERS: &str = r#"
+    SELECT username FROM division_online.o_server_users
+        WHERE sid = ?
         ALLOW FILTERING;
 "#;

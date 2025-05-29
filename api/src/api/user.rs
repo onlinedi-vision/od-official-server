@@ -52,7 +52,7 @@ pub async fn try_login(
         Some(password_hash) => {
             let user_password_hash = security::sha512(form.password.clone());
             if user_password_hash == password_hash {
-                let _ = db::update_user_key(
+                let _ = db::prelude::update_user_key(
                     &scylla_session, 
                     db::structures::KeyUser{
                         key: Some(new_token_holder.token.clone()), 
@@ -95,12 +95,12 @@ pub async fn token_login(
         username: Some(form.username.clone())
     };
     let scylla_session = session.lock.lock().unwrap();
-    if let Some(_) = db::check_token(&scylla_session, form.token.clone(), Some(form.username.clone())).await {
+    if let Some(_) = db::prelude::check_token(&scylla_session, form.token.clone(), Some(form.username.clone())).await {
         match db::get_user_password_hash(&scylla_session, username).await {
             Some(password_hash) => {
                 let user_password_hash = security::sha512(form.password.clone());
                 if user_password_hash == password_hash {
-                    let _ = db::update_user_key(
+                    let _ = db::prelude::update_user_key(
                         &scylla_session, 
                         db::structures::KeyUser{
                             key: Some(new_token_holder.token.clone()), 
@@ -138,4 +138,51 @@ pub async fn token_login(
     }
 }
 
-
+// !TODO: get_user_servers API
+#[actix_web::post("/api/get_user_servers")] 
+pub async fn get_user_servers(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    req: actix_web::web::Json<structures::TokenUser>
+) ->impl actix_web::Responder {
+    let new_token_holder = structures::TokenHolder {
+        token: security::token()
+    };
+    let username = db::structures::UserUsername {
+        username: Some(req.username.clone())
+    };
+    let scylla_session = session.lock.lock().unwrap();
+    if let Some(_) = db::prelude::check_token(&scylla_session, req.token.clone(), Some(req.username.clone())).await {
+        match db::server::fetch_user_servers(&scylla_session, req.username.clone()).await {
+            Some(sids) => {
+                    let _ = db::prelude::update_user_key(
+                        &scylla_session, 
+                        db::structures::KeyUser{
+                            key: Some(new_token_holder.token.clone()), 
+                            username: Some(req.username.clone())
+                        }
+                    ).await;
+                    actix_web::HttpResponse::Ok().json(
+                        &structures::ServersList {
+                            token: new_token_holder.token.clone(),
+                            s_list: sids
+                        }
+                    )
+            },
+            None => {
+                println!("no hash");
+                actix_web::HttpResponse::Ok().json(
+                    &structures::TokenHolder {
+                        token: "".to_string()
+                    }
+                )
+            }
+        }   
+    } else {
+        println!("no token");
+        actix_web::HttpResponse::Ok().json(
+            &structures::TokenHolder {
+                token: "".to_string()
+            }
+        )
+    }
+}

@@ -15,7 +15,7 @@ pub async fn get_channels (
 ) -> impl actix_web::Responder {
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
+    match db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
         Some(_) => {
             match db::fetch_server_channels(&scylla_session, sid).await {
                 Some(channels) => {
@@ -55,16 +55,16 @@ pub async fn create_channel (
 
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
+    match db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
         Some(_) => {
             
-            match db::create_channel(&scylla_session, sid, req.channel_name.clone()).await {
+            match db::server::create_channel(&scylla_session, sid, req.channel_name.clone()).await {
                 Some(_) => {
                     let new_token_holder = structures::TokenHolder {
                         token: security::token()
                     };
 
-                    let _ = db::update_user_key(
+                    let _ = db::prelude::update_user_key(
                         &scylla_session, 
                         db::structures::KeyUser{
                             key: Some(new_token_holder.token.clone()), 
