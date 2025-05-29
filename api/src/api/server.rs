@@ -73,6 +73,9 @@ pub async fn join_server(
     let scylla_session = session.lock.lock().unwrap();
     if let Some(_) = db::prelude::check_token(&scylla_session, req.token.clone(), Some(req.username.clone())).await {
         if let Some(_) = db::server::add_user_to_server(&scylla_session, sid, req.username.clone()).await {
+            let new_token_holder = structures::TokenHolder {
+                token: security::token()
+            }; 
             let _ = db::prelude::update_user_key(
                 &scylla_session, 
                 db::structures::KeyUser{
@@ -80,9 +83,7 @@ pub async fn join_server(
                     username: Some(req.username.clone())
                 }
             ).await;
-            let new_token_holder = structures::TokenHolder {
-                token: security::token()
-            };
+            
             return actix_web::HttpResponse::Ok().json(
                 &new_token_holder
             );
@@ -140,4 +141,24 @@ pub async fn get_server_users(
     }
 }
 
+#[actix_web::get("/servers/{sid}/api/get_server_info")] 
+pub async fn get_server_info(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    http: actix_web::HttpRequest
+) ->impl actix_web::Responder {
+    let sid: String = http.match_info().get("sid").unwrap().to_string();
+    let scylla_session = session.lock.lock().unwrap();
+    if let Some(server_info) = db::server::fetch_server_info(&scylla_session, sid.clone()).await {
+        return actix_web::HttpResponse::Ok().json(
+            &server_info
+        );
+    } else {
+        return actix_web::HttpResponse::Ok().json(
+            &structures::Status {
+                status: "nok".to_string()
+            }
+        );
+    }
+
+}
 

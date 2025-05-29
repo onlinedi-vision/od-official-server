@@ -58,7 +58,33 @@ pub async fn fetch_server_users(
         }
     }
     Some(users)
+}
 
+pub async fn fetch_server_info(
+    session: &scylla::client::session::Session,
+    sid: String
+) -> Option<structures::ServerInfo> {
+    let query_rows = session
+        .query_unpaged(statics::SELECT_SERVER_USERS, (sid,))
+        .await.ok()?
+        .into_rows_result().ok()?;
+    for row in query_rows.rows::<(Option<&str>, Option<&str>, Option<&str>)>().ok()? {
+        match row.ok()? {
+            (Some(name), Some(desc), Some(img_url)) => {
+                return Some(
+                    structures::ServerInfo {
+                        name: name.to_string(),
+                        desc: desc.to_string(),
+                        img_url: img_url.to_string()
+                    }
+                );
+            },
+            _ => {
+                return None;
+            }
+        }
+    }
+    None
 
 }
 

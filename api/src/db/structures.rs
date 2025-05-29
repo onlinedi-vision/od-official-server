@@ -44,3 +44,10 @@ pub struct Message {
     pub datetime: Option<String>,
     pub m_content: Option<String>,
 }
+
+#[derive(serde::Serialize)]
+pub struct ServerInfo {
+   pub name: String,
+   pub desc: String,
+   pub img_url: String
+}

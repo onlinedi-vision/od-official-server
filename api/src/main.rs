@@ -28,6 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::server::create_server)                
             .service(api::server::join_server)                      // change token !!
             .service(api::server::get_server_users)                 
+            .service(api::server::get_server_info)
 
             .service(api::channel::get_channels)
             .service(api::channel::create_channel)
