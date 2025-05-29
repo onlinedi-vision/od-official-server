@@ -22,6 +22,7 @@ pub async fn create_server(
                 &req.name,
                 req.username.clone()
         ).await {
+            let _ = db::create_channel(&scylla_session, sid.clone(), "info".to_string()).await;
             let new_token_holder = structures::TokenHolder {
                 token: security::token()
             };
