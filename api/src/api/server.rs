@@ -73,6 +73,13 @@ pub async fn join_server(
     let scylla_session = session.lock.lock().unwrap();
     if let Some(_) = db::prelude::check_token(&scylla_session, req.token.clone(), Some(req.username.clone())).await {
         if let Some(_) = db::server::add_user_to_server(&scylla_session, sid, req.username.clone()).await {
+            let _ = db::prelude::update_user_key(
+                &scylla_session, 
+                db::structures::KeyUser{
+                    key: Some(new_token_holder.token.clone()), 
+                    username: Some(req.username.clone())
+                }
+            ).await;
             let new_token_holder = structures::TokenHolder {
                 token: security::token()
             };
