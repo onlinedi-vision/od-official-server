@@ -65,7 +65,7 @@ pub async fn fetch_server_info(
     sid: String
 ) -> Option<structures::ServerInfo> {
     let query_rows = session
-        .query_unpaged(statics::SELECT_SERVER_USERS, (sid,))
+        .query_unpaged(statics::SELECT_SERVER_INFO, ((sid),))
         .await.ok()?
         .into_rows_result().ok()?;
     for row in query_rows.rows::<(Option<&str>, Option<&str>, Option<&str>)>().ok()? {
@@ -75,6 +75,33 @@ pub async fn fetch_server_info(
                     structures::ServerInfo {
                         name: name.to_string(),
                         desc: desc.to_string(),
+                        img_url: img_url.to_string()
+                    }
+                );
+            },
+            (Some(name), Some(desc), None) => {
+                return Some(
+                    structures::ServerInfo {
+                        name: name.to_string(),
+                        desc: desc.to_string(),
+                        img_url: "".to_string()
+                    }
+                );
+            },
+            (Some(name), None, None) => {
+                return Some(
+                    structures::ServerInfo {
+                        name: name.to_string(),
+                        desc: "".to_string(),
+                        img_url: "".to_string()
+                    }
+                );
+            },
+            (Some(name), None, Some(img_url)) => {
+                return Some(
+                    structures::ServerInfo {
+                        name: name.to_string(),
+                        desc: "".to_string(),
                         img_url: img_url.to_string()
                     }
                 );
