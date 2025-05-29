@@ -9,12 +9,12 @@ use crate::db;
 #[actix_web::post("/servers/{sid}/api/get_channels")]
 pub async fn get_channels (
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    req: actix_web::web::Json<TokenHolder>,
+    req: actix_web::web::Json<TokenUser>,
     http: actix_web::HttpRequest
 ) -> impl actix_web::Responder {
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::check_token(&scylla_session, req.token.clone(), None).await {
+    match db::check_user_is_in_server(&scylla_session, req.token.clone(), Some(req.username.clone())).await {
         Some(_) => {
             match db::fetch_server_channels(&scylla_session, sid).await {
                 Some(channels) => {
@@ -45,8 +45,6 @@ pub async fn get_channels (
     };
 }
 
-// TODO! Update token before sending it !
-// TODO! This should use check_user_is_in_server(..)
 #[actix_web::post("/servers/{sid}/api/create_channel")]
 pub async fn create_channel (
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -56,15 +54,24 @@ pub async fn create_channel (
 
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::check_token(&scylla_session, req.token.clone(), Some(req.username.clone())).await {
+    match db::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), Some(req.username.clone())).await {
         Some(_) => {
             
             match db::create_channel(&scylla_session, sid, req.channel_name.clone()).await {
                 Some(_) => {
+                    let new_token_holder = structures::TokenHolder {
+                        token: security::token()
+                    };
+
+                    let _ = db::update_user_key(
+                        &scylla_session, 
+                        db::structures::KeyUser{
+                            key: Some(new_token_holder.token.clone()), 
+                            username: Some(form.username.clone())
+                        }
+                    ).await;
                     return actix_web::HttpResponse::Ok().json(
-                        &structures::TokenHolder {
-                            token: security::token()
-                        }   
+                        &new_token_holder
                     );
                 },
                 None => {

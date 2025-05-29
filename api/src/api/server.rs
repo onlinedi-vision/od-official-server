@@ -31,3 +31,17 @@ pub async fn get_user_servers(
     )
 }
 
+// !TODO: get_user_servers API
+#[actix_web::post("/servers/{sid}/api/get_server_users")] 
+pub async fn get_user_servers(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    req: actix_web::web::Json<structures::SendMessage>
+) ->impl actix_web::Responder {
+    actix_web::HttpResponse::Ok().json(
+        &structures::Messages {
+            m_list: Vec::new()
+        }
+    )
+}
+
+
