@@ -6,9 +6,7 @@ pipeline {
 			steps {
 				echo 'here'
 				sh 'ls -lah'
-				sh 'cd api'
-				sh 'cargo build --release'
-				sh './target/release/api'
+				sh 'cd api; ls -alh; cargo build --release; ./target/release/api'
 			}
 		}
 	}
