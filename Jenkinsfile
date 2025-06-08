@@ -4,9 +4,8 @@ pipeline {
 	stages {
 		stage('Building') {
 			steps {
-				sh '. ~/export.sh; env'
-				sh 'env; ps -e | grep api | cut -d" " -f4 | while read line; do kill $line; done'
-				sh 'cd api; ls -alh; cargo build --release; ./target/release/api &' 
+				sh 'ps -e | grep api | cut -d" " -f4 | while read line; do kill $line; done'
+				sh '. ~/export.sh; cd api; ls -alh; cargo build --release; ./target/release/api > ~/rlog.logs 2> ~/errlog.logs &' 
 			}
 		}
 	}
