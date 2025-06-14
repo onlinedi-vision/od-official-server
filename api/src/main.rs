@@ -14,13 +14,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         lock: std::sync::Mutex::new(db::prelude::new_scylla_session("127.0.0.1:9042").await.expect(""))
     });
 
+    if let Some(homedir) = std::env::home_dir() {
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
             .wrap(Logger::new("%a %{User-Agent}i %U"))
             .app_data(session.clone())                                             // sharing scyllaDB session
-            .service(actix_files::Files::new("/cdn", "/var/lib/jenkins/cdn"))      // CDN route
-            
+            .service(actix_files::Files::new("/cdn", format!("{}/cdn",homedir.display())))      // CDN route
+            .service(api::cdn::save_file)
+
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)
             .service(api::user::get_user_servers)                   
@@ -41,6 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     .workers(8)
     .run()
     .await;
+    }
     Ok(())
 }
     
