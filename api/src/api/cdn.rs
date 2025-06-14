@@ -14,8 +14,7 @@ pub async fn save_file (
         let new_file_token = format!("{}/{}", new_dir_token.clone(), security::token());
         let new_dir = format!("{}/cdn/{}", homedir.display(), new_dir_token.clone());
         if let Ok(_) = std::fs::create_dir_all(new_dir.clone().as_str()) {
-            if let Ok(v) = BASE64_STANDARD.decode(req.cont.clone()) {
-            let pload = String::from_utf8(v).expect("Invalid");
+            let pload = req.cont.clone();//String::from_utf8(v).expect("Invalid");
             if let Ok(_) = std::fs::write(format!("{}/cdn/{}", homedir.display(), new_file_token.clone()), pload) {
                 return actix_web::HttpResponse::Ok().json(
                     &structures::FileURL {
@@ -23,23 +22,22 @@ pub async fn save_file (
                     }
                 );
             }
-            }
             return actix_web::HttpResponse::Ok().json(
                 &structures::FileURL {
-                    url: "".to_string()
+                    url: "write".to_string()
                 }
             );
         }
         
         return actix_web::HttpResponse::Ok().json(
             &structures::FileURL {
-                url: "".to_string()
+                url: "create dir".to_string()
             }
         );
     }
     return actix_web::HttpResponse::Ok().json(
         &structures::FileURL {
-            url: "".to_string()
+            url: "home dir".to_string()
         }
     );
 
