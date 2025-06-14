@@ -4,6 +4,7 @@ use crate::api::structures::{
     TokenLoginUser,
     TokenUser
 };
+use std::io::Write;
 use crate::security;
 use crate::db;
 
@@ -61,12 +62,21 @@ pub async fn send_message(
         Some(_) => {
             match db::server::send_message(
                 &scylla_session,
-                sid,
-                channel_name,
+                sid.clone(),
+                channel_name.clone(),
                 req.m_content.clone(),
                 req.username.clone()
             ).await {
                 Some(_) => {
+                    let mut file = std::fs::OpenOptions::new()
+                        .write(true)
+                        .append(true)
+                        .open("/var/lib/jenkins/WSLOCK")
+                        .unwrap();
+
+                    if let Err(e) = file.write_all(format!("{} {} {} {}", sid.clone(), channel_name.clone(), req.username.clone(), req.m_content.clone()).as_str().as_bytes()) {
+                        eprintln!("Couldn't write to file: {}", e);
+                    }
                     return actix_web::HttpResponse::Ok().json(
                         &structures::Messages {
                             m_list: Vec::new()
