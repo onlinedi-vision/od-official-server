@@ -74,7 +74,7 @@ pub async fn send_message(
                         .open("/var/lib/jenkins/WSLOCK")
                         .unwrap();
 
-                    if let Err(e) = file.write_all(format!("{} {} {} {}", sid.clone(), channel_name.clone(), req.username.clone(), req.m_content.clone()).as_str().as_bytes()) {
+                    if let Err(e) = file.write_all(format!("{} {} {} {}\n", sid.clone(), channel_name.clone(), req.username.clone(), req.m_content.clone()).as_str().as_bytes()) {
                         eprintln!("Couldn't write to file: {}", e);
                     }
                     return actix_web::HttpResponse::Ok().json(
