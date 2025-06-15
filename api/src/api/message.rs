@@ -85,6 +85,7 @@ pub async fn send_message(
                 },
                 _ => {
                     return actix_web::HttpResponse::Ok().json(
+                        println!("FAILED AT SEND MESSAGE");
                         &structures::Messages {
                             m_list: Vec::new()
                         }
@@ -93,6 +94,7 @@ pub async fn send_message(
             }
         },
         _ => {
+            println!("FAILED AT USER IN SERVER");
             return actix_web::HttpResponse::Ok().json(
                 &structures::Messages {
                     m_list: Vec::new()

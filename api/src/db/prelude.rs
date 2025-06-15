@@ -75,6 +75,7 @@ pub async fn check_user_is_in_server(
         for row in query_rows.rows::<(Option<&str>,)>().ok()? {
             match row.ok()? {
                 (Some(user),) => {
+                    println!("SERVER");
                     ret_vec.push(
                         structures::UserUsername {
                             username: Some(user.to_string())
@@ -82,6 +83,7 @@ pub async fn check_user_is_in_server(
                     );
                 },
                 _ => {
+                    println!("NOT SERVER");
                     return None;
                 }
             }
