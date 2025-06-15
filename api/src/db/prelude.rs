@@ -35,7 +35,7 @@ pub async fn check_token(
     un: Option<String>
 ) -> Option<()> {
     let query_rows: scylla::response::query_result::QueryRowsResult;
-    if let Some(username) = un {
+    if let Some(username) = un.clone() {
         query_rows = session
             .query_unpaged(statics::CHECK_TOKEN_USER, (token.clone(),username))
             .await.ok()?
@@ -46,7 +46,7 @@ pub async fn check_token(
             .await.ok()?
             .into_rows_result().ok()?;
     }
-    println!(" db/check_token {:?}", token);
+    println!(" db/check_token {:?} {:?}", token, un);
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
@@ -90,6 +90,7 @@ pub async fn check_user_is_in_server(
         }
         Some(ret_vec)
     } else {
+        println!("????????? TOKEN");
         None
     }
 }
