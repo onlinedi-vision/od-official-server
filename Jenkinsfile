@@ -3,7 +3,9 @@ pipeline {
 
 	stages {
     stage('Kill API processes') {
+      steps {
 				sh 'ps -e | awk \'{$1=$1};1\' | grep api | cut -d" " -f1 | while read line; do kill $line; done'
+      }
     }
 		stage('Build & run API') {
 			steps {
