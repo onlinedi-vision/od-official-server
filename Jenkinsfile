@@ -2,18 +2,28 @@ pipeline {
 	agent any
 
 	stages {
-		stage('Building API') {
-			steps {
+    stage('Kill API processes') {
 				sh 'ps -e | awk \'{$1=$1};1\' | grep api | cut -d" " -f1 | while read line; do kill $line; done'
-				sh '. ~/export.sh; cd api; cargo build --release; JENKINS_NODE_COOKIE=dontKillMe ./target/release/api > ~/rlog.logs 2> ~/errlog.logs &' 
+    }
+		stage('Build & run API') {
+			steps {
+				sh '. ~/export.sh; export API_PORT="1313"; cd api; cargo build --release; JENKINS_NODE_COOKIE=dontKillMe ./target/release/api > ~/rlog.logs 2> ~/errlog.logs &' 
 			}
 		}
-    stage('Building WS') {
+    stage('Kill WS processes') {
       steps {
         sh 'ps -e | awk \'{$1=$1};1\' | grep ws | cut -d" " -f1 | while read line; do kill $line; done'
-        sh 'cd ws; cargo build --release; JENKINS_NODE_COOKIE=dontKillMe ./target/release/ws > ~/wslog.logs 2> ~/wselog.logs &' 
+      }
+    }
+    stage('Build WS') {
+      steps {
+        sh 'cd ws; cargo build --release;'
+      }
+    }
+    stage('Run WS') {
+      steps {
+        sh 'export WS_PORT="9002";JENKINS_NODE_COOKIE=dontKillMe ./target/release/ws > ~/wslog.logs 2> ~/wselog.logs &' 
       }
     }
 	}
-
 }

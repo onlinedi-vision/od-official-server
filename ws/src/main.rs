@@ -8,7 +8,7 @@ use std::{
 };
 
 use log::*;
-use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
+use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Result};
 
 
 fn must_not_block<Role: HandshakeRole>(err: HandshakeError<Role>) -> Error {
@@ -36,7 +36,7 @@ fn handle_client(stream: TcpStream) -> Result<()> {
                 .expect("WATHCMASK FAILED");
 
 
-            let events = inotify.read_events_blocking(&mut buffer).expect("reading events error");
+            let _ = inotify.read_events_blocking(&mut buffer).expect("reading events error");
         
             let fc = std::fs::read_to_string(format!("{}/WSLOCK", home_path_buf.display()))
                 .expect("failed to read from WSLOCK");
@@ -47,18 +47,25 @@ fn handle_client(stream: TcpStream) -> Result<()> {
                 .last()
                 .expect("No lines in file");
         
-            let sid = lastline.split_whitespace().next().unwrap_or("").to_string();
             socket.send(lastline.into())?;
         }
     }
     Ok(())
 }
 
+pub fn get_env_var(
+    env_var_name: &str
+) -> String {
+     match std::env::var(env_var_name).map_err(|e| format!("{}: {}", env_var_name, e)) {
+        Ok(string) => string,
+        Err(_) => "".to_string()
+    }
+}
 
 fn main() {
     env_logger::init();
 
-    let server = TcpListener::bind("127.0.0.1:9002").unwrap();
+    let server = TcpListener::bind(format!("127.0.0.1:{}", get_env_var("WS_PORT"))).unwrap();
 
     for stream in server.incoming() {
         spawn(move || match stream {
