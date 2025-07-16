@@ -16,7 +16,7 @@ pipeline {
 			steps {
 				sh '. ~/export.sh;\
         if [[ $(git branch | grep shadow | wc -l) > 0 ]];\
-          then export API_PORT="1313";\
+          then export API_PORT="7777";\
         fi;\
         cd api; cargo build --release;\
         JENKINS_NODE_COOKIE=dontKillMe ./target/release/api > ~/rlog.logs 2> ~/errlog.logs &' 
