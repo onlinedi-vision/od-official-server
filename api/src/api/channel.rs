@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use crate::api::structures;
 use crate::api::structures::{
     TokenHolder,
