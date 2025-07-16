@@ -1,5 +1,10 @@
 pipeline {
 	agent any
+  
+  environment {
+    API_PORT='1313'
+    WS_PORT='9002'
+  }
 
 	stages {
     stage('Kill API processes') {
@@ -9,7 +14,12 @@ pipeline {
     }
 		stage('Build & run API') {
 			steps {
-				sh '. ~/export.sh; export API_PORT="1313"; cd api; cargo build --release; JENKINS_NODE_COOKIE=dontKillMe ./target/release/api > ~/rlog.logs 2> ~/errlog.logs &' 
+				sh '. ~/export.sh;\
+        if [[ $(git branch | grep shadow | wc -l) > 0 ]];\
+          then export API_PORT="1313";\
+        fi;\
+        cd api; cargo build --release;\
+        JENKINS_NODE_COOKIE=dontKillMe ./target/release/api > ~/rlog.logs 2> ~/errlog.logs &' 
 			}
 		}
     stage('Kill WS processes') {
