@@ -7,7 +7,7 @@ pipeline {
   }
 
   stages {
-    parallel {
+
       stage('API') {
         stage('Kill API processes') {
           steps {
@@ -41,7 +41,7 @@ pipeline {
             sh 'export WS_PORT="9002";JENKINS_NODE_COOKIE=dontKillMe ./target/release/ws > ~/wslog.logs 2> ~/wselog.logs &' 
           }
         }
-    }
+      }
   }
 }
       
