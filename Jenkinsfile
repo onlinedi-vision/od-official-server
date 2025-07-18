@@ -7,16 +7,19 @@ pipeline {
   }
 
   stages {
-
-        stage('Kill API processes') {
-          steps {
-            sh 'ps -e | awk \'{$1=$1};1\' | grep api | cut -d" " -f1 | while read line; do kill $line; done'
-          }
-        }
+        stage('Killing') {
+          parallel {
+            stage('Kill API processes') {
+              steps {
+                sh 'ps -e | awk \'{$1=$1};1\' | grep api | cut -d" " -f1 | while read line; do kill $line; done'
+              }
+            }
         
-        stage('Kill WS processes') {
-          steps {
-            sh 'ps -e | awk \'{$1=$1};1\' | grep ws | cut -d" " -f1 | while read line; do kill $line; done'
+            stage('Kill WS processes') {
+              steps {
+                sh 'ps -e | awk \'{$1=$1};1\' | grep ws | cut -d" " -f1 | while read line; do kill $line; done'
+              }
+            }
           }
         }
         stage('Build WS') {
