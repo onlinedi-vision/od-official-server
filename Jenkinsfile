@@ -37,7 +37,7 @@ pipeline {
             stage('Build & run API') {
               steps {
                 sh '. ~/export.sh;\
-                  if [ $(git branch | grep shadow | wc -l) > 0 ];\
+                  if [ $(git branch | grep shadow | wc -l) -gt 0 ];\
                     then export API_PORT="7777";\
                   fi;\
                   cd api; cargo build --release;\

@@ -11,7 +11,7 @@ pub fn sha512(secret: String) -> String {
 }
 
 pub fn token() -> String {
-    let salt = uuid::Uuid::new_v4().to_string();
+    let salt = uuid::Uuid::now_v7().to_string();
     println!("t{}", salt);
     
     let mut hasher = sha2::Sha256::new();
