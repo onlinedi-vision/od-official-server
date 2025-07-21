@@ -29,10 +29,10 @@ pipeline {
         }
         
         stage('Run') {
+          environment {
+            SCYLLA_CASSANDRA_PASSWORD = credentials('scylla-password')
+	        }
           parallel {
-	    environment {
-		SCYLLA_CASSANDRA_PASSWORD = credentials('scylla-password')
-	      }
             stage('Run WS') {
               steps {
                 sh 'export WS_PORT="9002";JENKINS_NODE_COOKIE=dontKillMe ./target/release/ws > ~/wslog.logs 2> ~/wselog.logs &' 
