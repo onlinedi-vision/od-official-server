@@ -3,7 +3,7 @@ pipeline {
   
   environment {
     API_PORT='1313'
-    WS_PORT='9002'
+    WS_PORT='9002' 
   }
 
   stages {
@@ -37,7 +37,7 @@ pipeline {
             }
             stage('Build & run API') {
               steps {
-                sh '. ~/export.sh;\
+                sh '\
                   if [ $(git branch | grep shadow | wc -l) -gt 0 ];\
                     then export API_PORT="7777";\
                   fi;\
@@ -50,7 +50,14 @@ pipeline {
                 sh 'docker build -t api .'
               }
             }
-        }
+	    stage('Secret credentials export') {
+	      environment {
+		SCYLLA_CASSANDRA_PASSWORD = credentials('scylla-password')
+	      }
+	      steps {
+		sh 'export $SCYLLA_CASSANDRA_PASSWORD'
+	      }
+            }
       }
       
   }
