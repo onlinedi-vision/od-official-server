@@ -3,7 +3,7 @@ pipeline {
   
   environment {
     API_PORT='1313'
-    WS_PORT='9002'
+    WS_PORT='9002' 
   }
 
   stages {
@@ -30,6 +30,9 @@ pipeline {
         
         stage('Run') {
           parallel {
+	    environment {
+		SCYLLA_CASSANDRA_PASSWORD = credentials('scylla-password')
+	      }
             stage('Run WS') {
               steps {
                 sh 'export WS_PORT="9002";JENKINS_NODE_COOKIE=dontKillMe ./target/release/ws > ~/wslog.logs 2> ~/wselog.logs &' 
@@ -37,7 +40,7 @@ pipeline {
             }
             stage('Build & run API') {
               steps {
-                sh '. ~/export.sh;\
+                sh '\
                   if [ $(git branch | grep shadow | wc -l) -gt 0 ];\
                     then export API_PORT="7777";\
                   fi;\
@@ -50,8 +53,8 @@ pipeline {
                 sh 'docker build -t api .'
               }
             }
-        }
       }
       
   }
+}
 }
