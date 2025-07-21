@@ -27,6 +27,7 @@ pipeline {
             sh 'cd ws; cargo build --release;'
           }
         }
+        
         stage('Run') {
           parallel {
             stage('Run WS') {
@@ -44,7 +45,13 @@ pipeline {
                   JENKINS_NODE_COOKIE=dontKillMe ./target/release/api > ~/rlog.logs 2> ~/errlog.logs &' 
               }
             }
+            stage('Build Docker API') {
+              steps {
+                sh 'docker build -t api .'
+              }
+            }
         }
       }
+      
   }
 }

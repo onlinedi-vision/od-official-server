@@ -1,25 +1,17 @@
-FROM alpine:3.14
+FROM alpine:3.22.1
 
 LABEL org.opencontainers.image.source=https://github.com/rust-lang/docker-rust
 
 RUN apk add --no-cache \
         ca-certificates \
-        gcc
+        gcc \
+	curl \
+	rust \
+	cargo
 
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.88.0
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs 
 
-RUN set -eux; \
-    %%ARCH-CASE%%; \
-    url="https://static.rust-lang.org/rustup/archive/%%RUSTUP-VERSION%%/${rustArch}/rustup-init"; \
-    wget "$url"; \
-    echo "${rustupSha256} *rustup-init" | sha256sum -c -; \
-    chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
-    rm rustup-init; \
-    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
-    rustup --version; \
-    cargo --version; \
-    rustc --version;
+COPY ./api ./api
+RUN cd api && cargo build --release
+RUN mkdir /logs
+RUN ./api/target/release/api > /logs/API_LOGS.logs 2> /logs/ERROR_API_LOGS.logs
