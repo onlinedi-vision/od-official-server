@@ -14,4 +14,4 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
 COPY ./api ./api
 RUN cd api && cargo build --release
 RUN mkdir /logs
-RUN ./target/release/api > /logs/API_LOGS.logs 2> /logs/ERROR_API_LOGS.logs
+CMD ./target/release/api > /logs/API_LOGS.logs 2> /logs/ERROR_API_LOGS.logs
