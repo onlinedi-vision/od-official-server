@@ -41,10 +41,10 @@ pipeline {
             
             stage('Build Docker API') {
               steps {
-                sh '[[ ! -d ./cdn ]] && mv ~/cdn ./cdn'
+                sh '[ -d ./cdn ] || mv ~/cdn ./cdn'
                 sh 'docker build -t api .'
                 sh 'docker run -d -p 1313:1313 --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env API_PORT="1313" api:latest'
-                sh '[[ -d ./cdn ]] && mv ./cdn ~/cdn'
+                sh '[ -d ./cdn ] && mv ./cdn ~/cdn'
               }
             }
       }
