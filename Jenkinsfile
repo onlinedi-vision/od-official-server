@@ -38,20 +38,11 @@ pipeline {
                 sh 'export WS_PORT="9002";JENKINS_NODE_COOKIE=dontKillMe ./target/release/ws > ~/wslog.logs 2> ~/wselog.logs &' 
               }
             }
-            stage('Build & run API') {
-              steps {
-                sh '\
-                  if [ $(git branch | grep shadow | wc -l) -gt 0 ];\
-                    then export API_PORT="7777";\
-                  fi;\
-                  cd api; cargo build --release;\
-                  JENKINS_NODE_COOKIE=dontKillMe ./target/release/api > ~/rlog.logs 2> ~/errlog.logs &' 
-              }
-            }
+            
             stage('Build Docker API') {
               steps {
                 sh 'docker build -t api .'
-                sh 'docker run -d --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env API_PORT="1313" api:latest'
+                sh 'docker run -d -p 1313:1313 --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env API_PORT="1313" api:latest'
               }
             }
       }
