@@ -51,6 +51,7 @@ pipeline {
             stage('Build Docker API') {
               steps {
                 sh 'docker build -t api .'
+                sh 'docker run -d --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env API_PORT="1313" api:latest'
               }
             }
       }
