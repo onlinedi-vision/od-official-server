@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     // connection to scylla-server
     let session = actix_web::web::Data::new(security::structures::ScyllaSession {
-        lock: std::sync::Mutex::new(db::prelude::new_scylla_session("127.0.0.1:9042").await.expect(""))
+        lock: std::sync::Mutex::new(db::prelude::new_scylla_session("onlinedi.vision:9042").await.expect(""))
     });
 
     if let Some(homedir) = std::env::home_dir() {
