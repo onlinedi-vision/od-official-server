@@ -11,8 +11,12 @@ RUN apk add --no-cache \
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs 
 
+COPY ./ws ./ws
 COPY ./api ./api
 COPY ./cdn ./cdn
+RUN touch /WSLOCK
+RUN cd ws && cargo build --release
 RUN cd api && cargo build --release
 RUN mkdir /logs
+CMD ["./ws/target/release/ws", ">", "/logs/WS_LOGS.logs", "2>", "/logs/ERROR_WS_LOGS.logs"]
 CMD ["./api/target/release/api", ">", "/logs/API_LOGS.logs", "2>", "/logs/ERROR_API_LOGS.logs"]
