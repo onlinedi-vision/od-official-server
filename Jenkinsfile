@@ -21,12 +21,12 @@ pipeline {
               }
             }
           }
-        }
-        
+        } 
         stage('Run') {
+	 parallel {
           environment {
             SCYLLA_CASSANDRA_PASSWORD = credentials('scylla-password')
-	        }
+	  }
 	    stage('Build Docker API & WS') {
 	      steps {
 		sh '[ -d ./cdn ] || mv ~/cdn ./cdn'
@@ -35,6 +35,7 @@ pipeline {
 		sh '[ -d ./cdn ] && mv ./cdn ~/cdn'
 	      }
 	    }
+  	 }
+	}
   }
-}
 }
