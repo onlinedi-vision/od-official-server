@@ -22,33 +22,19 @@ pipeline {
             }
           }
         }
-        stage('Build WS') {
-          steps {
-            sh 'cd ws; cargo build --release;'
-          }
-        }
         
         stage('Run') {
           environment {
             SCYLLA_CASSANDRA_PASSWORD = credentials('scylla-password')
 	        }
-          parallel {
-            stage('Run WS') {
-              steps {
-                sh 'export WS_PORT="9002";JENKINS_NODE_COOKIE=dontKillMe ./target/release/ws > ~/wslog.logs 2> ~/wselog.logs &' 
-              }
-            }
-            
-            stage('Build Docker API') {
-              steps {
-                sh '[ -d ./cdn ] || mv ~/cdn ./cdn'
-                sh 'docker build -t api .'
-                sh 'docker run -d -p 127.0.0.1:1313:1313 --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env API_PORT="1313" api:latest'
-                sh '[ -d ./cdn ] && mv ./cdn ~/cdn'
-              }
-            }
-      }
-      
+	    stage('Build Docker API & WS') {
+	      steps {
+		sh '[ -d ./cdn ] || mv ~/cdn ./cdn'
+		sh 'docker build -t api .'
+		sh 'docker run -d -p 127.0.0.1:1313:1313 --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env WS_PORT="9002" --env API_PORT="1313" api:latest'
+		sh '[ -d ./cdn ] && mv ./cdn ~/cdn'
+	      }
+	    }
   }
 }
 }
