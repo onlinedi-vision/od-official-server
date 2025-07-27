@@ -134,10 +134,8 @@ pub async fn get_server_users(
             );
         }
     } else {
-        return actix_web::HttpResponse::Ok().json(
-            &structures::UsersList {
-                u_list: Vec::new()
-            }
+        return actix_web::HttpResponse::Unauthorized().body(
+            "Wrong token :("
         );
     }
 }
