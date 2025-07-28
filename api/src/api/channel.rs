@@ -28,21 +28,13 @@ pub async fn get_channels (
                 },
                 None => {
                     println!("SERVERS FAIL: fetch_server_channels");
-                    return actix_web::HttpResponse::Ok().json(
-                        &structures::Channels {
-                            c_list: Vec::new()
-                        }
-                    );
+                    return actix_web::HttpResponse::InternalServerError().body("Failed to fetch server channels");
                 }
             }
         },
-        _ => {
+        None => {
             println!("SERVERS FAIL: invalid token in fetch_server_channels");
-            return actix_web::HttpResponse::Ok().json(
-                &structures::Channels {
-                    c_list: Vec::new()
-                }
-            );
+            return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
         }
     };
 }
@@ -78,21 +70,13 @@ pub async fn create_channel (
                 },
                 None => {
                     println!("SERVERS FAIL: create_channel");
-                    return actix_web::HttpResponse::Ok().json(
-                        &structures::TokenHolder {
-                            token: "".to_string()
-                        }
-                    );
+                    return actix_web::HttpResponse::InternalServerError().body("Could not create channel");
                 }
             }
         },
-        _ => {
+        None => {
             println!("SERVERS FAIL: invalid token in create_channel");
-            return actix_web::HttpResponse::Ok().json(
-                &structures::TokenHolder {
-                    token: "".to_string()
-                }
-            );
+            return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
         }
 
     }

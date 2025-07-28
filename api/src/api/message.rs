@@ -30,22 +30,14 @@ pub async fn get_channel_messages(
                 },
                 None => {
                     println!("SERVERS FAIL: fetch_server_channel_messages");
-                    return actix_web::HttpResponse::Ok().json(
-                        &structures::Messages {
-                            m_list: Vec::new()
-                        }
-                    );
+                    return actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages");
                 }
             }
 
         },
         None => {
             println!("SERVERS FAIL: invalid token in fetch_server_channel_messages");
-            actix_web::HttpResponse::Ok().json(
-                &structures::Messages {
-                    m_list: Vec::new()
-                }
-            )
+            actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
         }
     }
 }
@@ -84,23 +76,15 @@ pub async fn send_message(
                         }
                     );       
                 },
-                _ => {
+                None => {
                     println!("FAILED AT SEND MESSAGE");
-                    return actix_web::HttpResponse::Ok().json(
-                        &structures::Messages {
-                            m_list: Vec::new()
-                        }
-                    );
+                    return actix_web::HttpResponse::InternalServerError().body("Failed to send message");
                 }
             }
         },
-        _ => {
+        None => {
             println!("FAILED AT USER IN SERVER");
-            return actix_web::HttpResponse::Ok().json(
-                &structures::Messages {
-                    m_list: Vec::new()
-                }
-            );
+            return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
         }
     }
 }
