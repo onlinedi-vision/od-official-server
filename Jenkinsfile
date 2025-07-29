@@ -7,16 +7,11 @@ pipeline {
   }
 
   stages {
-        stage('Killing') {
-
-        
-            stage('Kill WS processes') {
-              steps {
-                sh 'ps -e | awk \'{$1=$1};1\' | grep ws | cut -d" " -f1 | while read line; do kill $line; done'
-              }
-            }
-          
-        } 
+	stage('Kill WS processes') {
+        	steps {
+                	sh 'ps -e | awk \'{$1=$1};1\' | grep ws | cut -d" " -f1 | while read line; do kill $line; done'
+              	}
+        }
         stage('Run') {
           environment {
             SCYLLA_CASSANDRA_PASSWORD = credentials('scylla-password')
