@@ -39,27 +39,15 @@ pub async fn create_server(
                 );
             } else {
                 println!("SERVERS FAIL: add_user_to_server");
-                return actix_web::HttpResponse::Ok().json(
-                    &structures::TokenHolder {
-                        token: "".to_string()
-                    }
-                );
+                return actix_web::HttpResponse::InternalServerError().body("Failed to add user to server");
             }
         } else {
             println!("SERVERS FAIL: create_server");
-            return actix_web::HttpResponse::Ok().json(
-                &structures::TokenHolder {
-                    token: "".to_string()
-                }
-            );
+            return actix_web::HttpResponse::InternalServerError().body("Failed to create server");
         }
     } else {
         println!("SERVERS FAIL: invalid token in create_server");
-        return actix_web::HttpResponse::Ok().json(
-            &structures::TokenHolder {
-                token: "".to_string()
-            }
-        );
+        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
 }
@@ -90,20 +78,12 @@ pub async fn join_server(
             );
         } else {
             println!("SERVERS FAIL: add_user_to_server");
-            return actix_web::HttpResponse::Ok().json(
-                &structures::TokenHolder {
-                    token: "".to_string()
-                }
-            );
+            return actix_web::HttpResponse::InternalServerError().body("Failed to add user to server");
         }
 
     } else {
         println!("SERVERS FAIL: invalid token in create_server");
-        return actix_web::HttpResponse::Ok().json(
-            &structures::TokenHolder {
-                token: "".to_string()
-            }
-        );
+        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
 
@@ -135,7 +115,7 @@ pub async fn get_server_users(
         }
     } else {
         return actix_web::HttpResponse::Unauthorized().body(
-            "Wrong token :("
+            "Invalid token or user not in server"
         );
     }
 }
@@ -152,7 +132,7 @@ pub async fn get_server_info(
             &server_info
         );
     } else {
-        return actix_web::HttpResponse::Ok().json(
+        return actix_web::HttpResponse::NotFound().json(
             &structures::Status {
                 status: "nok".to_string()
             }

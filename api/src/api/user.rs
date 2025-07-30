@@ -1,3 +1,5 @@
+use actix_web::HttpResponse;
+
 use crate::db;
 use crate::api::structures;
 use crate::security;
@@ -22,10 +24,7 @@ pub async fn new_user_login(
     let scylla_session = session.lock.lock().unwrap();
     match db::insert_new_user(&scylla_session, user_instance).await {
         None => {
-            token_holder.token = "".to_string();
-            return actix_web::HttpResponse::Ok().json(
-                &token_holder
-            );
+            return actix_web::HttpResponse::Conflict().body("User already exists or insert failed");
         },
         Some(_) => {
             return actix_web::HttpResponse::Ok().json(
@@ -64,20 +63,12 @@ pub async fn try_login(
                 )
             } else {
                 println!("not matchy");
-                actix_web::HttpResponse::Ok().json(
-                    &structures::TokenHolder {
-                        token: "".to_string()
-                    }
-                )
+                actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
             }
         },
         None => {
             println!("no hash");
-            actix_web::HttpResponse::Ok().json(
-                &structures::TokenHolder {
-                    token: "".to_string()
-                }
-            )
+            actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
         }
     }   
 }
@@ -112,29 +103,17 @@ pub async fn token_login(
                     )
                 } else {
                     println!("not matchy");
-                    actix_web::HttpResponse::Ok().json(
-                        &structures::TokenHolder {
-                            token: "".to_string()
-                        }
-                    )
+                    actix_web::HttpResponse::Unauthorized().body("Invalid password")
                 }
             },
             None => {
                 println!("no hash");
-                actix_web::HttpResponse::Ok().json(
-                    &structures::TokenHolder {
-                        token: "".to_string()
-                    }
-                )
+                actix_web::HttpResponse::Unauthorized().body("Invalid password")
             }
         }   
     } else {
         println!("no token");
-        actix_web::HttpResponse::Ok().json(
-            &structures::TokenHolder {
-                token: "".to_string()
-            }
-        )
+        actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
     }
 }
 
@@ -170,19 +149,11 @@ pub async fn get_user_servers(
             },
             None => {
                 println!("no hash");
-                actix_web::HttpResponse::Ok().json(
-                    &structures::TokenHolder {
-                        token: "".to_string()
-                    }
-                )
+                actix_web::HttpResponse::NotFound().body("No servers found for user")
             }
         }   
     } else {
         println!("no token");
-        actix_web::HttpResponse::Ok().json(
-            &structures::TokenHolder {
-                token: "".to_string()
-            }
-        )
+        actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
     }
 }
