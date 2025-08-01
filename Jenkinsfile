@@ -17,7 +17,7 @@ pipeline {
 	    stage('Build Docker API & WS') {
 	      steps {
           withVault([vaultSecrets: [
-                    [path: 'secret/jenkins/api', secretValues: [
+                    [path: 'secrets/secret/jenkins/api', secretValues: [
                         [vaultKey: 'secret', envVar: 'SCYLLA_CASSANDRA_PASSWORD']
                     ]]
                 ]]) {
