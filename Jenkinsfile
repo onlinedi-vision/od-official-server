@@ -14,7 +14,7 @@ pipeline {
         }
         stage('Run') {
           environment {
-            SCYLLA_CASSANDRA_PASSWORD = credentials('scylla-password')
+            SCYLLA_CASSANDRA_PASSWORD = credentials('vault-scylla-cassandra-password')
 	  }
 	  parallel {
 	    stage('Build Docker API & WS') {
