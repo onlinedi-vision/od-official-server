@@ -13,17 +13,20 @@ pipeline {
               	}
         }
         stage('Run') {
-          environment {
-            SCYLLA_CASSANDRA_PASSWORD = credentials('vault-scylla-cassandra-password')
-	  }
 	  parallel {
 	    stage('Build Docker API & WS') {
 	      steps {
+          withVault([vaultSecrets: [
+                    [path: 'secret/jenkins/api', secretValues: [
+                        [vaultKey: 'secret', envVar: 'SCYLLA_CASSANDRA_PASSWORD']
+                    ]]
+                ]]) {
 		sh '[ -d ./cdn ] || mv ~/cdn ./cdn'
 		sh 'docker build -t api .'
 		sh 'docker run -d -p 127.0.0.1:1313:1313 --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env WS_PORT="9002" --env API_PORT="1313" api:latest'
 		sh '[ -d ./cdn ] && mv ./cdn ~/cdn'
 	      }
+        }
 	    }
   	 }
 	}
