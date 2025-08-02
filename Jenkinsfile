@@ -8,7 +8,9 @@ pipeline {
 
   stages {
     stage('Docker Kill') {
-      sh 'docker kill backend_container'
+      steps {
+        sh 'docker kill backend_container'
+      }
     }
 	  stage('Docker Build') {
       steps {
