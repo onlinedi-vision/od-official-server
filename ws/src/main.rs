@@ -65,7 +65,7 @@ pub fn get_env_var(
 fn main() {
     env_logger::init();
 
-    let server = TcpListener::bind(format!("127.0.0.1:{}", get_env_var("WS_PORT"))).unwrap();
+    let server = TcpListener::bind(format!("0.0.0.0:{}", get_env_var("WS_PORT"))).unwrap();
 
     for stream in server.incoming() {
         spawn(move || match stream {
