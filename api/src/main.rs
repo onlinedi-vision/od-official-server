@@ -38,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::message::send_message)
             .service(api::message::get_channel_messages)
     })
-    .bind(("127.0.0.1", env::get_env_var("API_PORT").parse()?))?
+    .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
     .workers(8)
     .run()
     .await;
