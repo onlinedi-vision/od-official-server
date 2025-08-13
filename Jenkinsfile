@@ -10,6 +10,7 @@ pipeline {
     stage('Docker Kill') {
       steps {
         sh 'docker kill backend_container || echo "NO ALIVE CONTAINER"'
+		sh 'docker rm backend_container || echo "NO CONTAINER NAMED backend_container"'
       }
     }
 	  stage('Docker Build') {
