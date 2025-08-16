@@ -1,7 +1,5 @@
 pipeline {
-  agent {
-	  label 'docker'
-  }
+  agent any
   
   environment {
     API_PORT='1313'
