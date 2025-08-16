@@ -17,7 +17,7 @@ pipeline {
     stage('Docker Run') {
       steps {
         withCredentials([vaultString(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
-		      sh 'docker run -d --rm -p 127.0.0.1:1313:1313 --name backend_container --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env WS_PORT="9002" --env API_PORT="1313" api:latest'
+		      sh 'docker run -d --rm true -p 127.0.0.1:1313:1313 --name backend_container --env SCYLLA_CASSANDRA_PASSWORD=$SCYLLA_CASSANDRA_PASSWORD --env WS_PORT="9002" --env API_PORT="1313" api:latest'
         }
       }
     }
