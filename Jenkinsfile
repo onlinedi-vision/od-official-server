@@ -1,5 +1,7 @@
 pipeline {
-  agent any
+  agent {
+	  label 'docker'
+  }
   
   environment {
     API_PORT='1313'
@@ -16,9 +18,7 @@ pipeline {
 
 	  stage('Docker Build') {
       steps {
-        sh '[ -d ./cdn ] || mv ~/cdn ./cdn'
-		    sh 'docker build -t api .'
-		    sh '[ -d ./cdn ] && mv ./cdn ~/cdn'
+		  sh 'docker build -t api .'
       }
 	  }
     stage('Docker Run') {
