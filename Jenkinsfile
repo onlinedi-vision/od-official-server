@@ -9,6 +9,12 @@ pipeline {
   }
 
   stages {
+	  stage('Alpine Install Docker') {
+		  steps {
+		  	sh 'apk add docker'
+			sh 'service docker start'
+		  }
+	  }
 
 	  stage('Docker Kill') {
 		  steps {
