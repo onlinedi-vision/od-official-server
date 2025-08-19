@@ -9,9 +9,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
+    // connection to scylla-server
+    let session = actix_web::web::Data::new(security::structures::ScyllaSession {
         lock: std::sync::Mutex::new(db::prelude::new_scylla_session("onlinedi.vision:9042").await.expect(""))
     });
-
+    
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
