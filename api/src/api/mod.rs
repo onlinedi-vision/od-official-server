@@ -9,5 +9,4 @@ pub mod message;
 pub mod channel;
 pub mod user;
 pub mod server;
-pub mod cdn;
 
