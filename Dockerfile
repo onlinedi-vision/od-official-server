@@ -1,4 +1,4 @@
-FROM alpine:3.22.1 AS builder
+FROM alpine:3.22 AS builder
 
 LABEL org.opencontainers.image.source=https://github.com/rust-lang/docker-rust
 RUN apk add --no-cache \
@@ -11,8 +11,5 @@ RUN apk add --no-cache \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs 
 COPY ./api ./api
 RUN cd api && cargo build --release
-RUN mkdir /logs
 
-FROM scratch
-COPY --from=builder /api/target/release ./release
-ENTRYPOINT ["./release/api"]
+ENTRYPOINT ["./api/target/release/api"]
