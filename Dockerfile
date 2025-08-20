@@ -1,4 +1,4 @@
-FROM alpine:3.22.1 as builder
+FROM alpine:3.22.1 AS builder
 
 LABEL org.opencontainers.image.source=https://github.com/rust-lang/docker-rust
 
