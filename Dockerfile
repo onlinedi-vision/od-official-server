@@ -1,4 +1,4 @@
-FROM alpine:3.22.1
+FROM alpine:3.22.1 as builder
 
 LABEL org.opencontainers.image.source=https://github.com/rust-lang/docker-rust
 
@@ -14,4 +14,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
 COPY ./api ./api
 RUN cd api && cargo build --release
 RUN mkdir /logs
-CMD ["./api/target/release/api", ">", "/logs/API_LOGS.logs", "2>", "/logs/ERROR_API_LOGS.logs", "&"]
+
+
+FROM scratch
+
+COPY --from=builder /api/target/release .
+ENTRYPOINT ["./api"]
