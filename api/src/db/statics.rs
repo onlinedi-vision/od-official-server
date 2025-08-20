@@ -93,3 +93,28 @@ pub static SELECT_SERVER_INFO: &str = r#"
         WHERE sid = ?
         ALLOW FILTERING;
 "#;
+
+pub static SELECT_SERVER_ROLES: &str = r#"
+   SELECT role_name, color, permissions FROM division_online.o_server_roles
+       WHERE server_id = ?; 
+"#;
+
+pub static SELECT_USER_ROLES: &str = r#"
+   SELECT role_name FROM division_online.o_user_server_roles
+       WHERE server_id = ? AND username = ?;
+"#;
+
+pub static INSERT_SERVER_ROLE: &str = r#"
+   INSERT INTO division_online.o_server_roles (server_id, role_name, color, permissions)
+       VALUES(?, ?, ?, ?); 
+"#;
+
+pub static ASSIGN_ROLE_TO_USER: &str = r#"
+   INSERT INTO division_online.o_user_server_roles (server_id, username, role_name)
+       VALUES (?, ?, ?); 
+"#;
+
+pub static REMOVE_ROLE_FROM_USER: &str = r#"
+    DELETE FROM division_online.o_user_server_roles
+        WHERE server_id = ? AND username = ? AND role_name = ?;
+"#;
