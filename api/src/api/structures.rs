@@ -119,3 +119,4 @@ pub struct UserRoleQuery {
     pub username: String,
     pub server_id: String,
 }
+

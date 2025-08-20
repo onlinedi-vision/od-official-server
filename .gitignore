@@ -1,4 +1,4 @@
 landing/node_modules/*
 landing/package-lock.json
-api/target/*
+/api/target/*
 api/Cargo.lock

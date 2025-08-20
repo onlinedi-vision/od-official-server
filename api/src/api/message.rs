@@ -61,16 +61,7 @@ pub async fn send_message(
                 req.username.clone()
             ).await {
                 Some(_) => {
-                    let mut file = std::fs::OpenOptions::new()
-                        .write(true)
-                        .append(true)
-                        .open("/var/lib/jenkins/WSLOCK")
-                        .unwrap();
-
-                    if let Err(e) = file.write_all(format!("{} {} {} {}\n", sid.clone(), channel_name.clone(), req.username.clone(), req.m_content.clone()).as_str().as_bytes()) {
-                        eprintln!("Couldn't write to file: {}", e);
-                    }
-                    return actix_web::HttpResponse::Ok().json(
+                   return actix_web::HttpResponse::Ok().json(
                         &structures::Messages {
                             m_list: Vec::new()
                         }

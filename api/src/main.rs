@@ -13,15 +13,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let session = actix_web::web::Data::new(security::structures::ScyllaSession {
         lock: std::sync::Mutex::new(db::prelude::new_scylla_session("onlinedi.vision:9042").await.expect(""))
     });
-
+    
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
             .wrap(Logger::new("%a %{User-Agent}i %U"))
             .app_data(session.clone())                                             // sharing scyllaDB session
-            .service(actix_files::Files::new("/cdn", "/cdn"))      // CDN route
-            .service(api::cdn::save_file)
 
+            .service(api::get_api_version)
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)
             .service(api::user::get_user_servers)                   
@@ -38,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::message::send_message)
             .service(api::message::get_channel_messages)
     })
-    .bind(("127.0.0.1", env::get_env_var("API_PORT").parse()?))?
+    .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
     .workers(8)
     .run()
     .await;
