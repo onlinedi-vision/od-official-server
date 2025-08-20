@@ -19,7 +19,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         actix_web::App::new()
             .wrap(Logger::new("%a %{User-Agent}i %U"))
             .app_data(session.clone())                                             // sharing scyllaDB session
-            .service(actix_files::Files::new("/cdn", "/cdn"))      // CDN route
 
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)

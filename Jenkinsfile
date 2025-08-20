@@ -1,7 +1,5 @@
 pipeline {
-  agent {
-	  label 'agent1'
-  }
+  agent any
   
   environment {
     API_PORT='1313'
@@ -9,13 +7,7 @@ pipeline {
   }
 
   stages {
-	  stage('Alpine Install Docker') {
-		  steps {
-		  	sh 'apk add docker'
-			sh 'service docker start'
-		  }
-	  }
-
+	  
 	  stage('Docker Kill') {
 		  steps {
 			  sh 'docker kill backend_container || echo "NO ALIVE CONTAINER"'

@@ -87,12 +87,4 @@ pub struct UsersList {
     pub u_list: Vec<String>
 }
     
-#[derive(serde::Deserialize)]
-pub struct File {
-    pub cont: String
-}
 
-#[derive(serde::Serialize)]
-pub struct FileURL {
-    pub url: String
-}

@@ -1,5 +1,3 @@
-use actix_web::HttpResponse;
-
 use crate::db;
 use crate::api::structures;
 use crate::security;
@@ -11,7 +9,7 @@ pub async fn new_user_login(
 ) -> impl actix_web::Responder {
     println!("test"); 
     let password_hash = security::sha512(form.password.clone());
-    let mut token_holder = structures::TokenHolder {
+    let token_holder = structures::TokenHolder {
         token: security::token()
     };
     let user_instance = db::structures::User::new(
