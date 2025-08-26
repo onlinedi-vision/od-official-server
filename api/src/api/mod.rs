@@ -12,7 +12,7 @@ pub mod server;
 
 #[actix_web::get("/api/version")] 
 pub async fn get_api_version() ->impl actix_web::Responder {
-  return actix_web::HttpResponse::Ok().json(
+  return actix_web::HttpResponse::Ok().body(
     "v0.0.1".to_string()
   );
   
