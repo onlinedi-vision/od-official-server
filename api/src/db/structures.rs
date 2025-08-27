@@ -5,7 +5,8 @@ pub struct User {
     pub password_hash: Option<String>,
     pub key: Option<String>,
     pub bio: Option<String>,
-    pub salt: Option<String>
+    pub user_salt: Option<String>,
+    pub password_salt: Option<String>
 }
 
 impl User {

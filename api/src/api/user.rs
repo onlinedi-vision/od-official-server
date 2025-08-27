@@ -18,7 +18,8 @@ pub async fn new_user_login(
         form.email.clone(),
         password_hash.clone(),
         token_holder.token.clone(),
-        user_salt.clone()
+        user_salt.clone(),
+        password_salt.clone()
     );
     
     let scylla_session = session.lock.lock().unwrap();
