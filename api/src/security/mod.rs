@@ -37,4 +37,6 @@ pub fn sid() -> String {
     )
 }
 
-
+pub fn salt() -> String {
+    
+}

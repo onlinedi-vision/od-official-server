@@ -5,15 +5,17 @@ pub struct User {
     pub password_hash: Option<String>,
     pub key: Option<String>,
     pub bio: Option<String>,
+    pub salt: Option<String>
 }
 
 impl User {
-    pub fn new(username: String, email: String, password_hash: String, key: String) -> Self {
+    pub fn new(username: String, email: String, password_hash: String, key: String, salt: String) -> Self {
         Self {
             username: Some(username),
             email: Some(email),
             password_hash: Some(password_hash),
             key: Some(key),
+            salt: Some(salt),
             bio: Some("".to_string()),
         }
     }

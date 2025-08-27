@@ -9,6 +9,7 @@ pub async fn new_user_login(
 ) -> impl actix_web::Responder {
     println!("test"); 
     let password_hash = security::sha512(form.password.clone());
+    let user_salt = security::salt();
     let token_holder = structures::TokenHolder {
         token: security::token()
     };
@@ -16,7 +17,8 @@ pub async fn new_user_login(
         form.username.clone(),
         form.email.clone(),
         password_hash.clone(),
-        token_holder.token.clone()
+        token_holder.token.clone(),
+        user_salt.clone()
     );
     
     let scylla_session = session.lock.lock().unwrap();
