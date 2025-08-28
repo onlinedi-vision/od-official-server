@@ -4,5 +4,7 @@ services:
     ports: 
       - "127.0.0.1:1313:1313"
     environment:
+      - SALT_ENCRYPTION_KEY
+      - SALT_ENCRYPTION_IV
       - SCYLLA_CASSANDRA_PASSWORD
       - API_PORT=1313      

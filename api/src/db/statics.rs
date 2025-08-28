@@ -35,8 +35,9 @@ pub static UPDATE_USER_KEY: &str = r#"
 "#;
 
 pub static SELECT_USER_PASSWORD_HASH: &str = r#"
-    SELECT password_hash FROM division_online.users
-        WHERE username = ?;
+    SELECT password_hash, user_salt, password_salt FROM division_online.users
+        WHERE username = ?
+        ALLOW FILTERING;
 "#;
 
 pub static INSERT_SERVER_CHANNEL_MESSAGE: &str = r#"

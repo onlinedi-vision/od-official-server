@@ -46,6 +46,13 @@ pub struct Message {
     pub m_content: Option<String>,
 }
 
+#[derive(Debug, scylla::SerializeValue, serde::Serialize)]
+pub struct UserSecrets {
+    pub password_hash: Option<String>,
+    pub user_salt: Option<String>,
+    pub password_salt: Option<String>,
+}
+
 #[derive(serde::Serialize)]
 pub struct ServerInfo {
     pub name: String,

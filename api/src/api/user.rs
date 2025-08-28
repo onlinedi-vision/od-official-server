@@ -5,22 +5,29 @@ use crate::security;
 #[actix_web::post("/api/new_user")]
 pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    form: actix_web::web::Json<structures::NewUser>
+    req: actix_web::web::Json<structures::NewUser>
 ) -> impl actix_web::Responder {
     println!("test"); 
-    let password_hash = security::sha512(form.password.clone());
     let user_salt = security::salt();
     let password_salt = security::salt();
+    let password_hash = security::sha512(
+        security::aes::encrypt(
+            &security::aes::encrypt_with_key(
+                &format!("{}{}", user_salt.clone(), req.password.clone()),
+                &password_salt
+            )
+        )
+    );
     let token_holder = structures::TokenHolder {
         token: security::token()
     };
     let user_instance = db::structures::User::new(
-        form.username.clone(),
-        form.email.clone(),
+        req.username.clone(),
+        req.email.clone(),
         password_hash.clone(),
         token_holder.token.clone(),
-        user_salt.clone(),
-        password_salt.clone()
+        security::aes::encrypt(&user_salt),
+        security::aes::encrypt(&password_salt)
     );
     
     let scylla_session = session.lock.lock().unwrap();
@@ -39,25 +46,37 @@ pub async fn new_user_login(
 #[actix_web::post("/api/try_login")]
 pub async fn try_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    form: actix_web::web::Json<structures::LoginUser>
+    req: actix_web::web::Json<structures::LoginUser>
 ) -> impl actix_web::Responder {
 
     let new_token_holder = structures::TokenHolder {
         token: security::token()
     };
     let username = db::structures::UserUsername {
-        username: Some(form.username.clone())
+        username: Some(req.username.clone())
     };
     let scylla_session = session.lock.lock().unwrap();
     match db::get_user_password_hash(&scylla_session, username).await {
-        Some(password_hash) => {
-            let user_password_hash = security::sha512(form.password.clone());
+        Some(secrets) => {
+            let password_hash = secrets[0].password_hash.clone().unwrap();
+            let user_salt = secrets[0].user_salt.clone().unwrap();
+            let password_salt = secrets[0].password_salt.clone().unwrap();
+            let decrypted_user_salt = security::aes::decrypt(&user_salt);
+            let decrypted_password_salt = security::aes::decrypt(&password_salt);        
+            let user_password_hash = security::sha512(
+                security::aes::encrypt(
+                    &security::aes::encrypt_with_key(
+                        &format!("{}{}", decrypted_user_salt.clone(), req.password.clone()),
+                        &decrypted_password_salt
+                    )
+                )
+            );
             if user_password_hash == password_hash {
                 let _ = db::prelude::update_user_key(
                     &scylla_session, 
                     db::structures::KeyUser{
                         key: Some(new_token_holder.token.clone()), 
-                        username: Some(form.username.clone())
+                        username: Some(req.username.clone())
                     }
                 ).await;
                 actix_web::HttpResponse::Ok().json(
@@ -68,7 +87,7 @@ pub async fn try_login(
                 actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
             }
         },
-        None => {
+        _ => {
             println!("no hash");
             actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
         }
@@ -78,26 +97,29 @@ pub async fn try_login(
 #[actix_web::post("/api/token_login")]
 pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    form: actix_web::web::Json<structures::TokenLoginUser>
+    req: actix_web::web::Json<structures::TokenLoginUser>
 ) -> impl actix_web::Responder {
 
     let new_token_holder = structures::TokenHolder {
         token: security::token()
     };
     let username = db::structures::UserUsername {
-        username: Some(form.username.clone())
+        username: Some(req.username.clone())
     };
     let scylla_session = session.lock.lock().unwrap();
-    if let Some(_) = db::prelude::check_token(&scylla_session, form.token.clone(), Some(form.username.clone())).await {
+    if let Some(_) = db::prelude::check_token(&scylla_session, req.token.clone(), Some(req.username.clone())).await {
         match db::get_user_password_hash(&scylla_session, username).await {
-            Some(password_hash) => {
-                let user_password_hash = security::sha512(form.password.clone());
+            Some(secrets) => {
+                let password_hash = secrets[0].password_hash.clone().unwrap();
+                let user_salt = secrets[0].user_salt.clone().unwrap();
+                let password_salt = secrets[0].password_salt.clone().unwrap();
+                let user_password_hash = security::sha512(req.password.clone());
                 if user_password_hash == password_hash {
                     let _ = db::prelude::update_user_key(
                         &scylla_session, 
                         db::structures::KeyUser{
                             key: Some(new_token_holder.token.clone()), 
-                            username: Some(form.username.clone())
+                            username: Some(req.username.clone())
                         }
                     ).await;
                     actix_web::HttpResponse::Ok().json(
@@ -108,7 +130,7 @@ pub async fn token_login(
                     actix_web::HttpResponse::Unauthorized().body("Invalid password")
                 }
             },
-            None => {
+            _ => {
                 println!("no hash");
                 actix_web::HttpResponse::Unauthorized().body("Invalid password")
             }

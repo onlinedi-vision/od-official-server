@@ -38,5 +38,6 @@ pub fn sid() -> String {
 }
 
 pub fn salt() -> String {
-    return "aes".to_string();   
+    let mut rng = rand::thread_rng();
+    (0..16).map(|_| rng.gen_range::<u8, _>(33..127) as char).collect()
 }
