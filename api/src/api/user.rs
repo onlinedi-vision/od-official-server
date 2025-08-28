@@ -113,7 +113,16 @@ pub async fn token_login(
                 let password_hash = secrets[0].password_hash.clone().unwrap();
                 let user_salt = secrets[0].user_salt.clone().unwrap();
                 let password_salt = secrets[0].password_salt.clone().unwrap();
-                let user_password_hash = security::sha512(req.password.clone());
+                let decrypted_user_salt = security::aes::decrypt(&user_salt);
+                let decrypted_password_salt = security::aes::decrypt(&password_salt);        
+                let user_password_hash = security::sha512(
+                    security::aes::encrypt(
+                        &security::aes::encrypt_with_key(
+                            &format!("{}{}", decrypted_user_salt.clone(), req.password.clone()),
+                            &decrypted_password_salt
+                        )
+                    )
+                );
                 if user_password_hash == password_hash {
                     let _ = db::prelude::update_user_key(
                         &scylla_session, 
