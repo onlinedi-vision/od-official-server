@@ -2,7 +2,7 @@ use sha2::Digest;
 use rand::prelude::*;
 
 pub mod structures;
-
+pub mod aes;
 
 pub fn sha512(secret: String) -> String {   
     let mut hasher = sha2::Sha512::new();
@@ -37,4 +37,7 @@ pub fn sid() -> String {
     )
 }
 
-
+pub fn salt() -> String {
+    let mut rng = rand::thread_rng();
+    (0..16).map(|_| rng.gen_range::<u8, _>(33..127) as char).collect()
+}

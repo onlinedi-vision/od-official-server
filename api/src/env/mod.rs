@@ -1,3 +1,5 @@
+pub mod statics;
+
 pub fn get_env_var(
     env_var_name: &str
 ) -> String {

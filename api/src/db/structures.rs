@@ -5,15 +5,19 @@ pub struct User {
     pub password_hash: Option<String>,
     pub key: Option<String>,
     pub bio: Option<String>,
+    pub user_salt: Option<String>,
+    pub password_salt: Option<String>
 }
 
 impl User {
-    pub fn new(username: String, email: String, password_hash: String, key: String) -> Self {
+    pub fn new(username: String, email: String, password_hash: String, key: String, user_salt: String, password_salt: String) -> Self {
         Self {
             username: Some(username),
             email: Some(email),
             password_hash: Some(password_hash),
             key: Some(key),
+            user_salt: Some(user_salt),
+            password_salt: Some(password_salt),
             bio: Some("".to_string()),
         }
     }
@@ -40,6 +44,13 @@ pub struct Message {
     pub username: Option<String>,
     pub datetime: Option<String>,
     pub m_content: Option<String>,
+}
+
+#[derive(Debug, scylla::SerializeValue, serde::Serialize)]
+pub struct UserSecrets {
+    pub password_hash: Option<String>,
+    pub user_salt: Option<String>,
+    pub password_salt: Option<String>,
 }
 
 #[derive(serde::Serialize)]
