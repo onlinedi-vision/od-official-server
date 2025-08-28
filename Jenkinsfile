@@ -16,7 +16,7 @@ pipeline {
 
 	  stage('Docker Build') {
 		  steps {
-		  	sh 'docker build -t api .'
+		  	sh 'docker compose build'
      	 }
 	  }
    	 stage('Docker Run') {
