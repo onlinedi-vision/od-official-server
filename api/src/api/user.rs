@@ -10,6 +10,7 @@ pub async fn new_user_login(
     println!("test"); 
     let password_hash = security::sha512(form.password.clone());
     let user_salt = security::salt();
+    let password_salt = security::salt();
     let token_holder = structures::TokenHolder {
         token: security::token()
     };

@@ -10,13 +10,14 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(username: String, email: String, password_hash: String, key: String, salt: String) -> Self {
+    pub fn new(username: String, email: String, password_hash: String, key: String, user_salt: String, password_salt: String) -> Self {
         Self {
             username: Some(username),
             email: Some(email),
             password_hash: Some(password_hash),
             key: Some(key),
-            salt: Some(salt),
+            user_salt: Some(user_salt),
+            password_salt: Some(password_salt),
             bio: Some("".to_string()),
         }
     }

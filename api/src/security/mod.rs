@@ -2,7 +2,7 @@ use sha2::Digest;
 use rand::prelude::*;
 
 pub mod structures;
-
+pub mod aes;
 
 pub fn sha512(secret: String) -> String {   
     let mut hasher = sha2::Sha512::new();
@@ -38,5 +38,5 @@ pub fn sid() -> String {
 }
 
 pub fn salt() -> String {
-    
+    return "aes".to_string();   
 }
