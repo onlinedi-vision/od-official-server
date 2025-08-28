@@ -21,7 +21,7 @@ pub async fn insert_new_user(
             if row.rows_remaining() > 0 { return None; }
             else {
                 return Some(session
-                    .query_unpaged(statics::INSERT_NEW_USER, (user.username, user.password_hash, user.email, user.key, user.bio))
+                    .query_unpaged(statics::INSERT_NEW_USER, (user.username, user.password_hash, user.email, user.key, user.bio, user.user_salt, user.password_salt))
                     .await
                     .map(|_|())
                     .map_err(From::from)); 
