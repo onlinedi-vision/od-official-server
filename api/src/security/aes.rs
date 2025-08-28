@@ -8,9 +8,9 @@ use crate::env;
 
 #[inline(always)]
 pub fn encrypt_with_key(plaintext: &str, key: &str) -> String {
-    let key_bytes = hex::decode(key.to_string()).unwrap();
-    let iv_bytes = hex::decode(env::get_env_var(env::statics::OD_AES_IV)).unwrap();  
-    let cipher = Aes128CbcEnc::new_from_slices(&key_bytes, &iv_bytes);
+    // let key_bytes = hex::encode(key.to_string()).unwrap();
+    let iv_bytes = env::get_env_var(env::statics::OD_AES_IV);  
+    let cipher = Aes128CbcEnc::new_from_slices(key.as_bytes(), iv_bytes.as_bytes());
     let mut buffer = plaintext.as_bytes().to_vec();
     let pos = plaintext.len();
     let block_size = 16;
@@ -45,10 +45,10 @@ pub fn encrypt(plaintext: &str) -> String {
 
 #[inline(always)]
 pub fn decrypt(ciphertext: &str) -> String {
-    let key_bytes = hex::decode(env::get_env_var(env::statics::OD_AES_KEY)).unwrap();
-    let iv_bytes = hex::decode(env::get_env_var(env::statics::OD_AES_IV)).unwrap();
+    let key_bytes = env::get_env_var(env::statics::OD_AES_KEY);
+    let iv_bytes = env::get_env_var(env::statics::OD_AES_IV);
     let mut ciphertext_bytes = hex::decode(ciphertext).unwrap();
-    let cipher = Aes128CbcDec::new_from_slices(&key_bytes, &iv_bytes);
+    let cipher = Aes128CbcDec::new_from_slices(key_bytes.as_bytes(), iv_bytes.as_bytes());
     let plaintext = cipher
         .expect("")
         .decrypt_padded_mut::<Pkcs7>(&mut ciphertext_bytes)
