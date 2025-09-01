@@ -2,6 +2,7 @@ mod api;
 mod security;
 mod db;
 mod env;
+mod roles;
 use actix_web::{middleware::Logger};
 
 #[actix_web::main]
@@ -36,6 +37,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::message::get_channel_messages)
             .service(api::message::send_message)
             .service(api::message::get_channel_messages)
+
+
+            .service(api::roles::add_server_role)
+            .service(api::roles::assign_role_to_user)
+            .service(api::roles::remove_role_from_user)
+            .service(api::roles::fetch_server_roles)
+            .service(api::roles::fetch_user_roles)
     })
     .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
     .workers(8)
