@@ -1,5 +1,5 @@
 FROM alpine:3.22 AS builder
-
+# trigger API_BUILD_AND_RUN
 LABEL org.opencontainers.image.source=https://github.com/rust-lang/docker-rust
 RUN apk add --no-cache \
         ca-certificates \
