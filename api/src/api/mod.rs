@@ -9,6 +9,7 @@ pub mod message;
 pub mod channel;
 pub mod user;
 pub mod server;
+pub mod roles;
 
 #[actix_web::get("/api/version")] 
 pub async fn get_api_version() ->impl actix_web::Responder {
