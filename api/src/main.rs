@@ -2,7 +2,7 @@ mod api;
 mod security;
 mod db;
 mod env;
-mod roles;
+
 use actix_web::{middleware::Logger};
 
 #[actix_web::main]
