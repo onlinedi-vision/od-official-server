@@ -19,6 +19,7 @@ pub async fn add_server_role(
     )
     .await
     {
+        //trigger
         let role = db::structures::ServerRole {
             role_name: req.role_name.clone(),
             server_id: req.server_id.clone(),
