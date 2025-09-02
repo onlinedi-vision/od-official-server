@@ -68,7 +68,7 @@ pub struct ServerRole {
     pub permissions: std::collections::HashSet<String>,
 }
 
-#[derive(Debug, scylla::SerializeValue, serde::Serialize)]
+#[derive(Debug, Clone, scylla::SerializeValue, serde::Serialize, serde::Deserialize)]
 pub struct UserServerRole {
     pub server_id: String,
     pub username: String,
