@@ -136,7 +136,7 @@ pub async fn fetch_server_roles(
     .await
     {
         if let Some(roles) =
-            db::roles::fetch_server_roles(&scylla_session, query.server_id.clone()).await
+            db::roles::fetch_server_roles(&scylla_session, &query.server_id).await
         {
             return actix_web::HttpResponse::Ok().json(roles);
         }
