@@ -53,7 +53,7 @@ pub async fn remove_role_from_user(
 
 pub async fn fetch_server_roles(
     session: &scylla::client::session::Session,
-    server_id: String,
+    server_id: &str,
 ) -> Option<Vec<structures::ServerRole>> {
     let query_rows = session
         .query_unpaged(statics::SELECT_SERVER_ROLES, (server_id,))
@@ -74,6 +74,7 @@ pub async fn fetch_server_roles(
         if let Ok((Some(role_name), color, permissions)) = row {
             roles.push(structures::ServerRole {
                 role_name,
+                server_id: server_id.to_string(),
                 color,
                 permissions: permissions.unwrap_or_default(),
             });
