@@ -48,10 +48,12 @@ pub async fn add_server_role(
     actix_web::HttpResponse::Unauthorized().body("Invalid token")
 }
 
+
 #[actix_web::post("/api/assign_role_to_user")]
 pub async fn assign_role_to_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    req: actix_web::web::Json<db::structures::UserServerRole>,
+    req: actix_web::web::Json<structures::UserServerRoleRequest>,
+    
 ) -> impl actix_web::Responder {
     let scylla_session = session.lock.lock().unwrap();
 
@@ -62,7 +64,13 @@ pub async fn assign_role_to_user(
     )
     .await
     {
-        if let Some(result) = db::roles::assign_role_to_user(&scylla_session, req.0.clone()).await {
+        let user_role = db::structures::UserServerRole{
+            server_id: req.server_id.clone(),
+            username: req.username.clone(),
+            role_name: req.role_name.clone(),
+        };
+        
+        if let Some(result) = db::roles::assign_role_to_user(&scylla_session, user_role).await {
             return match result {
                 Ok(_) => actix_web::HttpResponse::Ok().body("Role assigned successfully"),
                 Err(err) => {
@@ -76,10 +84,11 @@ pub async fn assign_role_to_user(
     actix_web::HttpResponse::Unauthorized().body("Invalid token")
 }
 
+
 #[actix_web::post("/api/remove_role_from_user")]
 pub async fn remove_role_from_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    req: actix_web::web::Json<db::structures::UserServerRole>,
+    req: actix_web::web::Json<structures::UserServerRoleRequest>,
 ) -> impl actix_web::Responder {
     let scylla_session = session.lock.lock().unwrap();
 
@@ -90,7 +99,14 @@ pub async fn remove_role_from_user(
     )
     .await
     {
-        if let Some(result) = db::roles::remove_role_from_user(&scylla_session, req.0.clone()).await
+        
+        let user_role = db::structures::UserServerRole{
+            server_id: req.server_id.clone(),
+            username: req.username.clone(),
+            role_name: req.role_name.clone(),
+        };
+        
+        if let Some(result) = db::roles::remove_role_from_user(&scylla_session, user_role).await
         {
             return match result {
                 Ok(_) => actix_web::HttpResponse::Ok().body("Role removed successfully"),
@@ -103,6 +119,7 @@ pub async fn remove_role_from_user(
     }
     actix_web::HttpResponse::Unauthorized().body("Invalid token")
 }
+
 
 #[actix_web::get("/api/fetch_server_roles")]
 pub async fn fetch_server_roles(
@@ -128,6 +145,7 @@ pub async fn fetch_server_roles(
 
     actix_web::HttpResponse::Unauthorized().body("Invalid Token")
 }
+
 
 #[actix_web::get("/api/fetch_user_roles")]
 pub async fn fetch_user_roles(

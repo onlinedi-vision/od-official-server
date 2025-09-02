@@ -120,3 +120,11 @@ pub struct UserRoleQuery {
     pub server_id: String,
 }
 
+#[derive(serde::Deserialize)]
+pub struct UserServerRoleRequest {
+    pub token: String,
+    pub username: String,
+    pub server_id: String,
+    pub role_name: String,
+}
+
