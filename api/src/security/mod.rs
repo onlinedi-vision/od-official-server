@@ -39,5 +39,5 @@ pub fn sid() -> String {
 
 pub fn salt() -> String {
     let mut rng = rand::rng();
-    (0..16).map(|_| rng.gen_range::<u8, _>(33..127) as char).collect()
+    (0..16).map(|_| rng.random_range::<u8, _>(33..127) as char).collect()
 }
