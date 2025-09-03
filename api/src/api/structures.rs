@@ -87,16 +87,6 @@ pub struct UsersList {
 }
 
 #[derive(serde::Deserialize)]
-pub struct File {
-    pub cont: String,
-}
-
-#[derive(serde::Serialize)]
-pub struct FileURL {
-    pub url: String,
-}
-
-#[derive(serde::Deserialize)]
 pub struct ServerRoleRequest {
     pub token: String,
     pub username: String,
