@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::roles::fetch_user_roles)
     })
     .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
-    .workers(32)
+    .workers(512)
     .run()
     .await;
     Ok(())
