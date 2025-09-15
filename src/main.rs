@@ -33,6 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::server::get_server_info)
             .service(api::server::send_dm_invite)
             .service(api::server::accept_dm_invite)
+            .service(api::server::fetch_pending_dm_invites)
 
 
             .service(api::channel::get_channels)
