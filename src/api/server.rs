@@ -174,22 +174,29 @@ pub async fn send_dm_invite(
             return actix_web::HttpResponse::Ok().json(structures::SendInviteResp {
                 status: "already_invited".to_string(),
                 invite_id: None,
-                u1: u1,
-                u2: u2,
+                u1,
+                u2,
+                sender: Some(req.username.clone()),
             });
         }
 
         let invite_id = uuid::Uuid::new_v4().to_string();
 
-        if let Some(_) =
-            db::server::send_dm_invite(&scylla_session, u1.clone(), u2.clone(), invite_id.clone())
-                .await
+        if let Some(_) = db::server::send_dm_invite(
+            &scylla_session,
+            u1.clone(),
+            u2.clone(),
+            invite_id.clone(),
+            req.username.clone(),
+        )
+        .await
         {
             return actix_web::HttpResponse::Ok().json(structures::SendInviteResp {
                 status: "invite_created".to_string(),
                 invite_id: Some(invite_id),
-                u1: u1,
-                u2: u2,
+                u1,
+                u2,
+                sender: Some(req.username.clone()),
             });
         } else {
             return actix_web::HttpResponse::InternalServerError().body("Failed to create invite");
@@ -220,7 +227,7 @@ pub async fn accept_dm_invite(
             (req.other_user.clone(), req.username.clone())
         };
 
-        if let Some(invite_id) =
+        if let Some((invite_id, sender)) =
             db::server::fetch_dm_invite(&scylla_session, u1.clone(), u2.clone()).await
         {
             let sid = format!("!{}", security::sid());
@@ -250,6 +257,7 @@ pub async fn accept_dm_invite(
                     invite_id,
                     u1,
                     u2,
+                    sender: Some(sender),
                 });
             } else {
                 return actix_web::HttpResponse::InternalServerError()
@@ -257,6 +265,41 @@ pub async fn accept_dm_invite(
             }
         } else {
             return actix_web::HttpResponse::NotFound().body("Invite not found");
+        }
+    } else {
+        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+    }
+}
+
+#[actix_web::post("/api/fetch_pending_dm_invites")]
+pub async fn fetch_pending_dm_invites(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    req: actix_web::web::Json<structures::TokenUser>,
+) -> impl actix_web::Responder {
+    let scylla_session = session.lock.lock().unwrap();
+
+    if db::prelude::check_token(
+        &scylla_session,
+        req.token.clone(),
+        Some(req.username.clone()),
+    )
+    .await
+    .is_some()
+    {
+        if let Some(invites) =
+            db::server::fetch_pending_dm_invites(&scylla_session, req.username.clone()).await
+        {
+            let pending: Vec<structures::PendingInvite> = invites
+                .into_iter()
+                .map(|(invite_id, sender)| structures::PendingInvite { invite_id, sender })
+                .collect();
+
+            return actix_web::HttpResponse::Ok()
+                .json(structures::PendingInvitesResp { invites: pending });
+        } else {
+            return actix_web::HttpResponse::Ok().json(structures::PendingInvitesResp {
+                invites: Vec::new(),
+            });
         }
     } else {
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");

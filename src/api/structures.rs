@@ -138,6 +138,7 @@ pub struct SendInviteResp {
     pub invite_id: Option<String>,
     pub u1: String,
     pub u2: String,
+    pub sender: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -147,4 +148,16 @@ pub struct AcceptInviteResp {
     pub invite_id: String,
     pub u1: String,
     pub u2: String,
+    pub sender: Option<String>,
+}
+
+#[derive(serde::Serialize)]
+pub struct PendingInvite {
+    pub invite_id: String,
+    pub sender: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct PendingInvitesResp {
+    pub invites: Vec<PendingInvite>,
 }

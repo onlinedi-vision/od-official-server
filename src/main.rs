@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::get_api_version)
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)
-            .service(api::user::get_user_servers)                   
+            .service(api::user::get_user_servers)
  
             .service(api::server::create_server)                
             .service(api::server::join_server)                      // change token !!
@@ -33,6 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::server::get_server_info)
             .service(api::server::send_dm_invite)
             .service(api::server::accept_dm_invite)
+
 
             .service(api::channel::get_channels)
             .service(api::channel::create_channel)
