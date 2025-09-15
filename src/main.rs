@@ -1,3 +1,4 @@
+#![cfg_attr(rustfmt, rustfmt_skip)]
 mod api;
 mod security;
 mod db;
@@ -30,6 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::server::join_server)                      // change token !!
             .service(api::server::get_server_users)                 
             .service(api::server::get_server_info)
+            .service(api::server::send_dm_invite)
+            .service(api::server::accept_dm_invite)
 
             .service(api::channel::get_channels)
             .service(api::channel::create_channel)

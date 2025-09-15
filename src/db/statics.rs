@@ -119,3 +119,18 @@ pub static REMOVE_ROLE_FROM_USER: &str = r#"
     DELETE FROM division_online.o_user_server_roles
         WHERE server_id = ? AND username = ? AND role_name = ?;
 "#;
+
+pub static INSERT_DM_INVITE: &str = r#"
+    INSERT INTO division_online.o_dm_invites(u1, u2, invite_id)
+        VALUES(?,?,?);     
+"#;
+
+pub static SELECT_DM_INVITE: &str = r#"
+    SELECT invite_id FROM division_online.o_dm_invites
+        WHERE u1 = ? AND u2 = ?;
+"#;
+
+pub static DELETE_DM_INVITE: &str = r#"
+    DELETE FROM division_online.o_dm_invites
+        WHERE u1 = ? AND u2 = ?;
+"#;
