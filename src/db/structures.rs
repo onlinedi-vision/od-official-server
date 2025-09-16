@@ -6,11 +6,18 @@ pub struct User {
     pub key: Option<String>,
     pub bio: Option<String>,
     pub user_salt: Option<String>,
-    pub password_salt: Option<String>
+    pub password_salt: Option<String>,
 }
 
 impl User {
-    pub fn new(username: String, email: String, password_hash: String, key: String, user_salt: String, password_salt: String) -> Self {
+    pub fn new(
+        username: String,
+        email: String,
+        password_hash: String,
+        key: String,
+        user_salt: String,
+        password_salt: String,
+    ) -> Self {
         Self {
             username: Some(username),
             email: Some(email),

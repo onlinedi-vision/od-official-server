@@ -1,3 +1,4 @@
+#![cfg_attr(rustfmt, rustfmt_skip)]
 mod api;
 mod security;
 mod db;
@@ -24,12 +25,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::get_api_version)
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)
-            .service(api::user::get_user_servers)                   
+            .service(api::user::get_user_servers)
  
             .service(api::server::create_server)                
             .service(api::server::join_server)                      // change token !!
             .service(api::server::get_server_users)                 
             .service(api::server::get_server_info)
+            .service(api::server::send_dm_invite)
+            .service(api::server::accept_dm_invite)
+            .service(api::server::fetch_pending_dm_invites)
+
 
             .service(api::channel::get_channels)
             .service(api::channel::create_channel)
@@ -46,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::roles::fetch_user_roles)
     })
     .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
-    .workers(512)
+    .workers(32)
     .run()
     .await;
     Ok(())

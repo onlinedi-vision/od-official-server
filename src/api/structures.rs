@@ -118,3 +118,46 @@ pub struct UserServerRoleRequest {
     pub role_name: String,
 }
 
+#[derive(serde::Deserialize)]
+pub struct SendInviteReq {
+    pub token: String,
+    pub sender: String,
+    pub recipient: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct AcceptInviteReq {
+    pub token: String,
+    pub recipient: String,
+    pub sender: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct SendInviteResp {
+    pub status: String,
+    pub invite_id: Option<String>,
+    pub u1: String,
+    pub u2: String,
+    pub sender: Option<String>,
+}
+
+#[derive(serde::Serialize)]
+pub struct AcceptInviteResp {
+    pub status: String,
+    pub sid: Option<String>,
+    pub invite_id: String,
+    pub u1: String,
+    pub u2: String,
+    pub sender: Option<String>,
+}
+
+#[derive(serde::Serialize)]
+pub struct PendingInvite {
+    pub invite_id: String,
+    pub sender: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct PendingInvitesResp {
+    pub invites: Vec<PendingInvite>,
+}
