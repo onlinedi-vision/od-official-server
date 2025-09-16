@@ -196,7 +196,6 @@ pub async fn fetch_dm_invite(
         .ok()?
         .into_rows_result()
         .ok()?;
-
     for row in (query_rows.rows::<(Option<&str>, Option<&str>)>()).ok()? {
         if let Ok((Some(invite_id), Some(sender))) = row {
             return Some((invite_id.to_string(), sender.to_string()));
@@ -223,21 +222,25 @@ pub async fn fetch_pending_dm_invites(
     session: &scylla::client::session::Session,
     username: String,
 ) -> Option<Vec<(String, String)>> {
-    let query_rows = session
-        .query_unpaged(
-            statics::SELECT_PENDING_INVITES,
-            (username.clone(), username.clone()),
-        )
-        .await
-        .ok()?
-        .into_rows_result()
-        .ok()?;
-
     let mut invites = Vec::<(String, String)>::new();
 
-    for row in (query_rows.rows::<(Option<&str>, Option<&str>)>()).ok()? {
-        if let Ok((Some(invite_id), Some(sender))) = row {
-            invites.push((invite_id.to_string(), sender.to_string()));
+    for query in [
+        statics::SELECT_PENDING_INVITES_BY_U1,
+        statics::SELECT_PENDING_INVITES_BY_U2,
+    ] {
+        let query_rows = session
+            .query_unpaged(query, (username.clone(),))
+            .await
+            .ok()?
+            .into_rows_result()
+            .ok()?;
+
+        for row in (query_rows.rows::<(Option<&str>, Option<&str>)>()).ok()? {
+            if let Ok((Some(invite_id), Some(sender))) = row {
+                if sender != username {
+                    invites.push((invite_id.to_string(), sender.to_string()));
+                }
+            }
         }
     }
     Some(invites)

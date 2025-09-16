@@ -121,15 +121,15 @@ pub struct UserServerRoleRequest {
 #[derive(serde::Deserialize)]
 pub struct SendInviteReq {
     pub token: String,
-    pub username: String,
+    pub sender: String,
     pub recipient: String,
 }
 
 #[derive(serde::Deserialize)]
 pub struct AcceptInviteReq {
     pub token: String,
-    pub username: String,
-    pub other_user: String,
+    pub recipient: String,
+    pub sender: String,
 }
 
 #[derive(serde::Serialize)]

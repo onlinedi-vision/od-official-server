@@ -122,11 +122,12 @@ pub static REMOVE_ROLE_FROM_USER: &str = r#"
 
 pub static INSERT_DM_INVITE: &str = r#"
     INSERT INTO division_online.o_dm_invites(u1, u2, invite_id, sender)
-        VALUES(?,?,?,?);     
+        VALUES(?,?,?,?)
+        IF NOT EXISTS;     
 "#;
 
 pub static SELECT_DM_INVITE: &str = r#"
-    SELECT invite_id FROM division_online.o_dm_invites
+    SELECT invite_id, sender FROM division_online.o_dm_invites
         WHERE u1 = ? AND u2 = ?;
 "#;
 
@@ -135,7 +136,12 @@ pub static DELETE_DM_INVITE: &str = r#"
         WHERE u1 = ? AND u2 = ?;
 "#;
 
-pub static SELECT_PENDING_INVITES: &str = r#"
+pub static SELECT_PENDING_INVITES_BY_U1: &str = r#"
     SELECT invite_id, sender FROM division_online.o_dm_invites
-        WHERE u1 = ? OR u2 = ?;
+        WHERE u1 = ? ALLOW FILTERING;
+"#;
+
+pub static SELECT_PENDING_INVITES_BY_U2: &str = r#"
+    SELECT invite_id, sender FROM division_online.o_dm_invites
+        WHERE u2 = ? ALLOW FILTERING;
 "#;
