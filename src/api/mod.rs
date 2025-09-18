@@ -8,10 +8,8 @@ pub mod structures;
 pub mod message;
 pub mod channel;
 pub mod invites;
-pub mod message;
 pub mod roles;
 pub mod server;
-mod structures;
 pub mod user;
 
 #[actix_web::get("/api/version")]

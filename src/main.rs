@@ -16,6 +16,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         lock: std::sync::Mutex::new(db::prelude::new_scylla_session("onlinedi.vision:9042").await.expect(""))
     });
 
+    let no_of_workers = match env::get_option_env_var("NO_OF_WORKERS") {
+        Some(s_workers_count) => {
+            if let Ok(workers_count) = s_workers_count.parse::<usize>() {
+                workers_count
+            } else {512}
+        },
+        None => 512,
+    };
+
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
@@ -53,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::roles::fetch_user_roles)
     })
     .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
-    .workers(32)
+    .workers(no_of_workers)
     .run()
     .await;
     Ok(())

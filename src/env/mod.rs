@@ -8,3 +8,12 @@ pub fn get_env_var(
         Err(_) => "".to_string()
     }
 }
+
+pub fn get_option_env_var(
+    env_var_name: &str
+) ->  Option<String> {
+     match std::env::var(env_var_name).map_err(|e| format!("{}: {}", env_var_name, e)) {
+        Ok(string) => Some(string),
+        Err(_) => None 
+    }
+}
