@@ -151,6 +151,21 @@ pub struct AcceptInviteResp {
     pub sender: Option<String>,
 }
 
+#[derive(serde::Deserialize)]
+pub struct RejectInviteReq {
+    pub token: String,
+    pub recipient: String,
+    pub sender: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct RejectInviteResp {
+    pub status: String,
+    pub invite_id: String,
+    pub u1: String,
+    pub u2: String,
+}
+
 #[derive(serde::Serialize)]
 pub struct PendingInvite {
     pub invite_id: String,
