@@ -1,21 +1,20 @@
 #![allow(unused_variables)]
 
-/* !TODO: 
+/* !TODO:
  *  -- check out passing secrets with GET requests (to replace weird POST request implementation)
  * */
 
 pub mod structures;
 pub mod message;
 pub mod channel;
-pub mod user;
-pub mod server;
+pub mod invites;
+pub mod message;
 pub mod roles;
+pub mod server;
+mod structures;
+pub mod user;
 
-#[actix_web::get("/api/version")] 
-pub async fn get_api_version() ->impl actix_web::Responder {
-  return actix_web::HttpResponse::Ok().body(
-    "v0.0.1".to_string()
-  );
-  
+#[actix_web::get("/api/version")]
+pub async fn get_api_version() -> impl actix_web::Responder {
+    return actix_web::HttpResponse::Ok().body("v0.0.1".to_string());
 }
-
