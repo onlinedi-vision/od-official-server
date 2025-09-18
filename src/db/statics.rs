@@ -84,7 +84,7 @@ pub static INSERT_USER_INTO_SERVER: &str = r#"
 "#;
 
 pub static SELECT_SERVER_USERS: &str = r#"
-    SELECT username FROM division_online.o_server_users
+    SELECT username, bio, img_url FROM division_online.o_server_users
         WHERE sid = ?
         ALLOW FILTERING;
 "#;
