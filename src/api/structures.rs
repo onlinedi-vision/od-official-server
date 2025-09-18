@@ -17,6 +17,13 @@ pub struct LoginUser {
     pub password: String,
 }
 
+#[derive(serde::Deserialize,serde::Serialize)]
+pub struct PublicInfoUser {
+    pub username: String,
+    pub bio: String,
+    pub img_url: String,
+}
+
 #[derive(serde::Deserialize)]
 pub struct TokenLoginUser {
     pub username: String,
@@ -83,7 +90,7 @@ pub struct CreateServer {
 
 #[derive(serde::Serialize)]
 pub struct UsersList {
-    pub u_list: Vec<String>,
+    pub u_list: Vec<PublicInfoUser>,
 }
 
 #[derive(serde::Deserialize)]

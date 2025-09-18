@@ -1,4 +1,5 @@
 use crate::db::{statics, structures};
+use crate::api;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -39,18 +40,24 @@ pub async fn add_user_to_server(
 pub async fn fetch_server_users(
     session: &scylla::client::session::Session,
     sid: String,
-) -> Option<Vec<String>> {
+) -> Option<Vec<api::structures::PublicInfoUser>> {
     let query_rows = session
         .query_unpaged(statics::SELECT_SERVER_USERS, (sid,))
         .await
         .ok()?
         .into_rows_result()
         .ok()?;
-    let mut users = Vec::<String>::new();
-    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+    let mut users = Vec::<api::structures::PublicInfoUser>::new();
+    for row in query_rows.rows::<(Option<&str>,Option<&str>,Option<&str>)>().ok()? {
         match row.ok()? {
-            (Some(username),) => {
-                users.push(username.to_string());
+            (Some(username),Some(bio),Some(img_url)) => {
+                users.push(
+                    api::structures::PublicInfoUser {
+                        username: username.to_string(),
+                        bio: bio.to_string(),
+                        img_url: img_url.to_string()
+                    }
+                );
             }
             _ => {
                 return None;
