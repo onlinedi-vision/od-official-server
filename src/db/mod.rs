@@ -1,3 +1,4 @@
+pub mod friends;
 pub mod invites;
 pub mod prelude;
 pub mod roles;

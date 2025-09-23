@@ -87,6 +87,8 @@ pub async fn accept_dm_invite(
             .await
             .is_some()
             {
+                let _ = db::friends::add_friend(&scylla_session, u1.clone(), u2.clone()).await;
+                let _ = db::friends::add_friend(&scylla_session, u2.clone(), u1.clone()).await;
                 let _ =
                     db::server::add_user_to_server(&scylla_session, sid.clone(), u1.clone()).await;
                 let _ =

@@ -7,6 +7,7 @@
 pub mod structures;
 pub mod message;
 pub mod channel;
+pub mod friends;
 pub mod invites;
 pub mod roles;
 pub mod server;

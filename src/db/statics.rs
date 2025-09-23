@@ -145,3 +145,18 @@ pub static SELECT_PENDING_INVITES_BY_U2: &str = r#"
     SELECT invite_id, sender FROM division_online.o_dm_invites
         WHERE u2 = ? ALLOW FILTERING;
 "#;
+
+pub static INSERT_FRIEND: &str = r#"
+    INSERT INTO division_online.o_user_friends(username, friend, created_at)
+        VALUES(?,?,?);
+"#;
+
+pub static SELECT_FRIENDS: &str = r#"
+    SELECT friend, created_at FROM division_online.o_user_friends
+        WHERE username = ?;
+"#;
+
+pub static DELETE_FRIEND: &str = r#"
+    DELETE FROM division_online.o_user_friends
+        WHERE username = ? and friend = ?; 
+"#;
