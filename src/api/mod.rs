@@ -5,6 +5,7 @@
  * */
 
 pub mod channel;
+pub mod friends;
 pub mod invites;
 pub mod message;
 pub mod roles;

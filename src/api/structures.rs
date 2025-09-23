@@ -176,3 +176,28 @@ pub struct PendingInvite {
 pub struct PendingInvitesResp {
     pub invites: Vec<PendingInvite>,
 }
+
+#[derive(serde::Serialize)]
+pub struct FriendInfo {
+    pub username: String,
+    pub friends_since: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct FriendListReq {
+    pub token: String,
+    pub user: String,
+    pub friend: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct FriendListResp {
+    pub friends: Vec<FriendInfo>,
+}
+
+#[derive(serde::Serialize)]
+pub struct DeleteFriendResp {
+    pub status: String,
+    pub user: String,
+    pub friend: String,
+}
