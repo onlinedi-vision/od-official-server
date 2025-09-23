@@ -4,6 +4,8 @@
  *  -- check out passing secrets with GET requests (to replace weird POST request implementation)
  * */
 
+pub mod structures;
+pub mod message;
 pub mod channel;
 pub mod friends;
 pub mod invites;
