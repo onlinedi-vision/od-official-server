@@ -1,5 +1,6 @@
 FROM alpine:3.22 AS builder
 
+
 LABEL maintainer=kickhead13<ana.alexandru.gabriel@proton.me>
 RUN apk add --no-cache \
         ca-certificates \
