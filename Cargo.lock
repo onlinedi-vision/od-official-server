@@ -339,6 +339,7 @@ dependencies = [
  "scylla",
  "serde",
  "sha2",
+ "time-test",
  "uuid",
 ]
 
@@ -1798,6 +1799,15 @@ checksum = "30cfb0125f12d9c277f35663a0a33f8c30190f4e4574868a330595412d34ebf3"
 dependencies = [
  "num-conv",
  "time-core",
+]
+
+[[package]]
+name = "time-test"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff3804c6adc3d7a9f51586d6a47f7e57e173b9a2d257679deeb6d686d2698073"
+dependencies = [
+ "time",
 ]
 
 [[package]]
