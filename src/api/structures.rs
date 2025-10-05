@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct TestParamsStruct {
     pub param1: String,
@@ -35,6 +37,14 @@ pub struct TokenLoginUser {
 pub struct TokenUser {
     pub username: String,
     pub token: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct LimitMessageTokenUser {
+    pub username: String,
+    pub token: String,
+    pub limit: String,
+    pub offset: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
