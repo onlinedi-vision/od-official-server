@@ -171,7 +171,7 @@ pub async fn fetch_server_channel_messages_limited(
     offset: usize
 ) -> Option<Vec<structures::Message>> {
     let query_rows = session
-        .query_unpaged(statics::SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION, (sid, channel_name, limit as i64))
+        .query_unpaged(statics::SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION, (sid, channel_name, limit as i32))
         .await
         .ok()?
         .into_rows_result()
@@ -186,7 +186,7 @@ pub async fn fetch_server_channel_messages_limited(
         .ok()?
         .enumerate()
     {
-        if idx > offset {
+        if idx >= offset {
             match row.ok()? {
                 (Some(un), Some(dt), Some(mc)) => {
                     messages.push(structures::Message {
