@@ -101,9 +101,16 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "(WIP) Haven't yet found a way to check a async function within a non-async one... :|"]
+    // #[ignore = "(WIP) Haven't yet found a way to check a async function within a non-async one... :|"]
     fn test_scylla_connection() {
-        let _scylla_connection = db::prelude::new_scylla_session("onlinedi.vision:9042");
-        todo!()
+        // let _scylla_connection = db::prelude::new_scylla_session("onlinedi.vision:9042").await;
+        let tokio_result = tokio_test::block_on(async {
+            db::prelude::new_scylla_session("onlinedi.vision:9042").await
+        });
+        if let Ok(_) = tokio_result {
+            assert!(0 == 0);
+        } else {
+            assert!(1 == 0);
+        }
     }
 }   
