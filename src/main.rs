@@ -107,6 +107,7 @@ mod tests {
         let tokio_result = tokio_test::block_on(async {
             db::prelude::new_scylla_session("onlinedi.vision:9042").await
         });
+        println!("{:?}", tokio_result);
         if let Ok(_) = tokio_result {
             assert!(0 == 0);
         } else {
