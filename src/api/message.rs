@@ -21,7 +21,7 @@ pub async fn get_channel_messages(
     let scylla_session = session.lock.lock().unwrap();
     match db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
         Some(_) => {
-            match db::fetch_server_channel_messages(&scylla_session, sid.clone(), channel_name, None, None).await {
+            match db::messages::fetch_server_channel_messages(&scylla_session, sid.clone(), channel_name, None, None).await {
                 Some(messages) => {
                         return actix_web::HttpResponse::Ok().json(
                             &structures::Messages {
@@ -55,7 +55,7 @@ pub async fn get_channel_messages_migration(
     let offset: usize = req.offset.clone().parse::<usize>().unwrap();
     let scylla_session = session.lock.lock().unwrap();
     if let Some(_) = db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
-        if let Some(messages) = db::fetch_server_channel_messages(&scylla_session, sid.clone(), channel_name, Some(limit), Some(offset)).await {
+        if let Some(messages) = db::messages::fetch_server_channel_messages(&scylla_session, sid.clone(), channel_name, Some(limit), Some(offset)).await {
             return actix_web::HttpResponse::Ok().json(
                 &structures::Messages {
                     m_list: messages

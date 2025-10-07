@@ -18,7 +18,7 @@ pub async fn get_channels (
     let scylla_session = session.lock.lock().unwrap();
     match db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
         Some(_) => {
-            match db::fetch_server_channels(&scylla_session, sid).await {
+            match db::server::fetch_server_channels(&scylla_session, sid).await {
                 Some(channels) => {
                         return actix_web::HttpResponse::Ok().json(
                             &structures::Channels {
