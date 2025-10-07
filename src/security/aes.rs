@@ -9,7 +9,7 @@ use crate::env;
 #[inline(always)]
 pub fn encrypt_with_key(plaintext: &str, key: &str) -> String {
     // let key_bytes = hex::encode(key.to_string()).unwrap();
-    let iv_bytes = env::get_env_var(env::statics::OD_AES_IV);  
+    let iv_bytes = env::get_env_var(env::statics::OD_AES_IV);
     let cipher = Aes128CbcEnc::new_from_slices(key.as_bytes(), iv_bytes.as_bytes());
     let mut buffer = plaintext.as_bytes().to_vec();
     let pos = plaintext.len();

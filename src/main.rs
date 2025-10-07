@@ -71,4 +71,48 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     .await;
     Ok(())
 }
-    
+
+#[macro_use] extern crate time_test;
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_password_salting() {
+        time_test!();
+        
+        let password_hash = security::sha512(
+            security::aes::encrypt(
+                &security::aes::encrypt_with_key(
+                    &format!("{}{}", "1234567890123456".to_string(), "strong_password123".to_string()),
+                    "1234567890123456"
+                )
+            )
+        );
+        assert_eq!(&password_hash, "f581032d7304d19b58afd055b92c883e9137cb0b6a7ff5549581f7ec0ae82e5fdaba6cc639b6631c9b56e44128eb86d476842727c1b4ffb3e668cc0e31d33166")
+    }
+
+    #[test]
+    fn test_hashing() {
+        time_test!();
+
+        let hash = security::sha512("test".to_string());
+
+        assert_eq!(&hash, "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff");
+    }
+
+    #[test]
+    // #[ignore = "(WIP) Haven't yet found a way to check a async function within a non-async one... :|"]
+    fn test_scylla_connection() {
+        // let _scylla_connection = db::prelude::new_scylla_session("onlinedi.vision:9042").await;
+        let tokio_result = tokio_test::block_on(async {
+            db::prelude::new_scylla_session("onlinedi.vision:9042").await
+        });
+        println!("{:?}", tokio_result);
+        if let Ok(_) = tokio_result {
+            assert!(0 == 0);
+        } else {
+            assert!(1 == 0);
+        }
+    }
+}   

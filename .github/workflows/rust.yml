@@ -1,4 +1,4 @@
-name: Rust
+name: API_CI
 
 on:
   pull_request:
@@ -6,6 +6,9 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  SALT_ENCRYPTION_IV: ${{ secrets.SALT_ENCRYPTION_IV }}
+  SALT_ENCRYPTION_KEY: ${{ secrets.SALT_ENCRYPTION_KEY }}
+  SCYLLA_CASSANDRA_PASSWORD: ${{ secrets.SCYLLA_CASSANDRA_PASSWORD }}
 
 jobs:
   build:

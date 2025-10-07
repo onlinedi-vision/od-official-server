@@ -7,28 +7,29 @@ pipeline {
   }
 
   stages {
-	  
-	  stage('Docker Kill') {
+	  stage('Docker Build') {
 		  steps {
-				sh 'docker compose down' 		  
+				sh 'docker compose build'
 			}
 	  }
 
-	  stage('Docker Build') {
-		  steps {
-		  	sh 'docker compose build'
-     	 }
-	  }
-   	 stage('Docker Run') {
-		 steps {
-			withCredentials([vaultString(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
-				withCredentials([vaultString(credentialsId:'vault-aes-key',variable:'SALT_ENCRYPTION_KEY')]){
-					withCredentials([vaultString(credentialsId:'vault-aes-iv',variable:'SALT_ENCRYPTION_IV')]){
-        		sh 'docker compose up -d'
+		stage('Docker Kill') {
+			steps {
+				sh 'docker compose down' 		  
+			}
+		}
+
+		stage('Docker Run') {
+			steps {
+				withCredentials([vaultString(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
+					withCredentials([vaultString(credentialsId:'vault-aes-key',variable:'SALT_ENCRYPTION_KEY')]){
+						withCredentials([vaultString(credentialsId:'vault-aes-iv',variable:'SALT_ENCRYPTION_IV')]){
+        			sh 'docker compose up -d'
+						}
 					}
 				}
 			}
 		}
-		}
+		
   }
 }
