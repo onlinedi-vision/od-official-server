@@ -175,3 +175,30 @@ pub async fn fetch_user_servers(
     }
     Some(sids)
 }
+
+pub async fn fetch_server_channels(
+    session: &scylla::client::session::Session,
+    sid: String,
+) -> Option<Vec<structures::Channel>> {
+    let query_rows = session
+        .query_unpaged(statics::SELECT_SERVER_CHANNELS, ((sid),))
+        .await
+        .ok()?
+        .into_rows_result()
+        .ok()?;
+    let mut channels = Vec::<structures::Channel>::new();
+    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+        let (channel_name,): (Option<&str>,) = row.ok()?;
+        match channel_name {
+            Some(str) => {
+                channels.push(structures::Channel {
+                    channel_name: Some(str.to_string()),
+                });
+            }
+            None => {
+                return None;
+            }
+        }
+    }
+    Some(channels)
+}

@@ -31,7 +31,7 @@ pub async fn new_user_login(
     );
     
     let scylla_session = session.lock.lock().unwrap();
-    match db::insert_new_user(&scylla_session, user_instance).await {
+    match db::users::insert_new_user(&scylla_session, user_instance).await {
         None => {
             return actix_web::HttpResponse::Conflict().body("User already exists or insert failed");
         },
@@ -56,7 +56,7 @@ pub async fn try_login(
         username: Some(req.username.clone())
     };
     let scylla_session = session.lock.lock().unwrap();
-    match db::get_user_password_hash(&scylla_session, username).await {
+    match db::users::get_user_password_hash(&scylla_session, username).await {
         Some(secrets) => {
             let password_hash = secrets[0].password_hash.clone().unwrap();
             let user_salt = secrets[0].user_salt.clone().unwrap();
@@ -108,7 +108,7 @@ pub async fn token_login(
     };
     let scylla_session = session.lock.lock().unwrap();
     if let Some(_) = db::prelude::check_token(&scylla_session, req.token.clone(), Some(req.username.clone())).await {
-        match db::get_user_password_hash(&scylla_session, username).await {
+        match db::users::get_user_password_hash(&scylla_session, username).await {
             Some(secrets) => {
                 let password_hash = secrets[0].password_hash.clone().unwrap();
                 let user_salt = secrets[0].user_salt.clone().unwrap();
