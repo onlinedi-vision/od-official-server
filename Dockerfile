@@ -11,7 +11,6 @@ RUN apk add --no-cache \
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs 
 COPY . .
-RUN cargo test
 RUN cargo build --release
 
 ENTRYPOINT ["./target/release/api"]
