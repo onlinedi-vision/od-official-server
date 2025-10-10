@@ -37,14 +37,15 @@ pub async fn create_server(
             let new_token_holder = structures::TokenHolder {
                 token: security::token(),
             };
-            let _ = db::prelude::update_user_key(
+            let _ = db::prelude::insert_user_token(
                 &scylla_session,
                 db::structures::KeyUser {
-                    key: Some(new_token_holder.token.clone()),
+                    key: Some(security::armor_token(new_token_holder.token.clone())),
                     username: Some(req.username.clone()),
                 },
             )
             .await;
+
             if let Some(_) =
                 db::server::add_user_to_server(&scylla_session, sid, req.username.clone()).await
             {
@@ -85,12 +86,19 @@ pub async fn join_server(
             let new_token_holder = structures::TokenHolder {
                 token: security::token(),
             };
-            let _ = db::prelude::update_user_key(
+            let _ = db::prelude::insert_user_token(
                 &scylla_session,
                 db::structures::KeyUser {
-                    key: Some(new_token_holder.token.clone()),
+                    key: Some(security::armor_token(new_token_holder.token.clone())),
                     username: Some(req.username.clone()),
                 },
+            )
+            .await;
+
+            let _ = db::users::delete_token(
+                &scylla_session,
+                req.username.clone(),
+                security::armor_token(req.token.clone()),
             )
             .await;
 

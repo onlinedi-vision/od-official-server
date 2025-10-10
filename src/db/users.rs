@@ -1,4 +1,4 @@
-use crate::db::{structures, statics};
+use crate::db::{statics, structures};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -17,43 +17,63 @@ pub async fn insert_new_user(
             if row.rows_remaining() > 0 {
                 return None;
             } else {
+                let insert_user_result = session
+                    .query_unpaged(
+                        statics::INSERT_NEW_USER,
+                        (
+                            user.username.clone(),
+                            user.password_hash,
+                            user.email,
+                            user.key.clone(),
+                            user.bio,
+                            user.user_salt,
+                            user.password_salt,
+                        ),
+                    )
+                    .await
+                    .map(|_| ())
+                    .map_err(From::from);
+                if insert_user_result.is_err() {
+                    return Some(insert_user_result);
+                } else {
+                    return Some(
+                        session
+                            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key))
+                            .await
+                            .map(|_| ())
+                            .map_err(From::from),
+                    );
+                }
+            }
+        }
+        _ => {
+            let insert_user_result = session
+                .query_unpaged(
+                    statics::INSERT_NEW_USER,
+                    (
+                        user.username.clone(),
+                        user.password_hash,
+                        user.email,
+                        user.key.clone(),
+                        user.bio,
+                        user.user_salt,
+                        user.password_salt,
+                    ),
+                )
+                .await
+                .map(|_| ())
+                .map_err(From::from);
+            if insert_user_result.is_err() {
+                return Some(insert_user_result);
+            } else {
                 return Some(
                     session
-                        .query_unpaged(
-                            statics::INSERT_NEW_USER,
-                            (
-                                user.username,
-                                user.password_hash,
-                                user.email,
-                                user.key,
-                                user.bio,
-                                user.user_salt,
-                                user.password_salt,
-                            ),
-                        )
+                        .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key))
                         .await
                         .map(|_| ())
                         .map_err(From::from),
                 );
             }
-        }
-        _ => {
-            return Some(
-                session
-                    .query_unpaged(
-                        statics::INSERT_NEW_USER,
-                        (
-                            user.username,
-                            user.password_hash,
-                            user.email,
-                            user.key,
-                            user.bio,
-                        ),
-                    )
-                    .await
-                    .map(|_| ())
-                    .map_err(From::from),
-            );
         }
     }
 }
@@ -90,4 +110,19 @@ pub async fn get_user_password_hash(
         };
     }
     Some(secrets)
+}
+
+pub async fn delete_token(
+    session: &scylla::client::session::Session,
+    username: String,
+    token: String,
+) -> Option<Result<()>> {
+    println!("DELETE: {} {}", username, token);
+    Some(
+        session
+            .query_unpaged(statics::DELETE_TOKEN, (username, token))
+            .await
+            .map(|_| ())
+            .map_err(From::from),
+    )
 }

@@ -7,13 +7,13 @@ pub static SELECT_USER_USERNAME: &str = r#"
 "#;
 
 pub static CHECK_TOKEN: &str = r#"
-    SELECT key FROM division_online.users 
+    SELECT key FROM division_online.o_user_tokens
         WHERE key = ?
         ALLOW FILTERING;
 "#;
 
 pub static CHECK_TOKEN_USER: &str = r#"
-    SELECT key FROM division_online.users 
+    SELECT key FROM division_online.o_user_tokens
         WHERE key = ? AND username = ?
         ALLOW FILTERING;
 "#;
@@ -27,6 +27,11 @@ pub static SELECT_SERVER_CHANNELS: &str = r#"
 pub static INSERT_NEW_USER: &str = r#"
     INSERT INTO division_online.users (username, password_hash, email, key, bio, user_salt, password_salt)
         VALUES (?,?,?,?,?,?,?);
+"#;
+
+pub static INSERT_NEW_TOKEN: &str = r#"
+    INSERT INTO division_online.o_user_tokens (username, key, datetime)
+        VALUES (?,?,dateof(now()));
 "#;
 
 pub static UPDATE_USER_KEY: &str = r#"
@@ -183,4 +188,9 @@ pub static SELECT_FRIENDS: &str = r#"
 pub static DELETE_FRIEND: &str = r#"
     DELETE FROM division_online.o_user_friends
         WHERE username = ? and friend = ?; 
+"#;
+
+pub static DELETE_TOKEN: &str = r#"
+    DELETE FROM division_online.o_user_tokens
+        WHERE username = ? and key = ?; 
 "#;

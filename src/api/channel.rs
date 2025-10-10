@@ -1,83 +1,96 @@
 #![allow(unused_imports)]
 use crate::api::structures;
-use crate::api::structures::{
-    TokenHolder,
-    CreateChannel,
-    TokenUser
-};
-use crate::security;
+use crate::api::structures::{CreateChannel, TokenHolder, TokenUser};
 use crate::db;
+use crate::security;
 
 #[actix_web::post("/servers/{sid}/api/get_channels")]
-pub async fn get_channels (
+pub async fn get_channels(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<TokenUser>,
-    http: actix_web::HttpRequest
+    http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
-        Some(_) => {
-            match db::server::fetch_server_channels(&scylla_session, sid).await {
-                Some(channels) => {
-                        return actix_web::HttpResponse::Ok().json(
-                            &structures::Channels {
-                                c_list: channels
-                            }
-                        );
-                },
-                None => {
-                    println!("SERVERS FAIL: fetch_server_channels");
-                    return actix_web::HttpResponse::InternalServerError().body("Failed to fetch server channels");
-                }
+    match db::prelude::check_user_is_in_server(
+        &scylla_session,
+        sid.clone(),
+        req.token.clone(),
+        req.username.clone(),
+    )
+    .await
+    {
+        Some(_) => match db::server::fetch_server_channels(&scylla_session, sid).await {
+            Some(channels) => {
+                return actix_web::HttpResponse::Ok()
+                    .json(&structures::Channels { c_list: channels });
+            }
+            None => {
+                println!("SERVERS FAIL: fetch_server_channels");
+                return actix_web::HttpResponse::InternalServerError()
+                    .body("Failed to fetch server channels");
             }
         },
         None => {
             println!("SERVERS FAIL: invalid token in fetch_server_channels");
-            return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
+            return actix_web::HttpResponse::Unauthorized()
+                .body("Invalid token or user not in server");
         }
     };
 }
 
 #[actix_web::post("/servers/{sid}/api/create_channel")]
-pub async fn create_channel (
+pub async fn create_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<CreateChannel>,
-    http: actix_web::HttpRequest
+    http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
-    match db::prelude::check_user_is_in_server(&scylla_session, sid.clone(), req.token.clone(), req.username.clone()).await {
+    match db::prelude::check_user_is_in_server(
+        &scylla_session,
+        sid.clone(),
+        req.token.clone(),
+        req.username.clone(),
+    )
+    .await
+    {
         Some(_) => {
-            
             match db::server::create_channel(&scylla_session, sid, req.channel_name.clone()).await {
                 Some(_) => {
                     let new_token_holder = structures::TokenHolder {
-                        token: security::token()
+                        token: security::token(),
                     };
 
-                    let _ = db::prelude::update_user_key(
-                        &scylla_session, 
-                        db::structures::KeyUser{
-                            key: Some(new_token_holder.token.clone()), 
-                            username: Some(req.username.clone())
-                        }
-                    ).await;
-                    return actix_web::HttpResponse::Ok().json(
-                        &new_token_holder
-                    );
-                },
+                    let _ = db::prelude::insert_user_token(
+                        &scylla_session,
+                        db::structures::KeyUser {
+                            key: Some(security::armor_token(new_token_holder.token.clone())),
+                            username: Some(req.username.clone()),
+                        },
+                    )
+                    .await;
+
+                    let _ = db::users::delete_token(
+                        &scylla_session,
+                        req.username.clone(),
+                        security::armor_token(req.token.clone()),
+                    )
+                    .await;
+
+                    return actix_web::HttpResponse::Ok().json(&new_token_holder);
+                }
                 None => {
                     println!("SERVERS FAIL: create_channel");
-                    return actix_web::HttpResponse::InternalServerError().body("Could not create channel");
+                    return actix_web::HttpResponse::InternalServerError()
+                        .body("Could not create channel");
                 }
             }
-        },
+        }
         None => {
             println!("SERVERS FAIL: invalid token in create_channel");
-            return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
+            return actix_web::HttpResponse::Unauthorized()
+                .body("Invalid token or user not in server");
         }
-
     }
 }

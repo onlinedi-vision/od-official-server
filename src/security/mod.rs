@@ -4,8 +4,14 @@ use rand::prelude::*;
 pub mod structures;
 pub mod aes;
 
+pub fn sha256(secret: String) -> String {
+    let mut hasher = sha2::Sha256::new();
+    hasher.update(secret.into_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
 pub fn sha512(secret: String) -> String {   
-    let mut hasher = sha2::Sha512::new();
+    let mut hasher = sha2::Sha256::new();
     hasher.update(secret.into_bytes());
     format!("{:x}", hasher.finalize())
 }
@@ -26,6 +32,17 @@ pub fn token() -> String {
     format!(
         "{:x}", 
         hasher.finalize()
+    )
+}
+
+pub fn armor_token(plain_token: String) -> String {
+    sha256(
+        aes::encrypt(
+            &aes::encrypt_with_key(
+                &plain_token,
+                &plain_token[..16]
+            )
+        )
     )
 }
 
