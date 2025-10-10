@@ -20,9 +20,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Some(s_workers_count) => {
             if let Ok(workers_count) = s_workers_count.parse::<usize>() {
                 workers_count
-            } else {32}
+            } else {512}
         },
-        None => 32,
+        None => 512,
     };
 
     // setting up the API server
