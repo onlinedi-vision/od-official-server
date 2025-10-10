@@ -64,6 +64,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::roles::remove_role_from_user)
             .service(api::roles::fetch_server_roles)
             .service(api::roles::fetch_user_roles)
+            .service(api::roles::delete_server_role)
     })
     .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
     .workers(no_of_workers)

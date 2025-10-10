@@ -19,7 +19,7 @@ pub struct LoginUser {
     pub password: String,
 }
 
-#[derive(serde::Deserialize,serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct PublicInfoUser {
     pub username: String,
     pub bio: String,
@@ -111,6 +111,14 @@ pub struct ServerRoleRequest {
     pub role_name: String,
     pub color: Option<String>,
     pub permissions: Option<Vec<String>>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct DeleteServerRoleRequest {
+    pub token: String,
+    pub username: String,
+    pub server_id: String,
+    pub role_name: String,
 }
 
 #[derive(serde::Deserialize)]

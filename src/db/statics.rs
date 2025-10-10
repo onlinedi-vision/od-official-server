@@ -51,8 +51,7 @@ pub static SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION: &str = r#"
         ORDER BY datetime DESC
         LIMIT ?
         ALLOW FILTERING; 
-"#; 
-
+"#;
 
 pub static SELECT_SERVER_CHANNEL_MESSAGES: &str = r#"
     SELECT username, datetime, m_content FROM division_online.o_server_messages 
@@ -119,6 +118,11 @@ pub static INSERT_SERVER_ROLE: &str = r#"
        VALUES(?, ?, ?, ?); 
 "#;
 
+pub static DELETE_SERVER_ROLE: &str = r#"
+    DELETE FROM division_online.o_server_roles
+        WHERE server_id = ? AND role_name = ?;
+"#;
+
 pub static ASSIGN_ROLE_TO_USER: &str = r#"
    INSERT INTO division_online.o_user_server_roles (server_id, username, role_name)
        VALUES (?, ?, ?); 
@@ -127,6 +131,17 @@ pub static ASSIGN_ROLE_TO_USER: &str = r#"
 pub static REMOVE_ROLE_FROM_USER: &str = r#"
     DELETE FROM division_online.o_user_server_roles
         WHERE server_id = ? AND username = ? AND role_name = ?;
+"#;
+
+pub static SELECT_USERS_BY_ROLE: &str = r#"
+    SELECT username FROM division_online.o_user_server_roles
+        WHERE server_id = ? AND role_name = ?
+        ALLOW FILTERING;
+"#;
+
+pub static SELECT_SERVER_ROLE_BY_NAME: &str = r#"
+    SELECT role_name FROM division_online.o_server_roles
+        WHERE server_id = ? AND role_name = ?;
 "#;
 
 pub static INSERT_DM_INVITE: &str = r#"
