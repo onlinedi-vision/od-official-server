@@ -19,7 +19,6 @@ pub async fn add_server_role(
     )
     .await
     {
-        //trigger
         let role = db::structures::ServerRole {
             role_name: req.role_name.clone(),
             server_id: req.server_id.clone(),
@@ -48,6 +47,69 @@ pub async fn add_server_role(
     actix_web::HttpResponse::Unauthorized().body("Invalid token")
 }
 
+#[actix_web::post("/api/delete_server_role")]
+pub async fn delete_server_role(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    req: actix_web::web::Json<structures::DeleteServerRoleRequest>,
+) -> impl actix_web::Responder {
+    let scylla_session = session.lock.lock().unwrap();
+
+    if let Some(_) = db::prelude::check_token(
+        &scylla_session,
+        req.token.clone(),
+        Some(req.username.clone()),
+    )
+    .await
+    {
+        if let Some(role_exists) =
+            db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
+        {
+            if !role_exists {
+                return actix_web::HttpResponse::BadRequest()
+                    .body("Role does not exist on this server.");
+            }
+        }
+
+        if let Some(result) = db::roles::remove_role_from_all_users(
+            &scylla_session,
+            req.server_id.clone(),
+            req.role_name.clone(),
+        )
+        .await
+        {
+            match result {
+                Ok(_) => {
+                    if let Some(result) = db::roles::delete_server_role(
+                        &scylla_session,
+                        req.server_id.clone(),
+                        req.role_name.clone(),
+                    )
+                    .await
+                    {
+                        return match result {
+                            Ok(_) => {
+                                actix_web::HttpResponse::Ok().body("Role deleted successfully")
+                            }
+                            Err(err) => {
+                                println!("Error deleting role: {:?}", err);
+                                actix_web::HttpResponse::InternalServerError()
+                                    .body("Failed to delete role from server.")
+                            }
+                        };
+                    }
+                }
+                Err(err) => {
+                    println!("Error removing role from users: {:?}", err);
+                    return actix_web::HttpResponse::InternalServerError()
+                        .body("Failed to remove role from users.");
+                }
+            }
+        }
+    }
+
+    actix_web::HttpResponse::Unauthorized().body("Invalid user token.")
+}
+
 #[actix_web::post("/api/assign_role_to_user")]
 pub async fn assign_role_to_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -62,15 +124,26 @@ pub async fn assign_role_to_user(
     )
     .await
     {
+        if let Some(role_exists) =
+            db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
+        {
+            if !role_exists {
+                return actix_web::HttpResponse::BadRequest()
+                    .body("Role does not exist on this server");
+            }
+        } else {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Failed to check role existence on server.");
+        }
+
         let user_role = db::structures::UserServerRole {
             server_id: req.server_id.clone(),
             username: req.username.clone(),
             role_name: req.role_name.clone(),
         };
-
         if let Some(result) = db::roles::assign_role_to_user(&scylla_session, user_role).await {
             return match result {
-                Ok(_) => actix_web::HttpResponse::Ok().body("Role assigned successfully"),
+                Ok(_) => actix_web::HttpResponse::BadRequest().body("Role assigned successfully"),
                 Err(err) => {
                     println!("Error assigning role: {:?}", err);
                     actix_web::HttpResponse::InternalServerError().body("Failed to assign role")
