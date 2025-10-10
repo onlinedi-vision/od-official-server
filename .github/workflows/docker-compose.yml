@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     services:
       docker:
-        image: docker:20.10.9
+        image: docker:latest
         options: --privileged
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Build Docker images
         run: |
-          docker-compose -f compose.yml build
+          docker compose -f compose.yml build
