@@ -255,7 +255,7 @@ echo " * Removing old scylla containers."
 docker rm scylla-division-online
 
 echo " * Running scylladb/scylla image."
-docker run --name scylla-division-online -d scylladb/scylla --reactor-backend=epoll
+docker run --name scylla-division-online -d scylladb/scylla --reactor-backend=epoll 
 
 echo " * Waiting for docker container to settle."
 sleep 5

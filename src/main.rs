@@ -11,10 +11,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    // connection to scylla-server
-    let session = actix_web::web::Data::new(security::structures::ScyllaSession {
-        lock: std::sync::Mutex::new(db::prelude::new_scylla_session("onlinedi.vision:9042").await.expect(""))
-    });
+    let scylla_inet = match env::get_option_env_var("SCYLLA_INET") {
+        Some(inet) => inet,
+        None => "onlinedi.vision".to_string()
+    };
 
     let no_of_workers = match env::get_option_env_var("NO_OF_WORKERS") {
         Some(s_workers_count) => {
@@ -24,6 +24,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         },
         None => 512,
     };
+
+    // connection to scylla-server
+    let session = actix_web::web::Data::new(security::structures::ScyllaSession {
+        lock: std::sync::Mutex::new(db::prelude::new_scylla_session(&format!("{}:9042", scylla_inet)).await.expect(""))
+    });
 
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
