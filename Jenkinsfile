@@ -8,7 +8,7 @@ pipeline {
 
   stages {
 	  
-	  stage('Docker Kill') {
+	  stage('Docker Build') {
 		  steps {
 				withCredentials([vaultString(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
 					withCredentials([vaultString(credentialsId:'vault-aes-key',variable:'SALT_ENCRYPTION_KEY')]){
@@ -26,12 +26,7 @@ pipeline {
 			}
 	  }
 
-	  stage('Docker Build') {
-		  steps {
-		  	sh 'docker compose build'
-     	 }
-	  }
-   	 stage('Docker Run') {
+   	stage('Docker Run') {
 		 steps {
 			withCredentials([vaultString(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
 				withCredentials([vaultString(credentialsId:'vault-aes-key',variable:'SALT_ENCRYPTION_KEY')]){
