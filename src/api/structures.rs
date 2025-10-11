@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct TestParamsStruct {
     pub param1: String,
@@ -17,7 +19,7 @@ pub struct LoginUser {
     pub password: String,
 }
 
-#[derive(serde::Deserialize,serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct PublicInfoUser {
     pub username: String,
     pub bio: String,
@@ -35,6 +37,14 @@ pub struct TokenLoginUser {
 pub struct TokenUser {
     pub username: String,
     pub token: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct LimitMessageTokenUser {
+    pub username: String,
+    pub token: String,
+    pub limit: String,
+    pub offset: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -101,6 +111,14 @@ pub struct ServerRoleRequest {
     pub role_name: String,
     pub color: Option<String>,
     pub permissions: Option<Vec<String>>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct DeleteServerRoleRequest {
+    pub token: String,
+    pub username: String,
+    pub server_id: String,
+    pub role_name: String,
 }
 
 #[derive(serde::Deserialize)]
