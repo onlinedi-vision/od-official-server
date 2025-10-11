@@ -4,8 +4,28 @@ use crate::db:: {
     structures
 };
 use crate::env::get_env_var;
+use crate::security;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+pub async fn insert_user_token(
+    session: &scylla::client::session::Session,
+    user: structures::KeyUser,
+) -> Option<Result<()>> {
+    Some(
+        session
+            .query_unpaged(
+                statics::INSERT_NEW_TOKEN,
+                (
+                    user.username,
+                    user.key,
+                ),
+            )
+            .await
+            .map(|_| ())
+            .map_err(From::from)
+    )
+}
 
 pub async fn new_scylla_session(
     uri: &str
@@ -18,31 +38,24 @@ pub async fn new_scylla_session(
         .map_err(From::from)
 }
 
-pub async fn update_user_key(
-    session: &scylla::client::session::Session,
-    keyuser: structures::KeyUser
-) -> Result<()> {
-    session
-        .query_unpaged(statics::UPDATE_USER_KEY, (keyuser.key, keyuser.username))
-        .await
-        .map(|_|())
-        .map_err(From::from)
-}
-
 pub async fn check_token(
     session: &scylla::client::session::Session,
     token: String,
     un: Option<String>
 ) -> Option<()> {
     let query_rows: scylla::response::query_result::QueryRowsResult;
+    let plain_token = token.clone(); 
+    let crypted_token = security::armor_token(plain_token);
+
     if let Some(username) = un.clone() {
+        println!("{}", crypted_token.clone());
         query_rows = session
-            .query_unpaged(statics::CHECK_TOKEN_USER, (token.clone(),username))
+            .query_unpaged(statics::CHECK_TOKEN_USER, (crypted_token.clone(),username))
             .await.ok()?
             .into_rows_result().ok()?;
     } else {
         query_rows = session
-            .query_unpaged(statics::CHECK_TOKEN, (token.clone(),))
+            .query_unpaged(statics::CHECK_TOKEN, (crypted_token.clone(),))
             .await.ok()?
             .into_rows_result().ok()?;
     }

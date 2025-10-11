@@ -40,6 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)
             .service(api::user::get_user_servers)
+            .service(api::user::token_login)
  
             .service(api::server::create_server)                
             .service(api::server::join_server)                      // change token !!
