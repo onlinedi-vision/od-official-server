@@ -1,10 +1,19 @@
 services:
   od-official-server:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SALT_ENCRYPTION_KEY=${SALT_ENCRYPTION_KEY}
+        - SALT_ENCRYPTION_IV=${SALT_ENCRYPTION_IV}
+        - SCYLLA_CASSANDRA_PASSWORD=${SCYLLA_CASSANDRA_PASSWORD}
+        - API_PORT=1313              
+    mem_limit: 1G
+    cpus: '2'
     ports: 
       - "127.0.0.1:1313:1313"
     environment:
       - SALT_ENCRYPTION_KEY
       - SALT_ENCRYPTION_IV
       - SCYLLA_CASSANDRA_PASSWORD
-      - API_PORT=1313      
+      - API_PORT=1313

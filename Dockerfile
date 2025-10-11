@@ -1,16 +1,15 @@
-FROM alpine:3.22 AS builder
+FROM rust:1.89 AS builder
 
+ARG SALT_ENCRYPTION_KEY
+ARG SALT_ENCRYPTION_IV
+ARG SCYLLA_CASSANDRA_PASSWORD
+ENV SALT_ENCRYPTION_KEY $SALT_ENCRYPTION_KEY
+ENV SALT_ENCRYPTION_IV $SALT_ENCRYPTION_IV
+ENV SCYLLA_CASSANDRA_PASSWORD $SCYLLA_CASSANDRA_PASSWORD
 
 LABEL maintainer=kickhead13<ana.alexandru.gabriel@proton.me>
-RUN apk add --no-cache \
-        ca-certificates \
-        gcc \
-	curl \
-	rust \
-	cargo
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs 
 COPY . .
-RUN cargo build --release
+RUN cargo test && cargo build --release
 
 ENTRYPOINT ["./target/release/api"]
