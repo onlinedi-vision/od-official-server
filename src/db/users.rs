@@ -82,7 +82,6 @@ pub async fn get_user_password_hash(
     session: &scylla::client::session::Session,
     user: structures::UserUsername,
 ) -> Option<Vec<structures::UserSecrets>> {
-    // ) -> (Option<String>, Option<String>, Option<String>) {
     let query_rows = session
         .query_unpaged(statics::SELECT_USER_PASSWORD_HASH, ((user.username),))
         .await
@@ -101,7 +100,6 @@ pub async fn get_user_password_hash(
                     user_salt: Some(user_salt.to_string()),
                     password_salt: Some(password_salt.to_string()),
                 });
-                // return (Some(password_hash.to_string()), Some(user_salt.to_string()), Some(password_salt.to_string()));
             }
             _ => {
                 println!("[get_user_password_hash] wasn't able to retrieve user info"); // TODO: FIX DEBUG LOGS FUCK ME
@@ -129,4 +127,39 @@ pub async fn delete_token(
             .map(|_| ())
             .map_err(From::from),
     )
+}
+
+
+pub async fn fetch_user_info(
+    session: &scylla::client::session::Session,
+    username: String
+)-> Option<Vec<structures::UserInfo>> {
+    let query_rows = session
+        .query_unpaged(statics::SELECT_USER_INFO, ((username),))
+        .await
+        .ok()?
+        .into_rows_result()
+        .ok()?;
+    let mut user_info = Vec::<structures::UserInfo>::new();
+    for row in query_rows
+        .rows::<(Option<&str>, Option<&str>)>()
+        .ok()?
+    {
+        match row.ok()? {
+            (Some(pfp), Some(bio)) => {
+                user_info.push(structures::UserInfo {
+                    pfp: Some(pfp.to_string()),
+                    bio: Some(bio.to_string()),
+                });
+            }
+            _ => {
+                return None;
+            }
+        };
+    }
+    if user_info.len() > 0 {
+        Some(user_info)
+    } else {
+        None
+    }
 }

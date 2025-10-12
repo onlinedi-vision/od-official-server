@@ -31,6 +31,12 @@ impl User {
 }
 
 #[derive(Debug, scylla::SerializeValue)]
+pub struct UserInfo {
+    pub pfp: Option<String>,
+    pub bio: Option<String>,
+}
+
+#[derive(Debug, scylla::SerializeValue)]
 pub struct KeyUser {
     pub username: Option<String>,
     pub key: Option<String>,
