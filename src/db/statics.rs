@@ -25,8 +25,8 @@ pub static SELECT_SERVER_CHANNELS: &str = r#"
 "#;
 
 pub static INSERT_NEW_USER: &str = r#"
-    INSERT INTO division_online.users (username, password_hash, email, key, bio, user_salt, password_salt)
-        VALUES (?,?,?,?,?,?,?);
+    INSERT INTO division_online.users (username, password_hash, email, key, bio, user_salt, password_salt, pfp)
+        VALUES (?,?,?,?,?,?,?,'');
 "#;
 
 pub static INSERT_NEW_TOKEN: &str = r#"
@@ -97,7 +97,7 @@ pub static INSERT_USER_INTO_SERVER: &str = r#"
 "#;
 
 pub static SELECT_SERVER_USERS: &str = r#"
-    SELECT username, bio, img_url FROM division_online.o_server_users
+    SELECT username FROM division_online.o_server_users
         WHERE sid = ?
         ALLOW FILTERING;
 "#;
