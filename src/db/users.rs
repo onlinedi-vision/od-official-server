@@ -109,7 +109,11 @@ pub async fn get_user_password_hash(
             }
         };
     }
-    Some(secrets)
+    if secrets.len() > 0 {
+        Some(secrets)
+    } else {
+        None
+    }
 }
 
 pub async fn delete_token(
