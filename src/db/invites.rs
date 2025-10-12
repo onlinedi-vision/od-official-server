@@ -76,5 +76,10 @@ pub async fn fetch_pending_dm_invites(
             }
         }
     }
-    Some(invites)
+
+    if invites.len() > 0 {
+        Some(invites)
+    } else {
+        None
+    }
 }

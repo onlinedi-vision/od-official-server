@@ -34,7 +34,12 @@ pub async fn fetch_server_channel_messages_unlimited(
             }
         }
     }
-    Some(messages)
+
+    if messages.len() > 0 {
+        Some(messages)
+    } else {
+        None
+    }
 }
 
 pub async fn fetch_server_channel_messages_limited(
@@ -75,7 +80,12 @@ pub async fn fetch_server_channel_messages_limited(
             }
         }
     }
-    Some(messages)
+
+    if messages.len() > 0 {
+        Some(messages)
+    } else {
+        None
+    }
 }
 
 pub async fn fetch_server_channel_messages(

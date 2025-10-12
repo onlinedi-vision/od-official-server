@@ -155,7 +155,11 @@ pub async fn fetch_server_roles(
             });
         }
     }
-    Some(roles)
+    if roles.len() > 0 {
+        Some(roles)
+    } else {
+        None
+    }
 }
 
 pub async fn fetch_user_roles(
@@ -176,7 +180,11 @@ pub async fn fetch_user_roles(
             role_names.push(role_name);
         }
     }
-    Some(role_names)
+    if role_names.len() > 0 {
+        Some(role_names)
+    } else {
+        None
+    }
 }
 
 pub async fn check_role_exists(

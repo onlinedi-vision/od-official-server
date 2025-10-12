@@ -64,7 +64,12 @@ pub async fn fetch_server_users(
             }
         }
     }
-    Some(users)
+
+    if users.len() > 0 {
+        Some(users)
+    } else {
+        None
+    }
 }
 
 pub async fn fetch_server_info(
@@ -173,7 +178,12 @@ pub async fn fetch_user_servers(
             }
         }
     }
-    Some(sids)
+
+    if sids.len() > 0 {
+        Some(sids)
+    } else {
+        None
+    }
 }
 
 pub async fn fetch_server_channels(
@@ -200,5 +210,10 @@ pub async fn fetch_server_channels(
             }
         }
     }
-    Some(channels)
+
+    if channels.len() > 0 {
+        Some(channels)
+    } else {
+        None
+    }
 }

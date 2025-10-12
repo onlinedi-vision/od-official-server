@@ -39,7 +39,11 @@ pub async fn fetch_friends(
         }
     }
 
-    Some(friends)
+    if friends.len() > 0 {
+        Some(friends)
+    } else {
+        None
+    }
 }
 
 pub async fn delete_friend(
