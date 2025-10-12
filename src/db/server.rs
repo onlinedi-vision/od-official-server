@@ -61,6 +61,15 @@ pub async fn fetch_server_users(
                                 roles: roles,
                             }
                         );
+                    } else {
+                        users.push(
+                            api::structures::PublicInfoUser {
+                                username: username.to_string(),
+                                bio: user_info[0].bio.clone()?.to_string(),
+                                img_url: user_info[0].pfp.clone()?.to_string(),
+                                roles: Vec::new(),
+                            }
+                        );
                     }
                 }
             }
