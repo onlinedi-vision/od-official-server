@@ -102,6 +102,12 @@ pub static SELECT_SERVER_USERS: &str = r#"
         ALLOW FILTERING;
 "#;
 
+pub static SELECT_USER_INFO: &str = r#"
+    SELECT pfp, bio FROM division_online.users
+        WHERE username = ?
+        ALLOW FILTERING;
+"#;
+
 pub static SELECT_SERVER_INFO: &str = r#"
     SELECT name, desc, img_url FROM division_online.o_servers
         WHERE sid = ?

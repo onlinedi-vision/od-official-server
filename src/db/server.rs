@@ -1,4 +1,4 @@
-use crate::db::{statics, structures};
+use crate::db::{statics, structures, users};
 use crate::api;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -48,16 +48,18 @@ pub async fn fetch_server_users(
         .into_rows_result()
         .ok()?;
     let mut users = Vec::<api::structures::PublicInfoUser>::new();
-    for row in query_rows.rows::<(Option<&str>,Option<&str>,Option<&str>)>().ok()? {
+    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
         match row.ok()? {
-            (Some(username),Some(bio),Some(img_url)) => {
-                users.push(
-                    api::structures::PublicInfoUser {
-                        username: username.to_string(),
-                        bio: bio.to_string(),
-                        img_url: img_url.to_string()
-                    }
-                );
+            (Some(username),) => {
+                if let Some(user_info) = users::fetch_user_info(session, username.to_string()).await {
+                    users.push(
+                        api::structures::PublicInfoUser {
+                            username: username.to_string(),
+                            bio: user_info[0].bio.clone()?.to_string(),
+                            img_url: user_info[0].pfp.clone()?.to_string()
+                        }
+                    );
+                }
             }
             _ => {
                 return None;
