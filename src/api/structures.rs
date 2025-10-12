@@ -24,6 +24,7 @@ pub struct PublicInfoUser {
     pub username: String,
     pub bio: String,
     pub img_url: String,
+    pub roles: Vec<String>,
 }
 
 #[derive(serde::Deserialize)]

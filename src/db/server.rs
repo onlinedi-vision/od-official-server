@@ -1,4 +1,4 @@
-use crate::db::{statics, structures, users};
+use crate::db::{statics, structures, users, roles};
 use crate::api;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -42,7 +42,7 @@ pub async fn fetch_server_users(
     sid: String,
 ) -> Option<Vec<api::structures::PublicInfoUser>> {
     let query_rows = session
-        .query_unpaged(statics::SELECT_SERVER_USERS, (sid,))
+        .query_unpaged(statics::SELECT_SERVER_USERS, (sid.clone(),))
         .await
         .ok()?
         .into_rows_result()
@@ -52,13 +52,16 @@ pub async fn fetch_server_users(
         match row.ok()? {
             (Some(username),) => {
                 if let Some(user_info) = users::fetch_user_info(session, username.to_string()).await {
-                    users.push(
-                        api::structures::PublicInfoUser {
-                            username: username.to_string(),
-                            bio: user_info[0].bio.clone()?.to_string(),
-                            img_url: user_info[0].pfp.clone()?.to_string()
-                        }
-                    );
+                    if let Some(roles) = roles::fetch_user_roles(session, sid.clone(), username.to_string()).await { 
+                        users.push(
+                            api::structures::PublicInfoUser {
+                                username: username.to_string(),
+                                bio: user_info[0].bio.clone()?.to_string(),
+                                img_url: user_info[0].pfp.clone()?.to_string(),
+                                roles: roles,
+                            }
+                        );
+                    }
                 }
             }
             _ => {
