@@ -30,6 +30,12 @@ impl User {
     }
 }
 
+#[derive(Debug, scylla::SerializeValue, serde::Serialize)]
+pub struct Spell {
+    pub key: Option<String>,
+    pub spell: Option<String>,
+}
+
 #[derive(Debug, scylla::SerializeValue)]
 pub struct UserInfo {
     pub pfp: Option<String>,

@@ -200,3 +200,19 @@ pub static DELETE_TOKEN: &str = r#"
     DELETE FROM division_online.o_user_tokens
         WHERE username = ? and key = ?; 
 "#;
+
+pub static DELETE_SPELL: &str = r#"
+    DELETE FROM division_online.o_spell_caster_secrets
+        WHERE key = ?; 
+"#;
+
+pub static INSERT_SPELL: &str = r#"
+    INSERT INTO division_online.o_spell_caster_secrets(key, spell, username)
+        VALUES(?,?, ?);
+"#;
+
+pub static SELECT_SPELL: &str = r#"
+    SELECT spell FROM division_online.o_spell_caster_secrets
+        WHERE key = ? AND username = ?
+        ALLOW FILTERING;
+"#;

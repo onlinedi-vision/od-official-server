@@ -7,5 +7,4 @@ pub mod statics;
 pub mod structures;
 pub mod messages;
 pub mod users;
-
-
+pub mod spell_caster;

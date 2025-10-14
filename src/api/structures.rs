@@ -7,6 +7,18 @@ pub struct TestParamsStruct {
 }
 
 #[derive(serde::Deserialize)]
+pub struct SpellCaster {
+    pub username: String
+}
+
+#[derive(serde::Deserialize)]
+pub struct SpellChecker {
+    pub username: String,
+    pub token: String,
+    pub key: String,
+}
+
+#[derive(serde::Deserialize)]
 pub struct NewUser {
     pub username: String,
     pub email: String,
