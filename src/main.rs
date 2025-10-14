@@ -59,6 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
             .service(api::channel::get_channels)
             .service(api::channel::create_channel)
+            .service(api::channel::delete_channel)
 
             .service(api::message::get_channel_messages)
             .service(api::message::get_channel_messages_migration)
