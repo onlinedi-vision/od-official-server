@@ -246,21 +246,6 @@ pub async fn delete_server(
     session.query_unpaged(statics::DELETE_SERVER_ROLES_BY_SID, (sid.clone(),)).await.ok()?;
     session.query_unpaged(statics::DELETE_USER_ROLES_BY_SID, (sid.clone(),)).await.ok()?;
 
-    let rows = session
-        .query_unpaged(statics::SELECT_SERVER_MESSAGES_BY_SID, (sid.clone(),))
-        .await
-        .ok()?
-        .into_rows_result()
-        .ok()?;
-
-     for row in rows.rows::<(Option<&str>,)>().ok()? {
-        let (Some(mid),) = row.ok()? else { continue; };
-        session
-            .query_unpaged(statics::DELETE_SERVER_MESSAGE_BY_MID, (mid.to_string(),))
-            .await
-            .ok()?;
-    }
-
     Some(Ok(()))
 }
 
@@ -303,21 +288,6 @@ pub async fn delete_channel(
 
     session.query_unpaged(statics::DELETE_CHANNEL, (sid.clone(), channel_name.clone())).await.ok()?;
     session.query_unpaged(statics::DELETE_SERVER_MESSAGES_MIGRATIONS_BY_SID_AND_CHANNEL, (sid.clone(), channel_name.clone())).await.ok()?;
-
-    let rows = session
-        .query_unpaged(statics::SELECT_SERVER_MESSAGES_BY_SID_AND_CHANNEL, (sid.clone(), channel_name.clone()))
-        .await
-        .ok()?
-        .into_rows_result()
-        .ok()?;
-
-    for row in rows.rows::<(Option<&str>,)>().ok()? {
-        let (Some(mid),) = row.ok()? else { continue; };
-        session
-            .query_unpaged(statics::DELETE_SERVER_MESSAGE_BY_MID, (mid.to_string(),))
-            .await
-            .ok()?;
-    }
 
     Some(Ok(()))
 }

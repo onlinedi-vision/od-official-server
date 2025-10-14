@@ -183,26 +183,11 @@ pub static DELETE_USER_ROLES_BY_SID: &str = r#"
     DELETE FROM division_online.o_user_server_roles WHERE server_id = ?;
 "#;
 
-pub static SELECT_SERVER_MESSAGES_BY_SID: &str = r#"
-    SELECT mid FROM division_online.o_server_messages
-        WHERE sid = ?
-        ALLOW FILTERING;
-"#;
-
-pub static SELECT_SERVER_MESSAGES_BY_SID_AND_CHANNEL: &str = r#"
-    SELECT mid FROM division_online.o_server_messages
-        WHERE sid = ? AND channel_name = ?
-        ALLOW FILTERING;
-"#;
-
 pub static DELETE_SERVER_MESSAGES_MIGRATION: &str = r#"
     DELETE FROM division_online.o_server_messages_migration
         WHERE sid = ? AND channel_name = ? AND datetime = ?;
 "#;
 
-pub static DELETE_SERVER_MESSAGE_BY_MID: &str = r#"
-    DELETE FROM division_online.o_server_messages WHERE mid = ?;
-"#;
 
 pub static DELETE_CHANNEL : &str = r#"
     DELETE FROM division_online.o_server_channels
