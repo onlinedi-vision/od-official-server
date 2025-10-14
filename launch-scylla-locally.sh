@@ -37,7 +37,6 @@ CREATE TABLE division_online.users (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-
 CREATE TABLE division_online.o_user_tokens (
     username text,
     datetime timestamp,
@@ -139,7 +138,6 @@ CREATE TABLE division_online.o_server_users (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-
 CREATE TABLE division_online.o_server_roles (
     server_id text,
     role_name text,
@@ -206,8 +204,6 @@ CREATE TABLE division_online.o_server_messages (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-
-
 CREATE TABLE division_online.o_server_channels (
     sid text,
     channel_name text,
@@ -234,6 +230,25 @@ CREATE TABLE division_online.o_dm_invites (
     sender text,
     PRIMARY KEY ((u1, u2))
 ) WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'ALL'}
+    AND comment = ''
+    AND compaction = {'class': 'SizeTieredCompactionStrategy'}
+    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND speculative_retry = '99.0PERCENTILE'
+    AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
+
+CREATE TABLE division_online.o_spell_caster_secrets (
+    key text,
+    spell text,
+    PRIMARY KEY (key, secret)
+) WITH CLUSTERING ORDER BY (secret ASC)
+    AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'ALL'}
     AND comment = ''
     AND compaction = {'class': 'SizeTieredCompactionStrategy'}

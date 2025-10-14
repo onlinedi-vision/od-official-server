@@ -55,7 +55,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::friends::fetch_friend_list)
             .service(api::friends::delete_friend)
 
-
             .service(api::channel::get_channels)
             .service(api::channel::create_channel)
 
@@ -64,13 +63,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::message::send_message)
             .service(api::message::get_channel_messages)
 
-
             .service(api::roles::add_server_role)
             .service(api::roles::assign_role_to_user)
             .service(api::roles::remove_role_from_user)
             .service(api::roles::fetch_server_roles)
             .service(api::roles::fetch_user_roles)
             .service(api::roles::delete_server_role)
+
+            .service(api::spell_caster::spell_cast)
+            .service(api::spell_caster::spell_check)
     })
     .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
     .workers(no_of_workers)

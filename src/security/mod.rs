@@ -5,8 +5,6 @@ pub mod structures;
 pub mod aes;
 
 mod tests {
-    use super::*;
-
     #[test]
     fn test_token_armor() {
         assert_eq!("6249cbd6de7d01973b4a73eacc503c275ec9a92b49306b5a713e998ce2104182", armor_token("token12345678901234567890".to_string()));
