@@ -246,8 +246,9 @@ CREATE TABLE division_online.o_dm_invites (
 CREATE TABLE division_online.o_spell_caster_secrets (
     key text,
     spell text,
-    PRIMARY KEY (key, secret)
-) WITH CLUSTERING ORDER BY (secret ASC)
+    username text,
+    PRIMARY KEY (key, spell)
+) WITH CLUSTERING ORDER BY (spell ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'ALL'}
     AND comment = ''

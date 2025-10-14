@@ -207,12 +207,12 @@ pub static DELETE_SPELL: &str = r#"
 "#;
 
 pub static INSERT_SPELL: &str = r#"
-    INSERT INTO division_online.o_spell_caster_secrets(key, spell)
-        VALUES(?,?);
+    INSERT INTO division_online.o_spell_caster_secrets(key, spell, username)
+        VALUES(?,?, ?);
 "#;
 
 pub static SELECT_SPELL: &str = r#"
     SELECT spell FROM division_online.o_spell_caster_secrets
-        WHERE key = ?
+        WHERE key = ? AND username = ?
         ALLOW FILTERING;
 "#;
