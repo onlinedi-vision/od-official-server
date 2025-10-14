@@ -104,3 +104,25 @@ pub async fn fetch_server_channel_messages(
     return fetch_server_channel_messages_unlimited(session, sid.clone(), channel_name.clone()).await;
 
 }
+
+
+pub async fn delete_message(
+    session: &scylla::client::session::Session,
+    sid: String,
+    datetime: String,
+    channel_name: String,
+) -> Option<Result<(), Box<dyn std::error::Error>>> {
+
+    let dt = chrono::NaiveDateTime::parse_from_str(&datetime, "%Y-%m-%d %H:%M:%S%.f").unwrap();
+    let millis = dt.and_utc().timestamp_millis();
+
+    let cql_timestamp = scylla::value::CqlTimestamp(millis);
+
+    session
+        .query_unpaged(db::statics::DELETE_SERVER_MESSAGES_MIGRATION, (sid, channel_name, cql_timestamp))
+        .await
+        .ok()?;
+
+
+    Some(Ok(()))
+}

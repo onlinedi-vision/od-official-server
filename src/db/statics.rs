@@ -195,6 +195,11 @@ pub static SELECT_SERVER_MESSAGES_BY_SID_AND_CHANNEL: &str = r#"
         ALLOW FILTERING;
 "#;
 
+pub static DELETE_SERVER_MESSAGES_MIGRATION: &str = r#"
+    DELETE FROM division_online.o_server_messages_migration
+        WHERE sid = ? AND channel_name = ? AND datetime = ?;
+"#;
+
 pub static DELETE_SERVER_MESSAGE_BY_MID: &str = r#"
     DELETE FROM division_online.o_server_messages WHERE mid = ?;
 "#;
