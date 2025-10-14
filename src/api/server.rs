@@ -173,3 +173,38 @@ pub async fn get_server_info(
         });
     }
 }
+
+#[actix_web::post("/servers/{sid}/api/delete_server")]
+pub async fn delete_server(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    req: actix_web::web::Json<structures::TokenUser>,
+    http: actix_web::HttpRequest,
+) -> impl actix_web::Responder {
+
+    let scylla_session = session.lock.lock().unwrap();
+    if db::prelude::check_token(
+        &scylla_session,
+        req.token.clone(),
+        Some(req.username.clone()),
+    )
+    .await
+    .is_none()
+    {
+        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+    }
+
+    let sid: String = http.match_info().get("sid").unwrap().to_string();
+
+    if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await == Some(true) {
+        if let Some(_) = db::server::delete_server(&scylla_session, sid).await {
+            return actix_web::HttpResponse::Ok().body("Server deleted successfully");
+        } 
+        else {
+            return actix_web::HttpResponse::InternalServerError().body("Failed to delete server");
+        }
+    } 
+    else {
+        println!("Unauthorized: not server owner");
+        return actix_web::HttpResponse::Unauthorized().body("You don't have permission to delete this server");
+    }
+}

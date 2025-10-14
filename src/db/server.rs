@@ -231,3 +231,65 @@ pub async fn fetch_server_channels(
         None
     }
 }
+
+
+pub async fn delete_server(
+    session: &scylla::client::session::Session,
+    sid: String,
+) -> Option<Result<()>> {
+
+        
+    session.query_unpaged(statics::DELETE_SERVER_BY_SID, (sid.clone(),)).await.ok()?;
+    session.query_unpaged(statics::DELETE_SERVER_CHANNELS_BY_SID, (sid.clone(),)).await.ok()?;
+    session.query_unpaged(statics::DELETE_SERVER_USERS_BY_SID, (sid.clone(),)).await.ok()?;
+    session.query_unpaged(statics::DELETE_SERVER_MESSAGES_MIGRATION_BY_SID, (sid.clone(),)).await.ok()?;
+    session.query_unpaged(statics::DELETE_SERVER_ROLES_BY_SID, (sid.clone(),)).await.ok()?;
+    session.query_unpaged(statics::DELETE_USER_ROLES_BY_SID, (sid.clone(),)).await.ok()?;
+
+    let rows = session
+        .query_unpaged(statics::SELECT_SERVER_MESSAGES_MID, (sid.clone(),))
+        .await
+        .ok()?
+        .into_rows_result()
+        .ok()?;
+
+     for row in rows.rows::<(Option<&str>,)>().ok()? {
+        let (Some(mid),) = row.ok()? else { continue; };
+        session
+            .query_unpaged(statics::DELETE_SERVER_MESSAGE_BY_MID, (mid.to_string(),))
+            .await
+            .ok()?;
+    }
+
+    Some(Ok(()))
+}
+
+
+pub async fn check_user_is_owner(
+    session: &scylla::client::session::Session,
+    sid: String,
+    username: String,
+) -> Option<bool> {
+    let query_rows = session
+        .query_unpaged(statics::SELECT_SERVER_OWNER, (sid.clone(),))
+        .await
+        .ok()?
+        .into_rows_result()
+        .ok()?;
+
+    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+        match row.ok()? {
+            (Some(owner),) => {
+                if owner == username {
+                    return Some(true);
+                } else {
+                    return Some(false);
+                }
+            }
+            _ => {
+                return None; 
+            }
+        }
+    }
+    None 
+}

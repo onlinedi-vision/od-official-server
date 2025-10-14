@@ -155,6 +155,46 @@ pub static SELECT_SERVER_ROLE_BY_NAME: &str = r#"
         WHERE server_id = ? AND role_name = ?;
 "#;
 
+pub static DELETE_SERVER_BY_SID: &str = r#"
+        DELETE FROM division_online.o_servers WHERE sid = ?;
+"#;
+
+pub static DELETE_SERVER_CHANNELS_BY_SID: &str = r#"
+    DELETE FROM division_online.o_server_channels WHERE sid = ?;
+"#;
+
+pub static DELETE_SERVER_USERS_BY_SID: &str = r#"
+    DELETE FROM division_online.o_server_users WHERE sid = ?;
+"#;
+
+pub static DELETE_SERVER_MESSAGES_MIGRATION_BY_SID: &str = r#"
+    DELETE FROM division_online.o_server_messages_migration WHERE sid = ?;
+"#;
+
+pub static DELETE_SERVER_ROLES_BY_SID: &str = r#"
+    DELETE FROM division_online.o_server_roles WHERE server_id = ?;
+"#;
+
+pub static DELETE_USER_ROLES_BY_SID: &str = r#"
+    DELETE FROM division_online.o_user_server_roles WHERE server_id = ?;
+"#;
+
+pub static SELECT_SERVER_MESSAGES_MID: &str = r#"
+    SELECT mid FROM division_online.o_server_messages
+        WHERE sid = ?
+        ALLOW FILTERING;
+"#;
+
+pub static DELETE_SERVER_MESSAGE_BY_MID: &str = r#"
+    DELETE FROM division_online.o_server_messages WHERE mid = ?;
+"#;
+
+pub static SELECT_SERVER_OWNER: &str = r#"
+    SELECT owner FROM division_online.o_servers
+        WHERE sid = ?
+        ALLOW FILTERING;
+"#;
+
 pub static INSERT_DM_INVITE: &str = r#"
     INSERT INTO division_online.o_dm_invites(u1, u2, invite_id, sender)
         VALUES(?,?,?,?)
