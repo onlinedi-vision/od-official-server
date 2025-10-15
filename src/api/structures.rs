@@ -83,6 +83,13 @@ pub struct Messages {
 }
 
 #[derive(serde::Deserialize)]
+pub struct DeleteMessage {
+    pub datetime: String,
+    pub username: String,
+    pub token: String,
+}
+
+#[derive(serde::Deserialize)]
 pub struct SendMessage {
     pub token: String,
     pub m_content: String,

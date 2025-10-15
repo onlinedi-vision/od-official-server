@@ -104,3 +104,56 @@ pub async fn fetch_server_channel_messages(
     return fetch_server_channel_messages_unlimited(session, sid.clone(), channel_name.clone()).await;
 
 }
+
+
+pub async fn delete_message(
+    session: &scylla::client::session::Session,
+    sid: String,
+    datetime: scylla::value::CqlTimestamp,
+    channel_name: String,
+) -> Option<Result<(), Box<dyn std::error::Error>>> {
+
+    session
+        .query_unpaged(db::statics::DELETE_SERVER_MESSAGES_MIGRATION, (sid, channel_name, datetime))
+        .await
+        .ok()?;
+
+
+    Some(Ok(()))
+}
+
+pub async fn verify_message_ownership(
+    session: &scylla::client::session::Session,
+    sid: String,
+    channel_name: String,
+    datetime: scylla::value::CqlTimestamp,
+    username: String
+) -> Option<bool> {
+
+    let query_rows = session
+        .query_unpaged(db::statics::SELECT_SERVER_MESSAGE_MIGRATIONS_OWNER, (sid, channel_name, datetime))
+        .await
+        .ok()?
+        .into_rows_result()
+        .ok()?;
+    
+    for row in query_rows
+        .rows::<(Option<&str>,)>()
+        .ok()?
+    {
+        match row.ok()? {
+            (Some(un),) => {
+                if un.to_string() == username {
+                    return Some(true);
+                } else {
+                    return Some(false);
+                }
+            }
+            _ => {
+                return None;
+            }
+        }
+    }
+
+    None
+}

@@ -46,6 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::server::join_server)                      // change token !!
             .service(api::server::get_server_users)                 
             .service(api::server::get_server_info)
+            .service(api::server::delete_server)
             
             .service(api::invites::send_dm_invite)
             .service(api::invites::accept_dm_invite)
@@ -57,11 +58,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
             .service(api::channel::get_channels)
             .service(api::channel::create_channel)
+            .service(api::channel::delete_channel)
 
             .service(api::message::get_channel_messages)
             .service(api::message::get_channel_messages_migration)
             .service(api::message::send_message)
             .service(api::message::get_channel_messages)
+            .service(api::message::delete_message)
 
             .service(api::roles::add_server_role)
             .service(api::roles::assign_role_to_user)

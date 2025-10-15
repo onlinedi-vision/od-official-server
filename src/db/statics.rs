@@ -155,6 +155,55 @@ pub static SELECT_SERVER_ROLE_BY_NAME: &str = r#"
         WHERE server_id = ? AND role_name = ?;
 "#;
 
+pub static DELETE_SERVER_BY_SID: &str = r#"
+        DELETE FROM division_online.o_servers WHERE sid = ?;
+"#;
+
+pub static DELETE_SERVER_CHANNELS_BY_SID: &str = r#"
+    DELETE FROM division_online.o_server_channels WHERE sid = ?;
+"#;
+
+pub static DELETE_SERVER_USERS_BY_SID: &str = r#"
+    DELETE FROM division_online.o_server_users WHERE sid = ?;
+"#;
+
+pub static DELETE_SERVER_MESSAGES_MIGRATION_BY_SID: &str = r#"
+    DELETE FROM division_online.o_server_messages_migration WHERE sid = ?;
+"#;
+
+pub static DELETE_SERVER_MESSAGES_MIGRATIONS_BY_SID_AND_CHANNEL: &str = r#"
+    DELETE FROM division_online.o_server_messages_migration WHERE sid = ? AND channel_name = ?;
+"#;
+
+pub static DELETE_SERVER_ROLES_BY_SID: &str = r#"
+    DELETE FROM division_online.o_server_roles WHERE server_id = ?;
+"#;
+
+pub static DELETE_USER_ROLES_BY_SID: &str = r#"
+    DELETE FROM division_online.o_user_server_roles WHERE server_id = ?;
+"#;
+
+pub static DELETE_SERVER_MESSAGES_MIGRATION: &str = r#"
+    DELETE FROM division_online.o_server_messages_migration
+        WHERE sid = ? AND channel_name = ? AND datetime = ?;
+"#;
+
+pub static SELECT_SERVER_MESSAGE_MIGRATIONS_OWNER: &str = r#"
+    SELECT username FROM division_online.o_server_messages_migration
+        WHERE sid = ? AND channel_name = ? AND datetime = ?;
+"#;
+
+pub static DELETE_CHANNEL : &str = r#"
+    DELETE FROM division_online.o_server_channels
+        WHERE sid = ? AND channel_name = ?;
+"#;
+
+pub static SELECT_SERVER_OWNER: &str = r#"
+    SELECT owner FROM division_online.o_servers
+        WHERE sid = ?
+        ALLOW FILTERING;
+"#;
+
 pub static INSERT_DM_INVITE: &str = r#"
     INSERT INTO division_online.o_dm_invites(u1, u2, invite_id, sender)
         VALUES(?,?,?,?)

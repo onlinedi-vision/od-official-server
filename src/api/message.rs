@@ -6,6 +6,7 @@ use crate::api::structures::{
     TokenUser,
     LimitMessageTokenUser
 };
+use std::clone;
 use std::io::Write;
 use crate::security;
 use crate::db;
@@ -109,4 +110,51 @@ pub async fn send_message(
     }
 }
 
+#[actix_web::post("/servers/{sid}/api/{channel_name}/delete_message")]
+pub async fn delete_message(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    req: actix_web::web::Json<structures::DeleteMessage>,
+    http: actix_web::HttpRequest
+) -> impl actix_web::Responder {
 
+    let scylla_session = session.lock.lock().unwrap();
+    if db::prelude::check_token(
+            &scylla_session,
+            req.token.clone(),
+            Some(req.username.clone()),
+        )
+        .await
+        .is_none()
+        {
+            return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        }
+    
+
+    let sid: String = http.match_info().get("sid").unwrap().to_string();
+    let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();   
+
+    let dt = chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f").unwrap();
+    let millis = dt.and_utc().timestamp_millis();
+    let cql_datetime = scylla::value::CqlTimestamp(millis);
+
+    if db::messages::verify_message_ownership(&scylla_session, sid.clone(),channel_name.clone(), 
+    cql_datetime.clone(),req.username.clone()).await == Some(true)
+    || db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await == Some(true)
+    {
+        if let Some(_) = db::messages::delete_message(
+            &scylla_session,
+            sid.clone(),
+            cql_datetime,
+            channel_name.clone()
+        ).await {
+            return actix_web::HttpResponse::Ok().body("Message deleted successfully");
+        } 
+        else {
+            return actix_web::HttpResponse::InternalServerError().body("Failed to delete message");
+        }
+    } 
+    else {
+        println!("Unauthorized: not message owner or server owner");
+        return actix_web::HttpResponse::Unauthorized().body("You are not authorized to delete this message");
+    }
+}
