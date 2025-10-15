@@ -188,6 +188,10 @@ pub static DELETE_SERVER_MESSAGES_MIGRATION: &str = r#"
         WHERE sid = ? AND channel_name = ? AND datetime = ?;
 "#;
 
+pub static SELECT_SERVER_MESSAGE_MIGRATIONS_OWNER: &str = r#"
+    SELECT username FROM division_online.o_server_messages_migration
+        WHERE sid = ? AND channel_name = ? AND datetime = ?;
+"#;
 
 pub static DELETE_CHANNEL : &str = r#"
     DELETE FROM division_online.o_server_channels

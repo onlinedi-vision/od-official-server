@@ -121,7 +121,7 @@ pub async fn delete_channel(
     
 
     if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await == Some(true) 
-    || db::roles::fetch_user_roles(&scylla_session, sid.clone(), req.username.clone()).await == Some(vec!["Admin".to_string()]) {
+    {
         if let Some(_) = db::server::delete_channel(&scylla_session, sid, channel_name).await {
             return actix_web::HttpResponse::Ok().body("Channel deleted successfully");
         } 

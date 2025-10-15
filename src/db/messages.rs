@@ -109,20 +109,51 @@ pub async fn fetch_server_channel_messages(
 pub async fn delete_message(
     session: &scylla::client::session::Session,
     sid: String,
-    datetime: String,
+    datetime: scylla::value::CqlTimestamp,
     channel_name: String,
 ) -> Option<Result<(), Box<dyn std::error::Error>>> {
 
-    let dt = chrono::NaiveDateTime::parse_from_str(&datetime, "%Y-%m-%d %H:%M:%S%.f").unwrap();
-    let millis = dt.and_utc().timestamp_millis();
-
-    let cql_timestamp = scylla::value::CqlTimestamp(millis);
-
     session
-        .query_unpaged(db::statics::DELETE_SERVER_MESSAGES_MIGRATION, (sid, channel_name, cql_timestamp))
+        .query_unpaged(db::statics::DELETE_SERVER_MESSAGES_MIGRATION, (sid, channel_name, datetime))
         .await
         .ok()?;
 
 
     Some(Ok(()))
+}
+
+pub async fn verify_message_ownership(
+    session: &scylla::client::session::Session,
+    sid: String,
+    channel_name: String,
+    datetime: scylla::value::CqlTimestamp,
+    username: String
+) -> Option<bool> {
+
+    let query_rows = session
+        .query_unpaged(db::statics::SELECT_SERVER_MESSAGE_MIGRATIONS_OWNER, (sid, channel_name, datetime))
+        .await
+        .ok()?
+        .into_rows_result()
+        .ok()?;
+    
+    for row in query_rows
+        .rows::<(Option<&str>,)>()
+        .ok()?
+    {
+        match row.ok()? {
+            (Some(un),) => {
+                if un.to_string() == username {
+                    return Some(true);
+                } else {
+                    return Some(false);
+                }
+            }
+            _ => {
+                return None;
+            }
+        }
+    }
+
+    None
 }

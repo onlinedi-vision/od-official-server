@@ -72,7 +72,6 @@ pub struct Messages {
 
 #[derive(serde::Deserialize)]
 pub struct DeleteMessage {
-    pub owner: String,
     pub datetime: String,
     pub username: String,
     pub token: String,
