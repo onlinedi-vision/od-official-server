@@ -5,6 +5,7 @@ pub mod structures;
 pub mod aes;
 
 mod tests {
+    #[allow(unused_imports)] // This is for `use super::*;` -- for some reason it doesn't like it without allowing used imports
     use super::*;
     
     #[test]

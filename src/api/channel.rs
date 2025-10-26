@@ -7,13 +7,18 @@ use crate::security;
 #[actix_web::post("/servers/{sid}/api/get_channels")]
 pub async fn get_channels(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+    
     match db::prelude::check_user_is_in_server(
         &scylla_session,
+        &cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -42,13 +47,16 @@ pub async fn get_channels(
 #[actix_web::post("/servers/{sid}/api/create_channel")]
 pub async fn create_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<CreateChannel>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
     match db::prelude::check_user_is_in_server(
         &scylla_session,
+        &cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -64,6 +72,7 @@ pub async fn create_channel(
 
                     let _ = db::prelude::insert_user_token(
                         &scylla_session,
+                        &cache,
                         db::structures::KeyUser {
                             key: Some(security::armor_token(new_token_holder.token.clone())),
                             username: Some(req.username.clone()),
@@ -99,13 +108,17 @@ pub async fn create_channel(
 #[actix_web::post("/servers/{sid}/api/{channel_name}/delete_channel")]
 pub async fn delete_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
 
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+
     if db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )

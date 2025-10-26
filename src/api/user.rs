@@ -41,6 +41,7 @@ pub async fn new_user_login(
 #[actix_web::post("/api/try_login")]
 pub async fn try_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::LoginUser>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
@@ -50,6 +51,7 @@ pub async fn try_login(
         username: Some(req.username.clone()),
     };
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
     match db::users::get_user_password_hash(&scylla_session, username).await {
         Some(secrets) => {
             let password_hash = secrets[0].password_hash.clone().unwrap();
@@ -65,6 +67,7 @@ pub async fn try_login(
             if user_password_hash == password_hash {
                 let _ = db::prelude::insert_user_token(
                     &scylla_session,
+                    &cache,
                     db::structures::KeyUser {
                         key: Some(security::armor_token(new_token_holder.token.clone())),
                         username: Some(req.username.clone()),
@@ -88,17 +91,24 @@ pub async fn try_login(
 #[actix_web::post("/api/token_login")]
 pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::TokenLoginUser>,
 ) -> impl actix_web::Responder {
+
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
+
     let username = db::structures::UserUsername {
         username: Some(req.username.clone()),
     };
+    
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+
     if let Some(_) = db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
@@ -119,6 +129,7 @@ pub async fn token_login(
                 if user_password_hash == password_hash {
                     let _ = db::prelude::insert_user_token(
                         &scylla_session,
+                        &cache,
                         db::structures::KeyUser {
                             key: Some(security::armor_token(new_token_holder.token.clone())),
                             username: Some(req.username.clone()),
@@ -154,6 +165,7 @@ pub async fn token_login(
 #[actix_web::post("/api/get_user_servers")]
 pub async fn get_user_servers(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::TokenUser>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
@@ -163,8 +175,10 @@ pub async fn get_user_servers(
         username: Some(req.username.clone()),
     };
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
     if let Some(_) = db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
@@ -174,6 +188,7 @@ pub async fn get_user_servers(
             Some(sids) => {
                 let _ = db::prelude::insert_user_token(
                     &scylla_session,
+                    &cache,
                     db::structures::KeyUser {
                         key: Some(security::armor_token(new_token_holder.token.clone())),
                         username: Some(req.username.clone()),

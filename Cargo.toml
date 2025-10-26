@@ -19,6 +19,7 @@ aes = "0.8.4"
 cbc = "0.1.2"
 hex = "0.4.3"
 chrono = {version="0.4", features=["serde"]}
+moka = { version = "0.12.11", features = ["future"] }
 
 # Improves comp time ?
 [profile.dev]

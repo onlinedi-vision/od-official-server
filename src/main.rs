@@ -27,14 +27,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     // connection to scylla-server
     let session = actix_web::web::Data::new(security::structures::ScyllaSession {
-        lock: std::sync::Mutex::new(db::prelude::new_scylla_session(&format!("{}:9042", scylla_inet)).await.expect(""))
+        lock: std::sync::Mutex::new(db::prelude::new_scylla_session(&format!("{}:9042", scylla_inet)).await.expect("Failed to create Scylla Connection."))
+    });
+
+    
+    let cache = actix_web::web::Data::new(security::structures::MokaCache {
+        lock: std::sync::Mutex::new(db::prelude::new_moka_cache(1_000).await.expect("Failed to create moka cache."))
     });
 
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
             .wrap(Logger::new("%a %{User-Agent}i %U"))
+            
             .app_data(session.clone())                                             // sharing scyllaDB session
+            .app_data(cache.clone())
 
             .service(api::get_api_version)
             .service(api::user::new_user_login)                     // API route for signing up

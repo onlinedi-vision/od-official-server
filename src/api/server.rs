@@ -11,11 +11,16 @@ use crate::security;
 #[actix_web::post("/api/create_server")]
 pub async fn create_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::CreateServer>,
 ) -> impl actix_web::Responder {
+    
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+
     if let Some(_) = db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
@@ -39,6 +44,7 @@ pub async fn create_server(
             };
             let _ = db::prelude::insert_user_token(
                 &scylla_session,
+                &cache,
                 db::structures::KeyUser {
                     key: Some(security::armor_token(new_token_holder.token.clone())),
                     username: Some(req.username.clone()),
@@ -84,13 +90,18 @@ pub async fn create_server(
 #[actix_web::post("/servers/{sid}/api/join")]
 pub async fn join_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+
     if let Some(_) = db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
@@ -104,6 +115,7 @@ pub async fn join_server(
             };
             let _ = db::prelude::insert_user_token(
                 &scylla_session,
+                &cache,
                 db::structures::KeyUser {
                     key: Some(security::armor_token(new_token_holder.token.clone())),
                     username: Some(req.username.clone()),
@@ -134,13 +146,18 @@ pub async fn join_server(
 #[actix_web::post("/servers/{sid}/api/get_server_users")]
 pub async fn get_server_users(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+    
     if let Some(_) = db::prelude::check_user_is_in_server(
         &scylla_session,
+        &cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -177,13 +194,17 @@ pub async fn get_server_info(
 #[actix_web::post("/servers/{sid}/api/delete_server")]
 pub async fn delete_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
 
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+
     if db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
