@@ -26,5 +26,3 @@ After installing the server and setting up the env vars and ScyllaDB, running it
 $ build.sh
 ```
 This will build and run the server.
-
-
