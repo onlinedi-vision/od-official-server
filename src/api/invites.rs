@@ -5,10 +5,19 @@ use crate::security;
 #[actix_web::post("/api/send_dm_invite")]
 pub async fn send_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::SendInviteReq>,
 ) -> impl actix_web::Responder {
+    
     let scylla_session = session.lock.lock().unwrap();
-    if db::prelude::check_token(&scylla_session, req.token.clone(), Some(req.sender.clone()))
+    let cache = shared_cache.lock.lock().unwrap();
+
+    if db::prelude::check_token(
+        &scylla_session,
+        &cache,
+        req.token.clone(),
+        Some(req.sender.clone())
+    )
         .await
         .is_some()
     {
@@ -56,11 +65,16 @@ pub async fn send_dm_invite(
 #[actix_web::post("/api/accept_dm_invite")]
 pub async fn accept_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::AcceptInviteReq>,
 ) -> impl actix_web::Responder {
+    
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+
     if db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.recipient.clone()),
     )
@@ -120,12 +134,16 @@ pub async fn accept_dm_invite(
 #[actix_web::post("/api/reject_dm_invite")]
 pub async fn reject_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::RejectInviteReq>,
 ) -> impl actix_web::Responder {
+
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
 
     if db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.recipient.clone()),
     )
@@ -159,12 +177,16 @@ pub async fn reject_dm_invite(
 #[actix_web::post("/api/fetch_pending_dm_invites")]
 pub async fn fetch_pending_dm_invites(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::TokenUser>,
 ) -> impl actix_web::Responder {
+
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
 
     if db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )

@@ -35,12 +35,16 @@ pub async fn spell_cast(
 #[actix_web::post("/api/spell/check")]
 pub async fn spell_check(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::SpellChecker>,
 ) -> impl actix_web::Responder {
+
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
     
     if let Some(_) = db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )

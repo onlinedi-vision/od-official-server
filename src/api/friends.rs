@@ -5,11 +5,15 @@ use crate::security;
 #[actix_web::post("/api/fetch_friend_list")]
 pub async fn fetch_friend_list(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::TokenUser>,
 ) -> impl actix_web::Responder {
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+    
     if db::prelude::check_token(
         &scylla_session,
+        &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
@@ -41,11 +45,19 @@ pub async fn fetch_friend_list(
 #[actix_web::post("/api/delete_friend")]
 pub async fn delete_friend(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::FriendListReq>,
 ) -> impl actix_web::Responder {
+    
     let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
 
-    if db::prelude::check_token(&scylla_session, req.token.clone(), Some(req.user.clone()))
+    if db::prelude::check_token(
+        &scylla_session,
+        &cache,
+        req.token.clone(),
+        Some(req.user.clone())
+    )
         .await
         .is_none()
     {
