@@ -59,6 +59,8 @@ pub async fn check_token(
         if let Some(cache_token) = cache.get(&username.clone()).await {
             if cache_token == crypted_token.clone() {
                 return Some(());
+            } else {
+                return None;
             }
         }
 
