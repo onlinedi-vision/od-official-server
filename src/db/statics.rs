@@ -108,6 +108,19 @@ pub static SELECT_USER_INFO: &str = r#"
         ALLOW FILTERING;
 "#;
 
+pub static SELECT_USER_PFP: &str = r#"
+    SELECT pfp FROM division_online.users
+        WHERE username = ?
+        ALLOW FILTERING;
+"#;
+
+pub static UPDATE_USER_PFP: &str = r#"
+    UPDATE division_online.users
+    SET pfp = ?
+    WHERE username = ?
+    IF EXISTS;
+"#;
+
 pub static SELECT_SERVER_INFO: &str = r#"
     SELECT name, desc, img_url FROM division_online.o_servers
         WHERE sid = ?
@@ -193,7 +206,7 @@ pub static SELECT_SERVER_MESSAGE_MIGRATIONS_OWNER: &str = r#"
         WHERE sid = ? AND channel_name = ? AND datetime = ?;
 "#;
 
-pub static DELETE_CHANNEL : &str = r#"
+pub static DELETE_CHANNEL: &str = r#"
     DELETE FROM division_online.o_server_channels
         WHERE sid = ? AND channel_name = ?;
 "#;

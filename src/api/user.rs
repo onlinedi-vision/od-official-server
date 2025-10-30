@@ -41,7 +41,7 @@ pub async fn new_user_login(
 #[actix_web::post("/api/try_login")]
 pub async fn try_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::LoginUser>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
@@ -91,10 +91,9 @@ pub async fn try_login(
 #[actix_web::post("/api/token_login")]
 pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenLoginUser>,
 ) -> impl actix_web::Responder {
-
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
@@ -102,7 +101,7 @@ pub async fn token_login(
     let username = db::structures::UserUsername {
         username: Some(req.username.clone()),
     };
-    
+
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
@@ -165,7 +164,7 @@ pub async fn token_login(
 #[actix_web::post("/api/get_user_servers")]
 pub async fn get_user_servers(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
@@ -212,6 +211,114 @@ pub async fn get_user_servers(
                 println!("no hash");
                 actix_web::HttpResponse::NotFound().body("No servers found for user")
             }
+        }
+    } else {
+        println!("no token");
+        actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
+    }
+}
+
+#[actix_web::get("/api/get_user_pfp")]
+pub async fn get_user_pfp(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
+    req: actix_web::web::Json<structures::TokenUser>,
+) -> impl actix_web::Responder {
+    let new_token_holder = structures::TokenHolder {
+        token: security::token(),
+    };
+    let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+    if let Some(_) = db::prelude::check_token(
+        &scylla_session,
+        &cache,
+        req.token.clone(),
+        Some(req.username.clone()),
+    )
+    .await
+    {
+        match db::users::fetch_user_pfp(&scylla_session, &req.username).await {
+            Some(pfp_row) => {
+                let _ = db::prelude::insert_user_token(
+                    &scylla_session,
+                    &cache,
+                    db::structures::KeyUser {
+                        key: Some(security::armor_token(new_token_holder.token.clone())),
+                        username: Some(req.username.clone()),
+                    },
+                )
+                .await;
+
+                let _ = db::users::delete_token(
+                    &scylla_session,
+                    req.username.clone(),
+                    security::armor_token(req.token.clone()),
+                )
+                .await;
+
+                actix_web::HttpResponse::Ok().json(&structures::GetUserPfpResp {
+                    img_url: pfp_row.pfp,
+                })
+            }
+            None => actix_web::HttpResponse::NotFound().body("User not found."),
+        }
+    } else {
+        println!("no token");
+        actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
+    }
+}
+
+#[actix_web::post("/api/set_user_pfp")]
+pub async fn set_user_pfp(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
+    req: actix_web::web::Json<structures::SetUserPfpReq>,
+) -> impl actix_web::Responder {
+    let new_token_holder = structures::TokenHolder {
+        token: security::token(),
+    };
+    let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+    if let Some(_) = db::prelude::check_token(
+        &scylla_session,
+        &cache,
+        req.token.clone(),
+        Some(req.username.clone()),
+    )
+    .await
+    {
+        let img_opt = match req.img_url.as_deref() {
+            // If "" -> None
+            Some(s) if s.trim().is_empty() => None,
+            other => other,
+        };
+        match db::users::set_user_pfp(&scylla_session, &req.username, img_opt).await {
+            Some(Ok(())) => {
+                let _ = db::prelude::insert_user_token(
+                    &scylla_session,
+                    &cache,
+                    db::structures::KeyUser {
+                        key: Some(security::armor_token(new_token_holder.token.clone())),
+                        username: Some(req.username.clone()),
+                    },
+                )
+                .await;
+
+                let _ = db::users::delete_token(
+                    &scylla_session,
+                    req.username.clone(),
+                    security::armor_token(req.token.clone()),
+                )
+                .await;
+
+                actix_web::HttpResponse::Ok().json(&structures::GetUserPfpResp {
+                    img_url: req.img_url.clone(),
+                })
+            }
+            Some(Err(_e)) => actix_web::HttpResponse::InternalServerError()
+                .body("Failed to update profile picture."),
+            None => actix_web::HttpResponse::InternalServerError()
+                .body("Failed to update profile picture."),
         }
     } else {
         println!("no token");

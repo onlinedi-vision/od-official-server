@@ -42,6 +42,11 @@ pub struct UserInfo {
     pub bio: Option<String>,
 }
 
+#[derive(Debug, serde::Serialize)]
+pub struct UserPfp {
+    pub pfp: Option<String>,
+}
+
 #[derive(Debug, scylla::SerializeValue)]
 pub struct KeyUser {
     pub username: Option<String>,
