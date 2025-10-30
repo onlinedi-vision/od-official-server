@@ -8,7 +8,7 @@ pub struct TestParamsStruct {
 
 #[derive(serde::Deserialize)]
 pub struct SpellCaster {
-    pub username: String
+    pub username: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -245,4 +245,16 @@ pub struct DeleteFriendResp {
     pub status: String,
     pub user: String,
     pub friend: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct GetUserPfpResp {
+    pub img_url: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct SetUserPfpReq {
+    pub token: String,
+    pub username: String,
+    pub img_url: Option<String>,
 }

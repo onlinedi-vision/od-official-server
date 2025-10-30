@@ -129,11 +129,10 @@ pub async fn delete_token(
     )
 }
 
-
 pub async fn fetch_user_info(
     session: &scylla::client::session::Session,
-    username: String
-)-> Option<Vec<structures::UserInfo>> {
+    username: String,
+) -> Option<Vec<structures::UserInfo>> {
     let query_rows = session
         .query_unpaged(statics::SELECT_USER_INFO, ((username),))
         .await
@@ -141,10 +140,7 @@ pub async fn fetch_user_info(
         .into_rows_result()
         .ok()?;
     let mut user_info = Vec::<structures::UserInfo>::new();
-    for row in query_rows
-        .rows::<(Option<&str>, Option<&str>)>()
-        .ok()?
-    {
+    for row in query_rows.rows::<(Option<&str>, Option<&str>)>().ok()? {
         match row.ok()? {
             (Some(pfp), Some(bio)) => {
                 user_info.push(structures::UserInfo {
@@ -162,4 +158,43 @@ pub async fn fetch_user_info(
     } else {
         None
     }
+}
+
+pub async fn fetch_user_pfp(
+    session: &scylla::client::session::Session,
+    username: &str,
+) -> Option<structures::UserPfp> {
+    let query_rows = session
+        .query_unpaged(statics::SELECT_USER_PFP, (username,))
+        .await
+        .ok()?
+        .into_rows_result()
+        .ok()?;
+    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+        match row.ok()? {
+            (Some(pfp),) => {
+                return Some(structures::UserPfp {
+                    pfp: Some(pfp.to_string()),
+                });
+            }
+            (None,) => {
+                return Some(structures::UserPfp { pfp: None });
+            }
+        }
+    }
+    None
+}
+
+pub async fn set_user_pfp(
+    session: &scylla::client::session::Session,
+    username: &str,
+    img_url: Option<&str>,
+) -> Option<Result<()>> {
+    Some(
+        session
+            .query_unpaged(statics::UPDATE_USER_PFP, (img_url, username))
+            .await
+            .map(|_| ())
+            .map_err(From::from),
+    )
 }
