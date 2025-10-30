@@ -218,7 +218,7 @@ pub async fn get_user_servers(
     }
 }
 
-#[actix_web::get("/api/get_user_pfp")]
+#[actix_web::post("/api/get_user_pfp")]
 pub async fn get_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -257,6 +257,7 @@ pub async fn get_user_pfp(
                 .await;
 
                 actix_web::HttpResponse::Ok().json(&structures::GetUserPfpResp {
+                    token: new_token_holder.token.clone(),
                     img_url: pfp_row.pfp,
                 })
             }
@@ -312,6 +313,7 @@ pub async fn set_user_pfp(
                 .await;
 
                 actix_web::HttpResponse::Ok().json(&structures::GetUserPfpResp {
+                    token: new_token_holder.token.clone(),
                     img_url: req.img_url.clone(),
                 })
             }

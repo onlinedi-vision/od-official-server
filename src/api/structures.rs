@@ -249,6 +249,7 @@ pub struct DeleteFriendResp {
 
 #[derive(serde::Serialize)]
 pub struct GetUserPfpResp {
+    pub token: String,
     pub img_url: Option<String>,
 }
 
