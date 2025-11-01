@@ -10,7 +10,7 @@ pub async fn spell(
 ) -> Option<Result<()>> {
 
     let res = session
-        .query_unpaged(db::statics::INSERT_FRIEND, (key, spell, username))
+        .query_unpaged(db::statics::INSERT_SPELL, (key, spell, username))
         .await
         .map(|_| ())
         .map_err(From::from);
