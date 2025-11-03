@@ -10,10 +10,14 @@ pub async fn new_user_login(
     println!("test");
     let user_salt = security::salt();
     let password_salt = security::salt();
-    let password_hash = security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
-        &format!("{}{}", user_salt.clone(), req.password.clone()),
-        &password_salt,
-    )));
+    let password_hash = security::argon(
+        security::aes::encrypt(
+            &security::aes::encrypt_with_key(
+                &format!("{}{}", user_salt.clone(), req.password.clone()),
+                &password_salt,
+            )
+        )
+    );
     let token_holder = structures::TokenHolder {
         token: security::token(),
     };
@@ -59,12 +63,15 @@ pub async fn try_login(
             let password_salt = secrets[0].password_salt.clone().unwrap();
             let decrypted_user_salt = security::aes::decrypt(&user_salt);
             let decrypted_password_salt = security::aes::decrypt(&password_salt);
-            let user_password_hash =
-                security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
-                    &format!("{}{}", decrypted_user_salt.clone(), req.password.clone()),
-                    &decrypted_password_salt,
-                )));
-            if user_password_hash == password_hash {
+            let user_password_plain =
+                security::aes::encrypt(
+                    &security::aes::encrypt_with_key(
+                        &format!("{}{}", decrypted_user_salt.clone(), req.password.clone()),
+                        &decrypted_password_salt,
+                )
+            );
+            
+            if security::argon_check(user_password_plain, password_hash) {
                 let _ = db::prelude::insert_user_token(
                     &scylla_session,
                     &cache,
@@ -120,12 +127,13 @@ pub async fn token_login(
                 let password_salt = secrets[0].password_salt.clone().unwrap();
                 let decrypted_user_salt = security::aes::decrypt(&user_salt);
                 let decrypted_password_salt = security::aes::decrypt(&password_salt);
-                let user_password_hash =
-                    security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
+                let user_password_plain = security::aes::encrypt(
+                    &security::aes::encrypt_with_key(
                         &format!("{}{}", decrypted_user_salt.clone(), req.password.clone()),
                         &decrypted_password_salt,
-                    )));
-                if user_password_hash == password_hash {
+                    )
+                );
+                if security::argon_check(user_password_plain, password_hash) {
                     let _ = db::prelude::insert_user_token(
                         &scylla_session,
                         &cache,

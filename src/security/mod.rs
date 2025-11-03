@@ -1,5 +1,9 @@
 use sha2::Digest;
 use rand::prelude::*;
+use argon2::{
+    PasswordHasher,
+    PasswordVerifier
+};
 
 pub mod structures;
 pub mod aes;
@@ -22,6 +26,36 @@ mod tests {
     fn test_hashers(){
         let pre_hash_string: String = "pre_hash".to_string();
         assert_ne!(sha256(pre_hash_string.clone()), sha512(pre_hash_string));
+    }
+
+    #[test]
+    fn test_argon2() {
+        let plain_text_secret: String = "pre_hash".to_string();
+        let argon_hash: String = argon(plain_text_secret.clone());
+
+        assert!(argon_check(plain_text_secret, argon_hash));
+    }
+}
+
+pub fn argon(secret:String) -> String {
+    let salt = argon2::password_hash::SaltString::generate(
+        &mut argon2::password_hash::rand_core::OsRng
+    );
+    
+    match argon2::Argon2::default().hash_password(secret.as_bytes(), &salt) {
+        Ok(hash) => hash.to_string(),
+        Err(_) => "".to_string()
+    }
+}
+
+pub fn argon_check(plain_text: String, hash: String) -> bool {
+    match argon2::password_hash::PasswordHash::new(&hash) {
+        Ok(parsed_hash) => {
+            argon2::Argon2::default()
+                .verify_password(plain_text.as_bytes(), &parsed_hash)
+                .is_ok()
+        },
+        Err(_) => false
     }
 }
 
