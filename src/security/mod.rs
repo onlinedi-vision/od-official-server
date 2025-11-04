@@ -30,18 +30,17 @@ mod tests {
     #[test]
     fn test_argon2() {
         let plain_text_secret: String = "pre_hash".to_string();
-        let argon_hash: String = argon(plain_text_secret.clone());
+        let argon_hash: String = argon(plain_text_secret.clone()).expect(
+            "Argon2 failed to create a proper hash. Check src/security/mod.rs:argon()"
+        );
 
         assert!(argon_check(plain_text_secret, argon_hash));
     }
 }
 
-pub fn argon(secret: String) -> String {
+pub fn argon(secret: String) -> Option<String> {
     let salt = SaltString::generate(&mut OsRng);
-    match argon2::Argon2::default().hash_password(secret.as_bytes(), &salt) {
-        Ok(hash) => hash.to_string(),
-        Err(_) => "".to_string(),
-    }
+    return Some(argon2::Argon2::default().hash_password(secret.as_bytes(), &salt).ok()?.to_string());
 }
 
 pub fn argon_check(plain_text: String, hash: String) -> bool {

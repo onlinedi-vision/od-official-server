@@ -24,7 +24,9 @@ pub async fn new_user_login(
     let user_instance = db::structures::User::new(
         req.username.clone(),
         req.email.clone(),
-        password_hash.clone(),
+        password_hash.clone().expect(
+            "Argon2 failed to create a proper hash. Check src/security/mod.rs:argon()"
+        ),
         security::armor_token(token_holder.token.clone()),
         security::aes::encrypt(&user_salt),
         security::aes::encrypt(&password_salt),
