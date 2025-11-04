@@ -163,8 +163,10 @@ CREATE TABLE division_online.o_server_messages_migration (
     sid text,
     channel_name text,
     datetime timestamp,
+    encrypted boolean,
     m_content text,
     mid text,
+    salt text,
     username text,
     PRIMARY KEY (sid, channel_name, datetime)
 ) WITH CLUSTERING ORDER BY (channel_name ASC, datetime DESC)
