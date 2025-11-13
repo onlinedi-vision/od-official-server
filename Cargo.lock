@@ -209,6 +209,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-web-ratelimit"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c54408fddbc008aebc7373bf1540e503f46610ff54d184f462c321b64901dd20"
+dependencies = [
+ "actix-service",
+ "actix-web",
+ "dashmap",
+ "futures-util",
+ "log",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -329,6 +342,7 @@ version = "0.0.1"
 dependencies = [
  "actix-files",
  "actix-web",
+ "actix-web-ratelimit",
  "aes",
  "base64",
  "cbc",
