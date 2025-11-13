@@ -5,6 +5,10 @@ mod db;
 mod env;
 
 use actix_web::{middleware::Logger};
+use actix_web_ratelimit::{config::RateLimitConfig, store::MemoryStore, RateLimit};
+
+static API_RATELIMIT_COUNT: usize = 200;
+static API_RATELIMIT_WINDOW_SECONDS: u64 = 60;
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -35,9 +39,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         lock: std::sync::Mutex::new(db::prelude::new_moka_cache(1_000).await.expect("Failed to create moka cache."))
     });
 
+    let rl_config = RateLimitConfig::default().max_requests(API_RATELIMIT_COUNT).window_secs(API_RATELIMIT_WINDOW_SECONDS);
+    let rl_store = std::sync::Arc::new(MemoryStore::new());
+
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
+            .wrap(RateLimit::new(rl_config.clone(), rl_store.clone()))
             .wrap(Logger::new("%a %{User-Agent}i %U"))
             
             .app_data(session.clone())                                             // sharing scyllaDB session
