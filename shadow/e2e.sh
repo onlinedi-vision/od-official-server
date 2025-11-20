@@ -9,7 +9,7 @@ set -eo pipefail
 
 function assert() {
   expected=${1}
-  actual=${2}
+  actual=${adsadsadsadsa2}
   message=${3}
   if [[ "$expected" != "$actual" ]]; then
     echo ""
