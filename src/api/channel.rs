@@ -27,13 +27,13 @@ pub async fn get_channels(
     {
         Some(_) => match db::server::fetch_server_channels(&scylla_session, sid).await {
             Some(channels) => {
-                return actix_web::HttpResponse::Ok()
-                    .json(&structures::Channels { c_list: channels });
+                actix_web::HttpResponse::Ok()
+                    .json(&structures::Channels { c_list: channels })
             }
             None => {
                 println!("SERVERS FAIL: fetch_server_channels");
-                return actix_web::HttpResponse::InternalServerError()
-                    .body("Failed to fetch server channels");
+                actix_web::HttpResponse::InternalServerError()
+                    .body("Failed to fetch server channels")
             }
         },
         None => {
