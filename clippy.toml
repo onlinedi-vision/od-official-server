@@ -1,5 +1,5 @@
 disallowed-methods = [
     "std::option::Option::unwrap",
     "std::result::Result::unwrap",
-    "std::result::Result::except",
+    "std::result::Result::expect",
 ]
