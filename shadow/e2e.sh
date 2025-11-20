@@ -65,11 +65,11 @@ function post() {
 }
 
 eetest "/servers/{sid}/api/get_server_info" ""
-get_server_info=$(get "/servers/1313/api/get_server_info" 2> /dev/null | jq '.name')
+get_server_info=$(get "/servers/1313/api/get_server_info"  | jq '.name')
 assert '"division"' "${get_server_info}" "/servers/{sid}/api/get_server_info"
 
 eetest "/api/version" ""
-get_server_info=$(get "/api/version" 2> /dev/null)
+get_server_info=$(get "/api/version" )
 assert_match v* "${get_server_info}" "/servers/{sid}/api/get_server_info"
 
 eetest "/api/new_user"
@@ -87,29 +87,29 @@ token=$(echo -e "${user_servers_payload}" | jq '.token')
 assert_neq "null" "${token}" "/api/create_server"
 
 eetest "/servers/{sid}/api/get_server_info (part2) -- name" ""
-get_server_info=$(get "/servers/${sid}/api/get_server_info" 2> /dev/null | jq '.name')
+get_server_info=$(get "/servers/${sid}/api/get_server_info"  | jq '.name')
 assert '"QA_TEST_SERVER"' "${get_server_info}" "/servers/{sid}/api/get_server_info"
 
 eetest "/servers/{sid}/api/get_server_info (part2) -- desc" ""
-get_server_info=$(get "/servers/${sid}/api/get_server_info" 2> /dev/null | jq '.desc')
+get_server_info=$(get "/servers/${sid}/api/get_server_info"  | jq '.desc')
 assert '"L"' "${get_server_info}" "/servers/{sid}/api/get_server_info"
 
 eetest "/servers/{sid}/api/get_server_info (part2) -- img_url" ""
-get_server_info=$(get "/servers/${sid}/api/get_server_info" 2> /dev/null | jq '.img_url')
+get_server_info=$(get "/servers/${sid}/api/get_server_info"  | jq '.img_url')
 assert '"L"' "${get_server_info}" "/servers/{sid}/api/get_server_info"
 
 eetest "/servers/{sid}/api/create_channel" ""
-token=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"main\"}" "/servers/${sid}/api/create_channel" 2> /dev/null | jq '.token' )
+token=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"main\"}" "/servers/${sid}/api/create_channel"  | jq '.token' )
 assert_neq "null" "${token}" "/servers/${sid}/api/create_channel"
 
 eetest "/servers/{sid}/api/get_channels" ""
-main_channel=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/get_channels" 2> /dev/null | jq -r '.c_list[1].channel_name' )
+main_channel=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/get_channels"  | jq -r '.c_list[1].channel_name' )
 assert "main" "${main_channel}" "/servers/${sid}/api/get_channels"
 
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is owner)" ""
-payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/delete_server" 2> /dev/null )
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/delete_server"  )
 assert 'Server deleted successfully' "${payload}" "/servers/{sid}/api/delete_server"
 
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is _NOT_ owner)" ""
-payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/1313/api/delete_server" 2> /dev/null )
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/1313/api/delete_server"  )
 assert "You don't have permission to delete this server" "${payload}" "/servers/{sid}/api/delete_server"
