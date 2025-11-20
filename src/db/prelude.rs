@@ -13,11 +13,10 @@ pub async fn insert_user_token(
     user: structures::KeyUser,
 ) -> Option<Result<()>> {
 
-    if let Some(username) = user.username.clone() {
-        if let Some(key) = user.key.clone() {
+    if let Some(username) = user.username.clone()
+        && let Some(key) = user.key.clone() {
             let _ = cache.insert(username.clone(), key.clone()).await;
         }
-    }
        
     Some(
         session
@@ -31,7 +30,7 @@ pub async fn insert_user_token(
 pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Session> {
     scylla::client::session_builder::SessionBuilder::new()
         .known_node(uri)
-        .user("cassandra", &get_env_var("SCYLLA_CASSANDRA_PASSWORD"))
+        .user("cassandra", get_env_var("SCYLLA_CASSANDRA_PASSWORD"))
         .build()
         .await
         .map_err(From::from)
@@ -56,11 +55,10 @@ pub async fn check_token(
     if let Some(username) = un.clone() {
         println!("{}", crypted_token.clone());
 
-        if let Some(cache_token) = cache.get(&username.clone()).await {
-            if cache_token == crypted_token.clone() {
+        if let Some(cache_token) = cache.get(&username.clone()).await
+            && cache_token == crypted_token.clone() {
                 return Some(());
             }
-        }
 
         query_rows = session
             .query_unpaged(statics::CHECK_TOKEN_USER, (crypted_token.clone(), username))
@@ -80,9 +78,9 @@ pub async fn check_token(
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
-                return Some(());
+                Some(())
             } else {
-                return None;
+                None
             }
         }
         _ => None,
@@ -96,7 +94,7 @@ pub async fn check_user_is_in_server(
     token: String,
     un: String,
 ) -> Option<Vec<structures::UserUsername>> {
-    if let Some(_) = db::prelude::check_token(&session, &cache, token.clone(), Some(un.clone())).await {
+    if let Some(_) = db::prelude::check_token(session, cache, token.clone(), Some(un.clone())).await {
         let query_rows = session
             .query_unpaged(statics::SELECT_SERVER_USER, (sid, un.clone()))
             .await

@@ -71,19 +71,19 @@ pub async fn create_server(
             if let Some(_) =
                 db::server::add_user_to_server(&scylla_session, sid, req.username.clone()).await
             {
-                return actix_web::HttpResponse::Ok().json(&new_token_holder);
+                actix_web::HttpResponse::Ok().json(&new_token_holder)
             } else {
                 println!("SERVERS FAIL: add_user_to_server");
-                return actix_web::HttpResponse::InternalServerError()
-                    .body("Failed to add user to server");
+                actix_web::HttpResponse::InternalServerError()
+                    .body("Failed to add user to server")
             }
         } else {
             println!("SERVERS FAIL: create_server");
-            return actix_web::HttpResponse::InternalServerError().body("Failed to create server");
+            actix_web::HttpResponse::InternalServerError().body("Failed to create server")
         }
     } else {
         println!("SERVERS FAIL: invalid token in create_server");
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
@@ -130,15 +130,15 @@ pub async fn join_server(
             )
             .await;
 
-            return actix_web::HttpResponse::Ok().json(&new_token_holder);
+            actix_web::HttpResponse::Ok().json(&new_token_holder)
         } else {
             println!("SERVERS FAIL: add_user_to_server");
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Failed to add user to server");
+            actix_web::HttpResponse::InternalServerError()
+                .body("Failed to add user to server")
         }
     } else {
         println!("SERVERS FAIL: invalid token in create_server");
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
@@ -165,13 +165,13 @@ pub async fn get_server_users(
     .await
     {
         if let Some(users) = db::server::fetch_server_users(&scylla_session, sid.clone()).await {
-            return actix_web::HttpResponse::Ok().json(&structures::UsersList { u_list: users });
+            actix_web::HttpResponse::Ok().json(&structures::UsersList { u_list: users })
         } else {
-            return actix_web::HttpResponse::Ok()
-                .json(&structures::UsersList { u_list: Vec::new() });
+            actix_web::HttpResponse::Ok()
+                .json(&structures::UsersList { u_list: Vec::new() })
         }
     } else {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
+        actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
     }
 }
 
@@ -183,11 +183,11 @@ pub async fn get_server_info(
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
     if let Some(server_info) = db::server::fetch_server_info(&scylla_session, sid.clone()).await {
-        return actix_web::HttpResponse::Ok().json(&server_info);
+        actix_web::HttpResponse::Ok().json(&server_info)
     } else {
-        return actix_web::HttpResponse::NotFound().json(&structures::Status {
+        actix_web::HttpResponse::NotFound().json(&structures::Status {
             status: "nok".to_string(),
-        });
+        })
     }
 }
 
@@ -218,14 +218,14 @@ pub async fn delete_server(
 
     if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await == Some(true) {
         if let Some(_) = db::server::delete_server(&scylla_session, sid).await {
-            return actix_web::HttpResponse::Ok().body("Server deleted successfully");
+            actix_web::HttpResponse::Ok().body("Server deleted successfully")
         } 
         else {
-            return actix_web::HttpResponse::InternalServerError().body("Failed to delete server");
+            actix_web::HttpResponse::InternalServerError().body("Failed to delete server")
         }
     } 
     else {
         println!("Unauthorized: not server owner");
-        return actix_web::HttpResponse::Unauthorized().body("You don't have permission to delete this server");
+        actix_web::HttpResponse::Unauthorized().body("You don't have permission to delete this server")
     }
 }

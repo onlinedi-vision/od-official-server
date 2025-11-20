@@ -39,7 +39,7 @@ pub async fn fetch_friends(
         }
     }
 
-    if friends.len() > 0 {
+    if !friends.is_empty() {
         Some(friends)
     } else {
         None

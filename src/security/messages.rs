@@ -3,12 +3,12 @@ use crate::security;
 pub fn decrypt(enc_message: &str, salt: &str) -> String {
     let dec_salt = &security::aes::decrypt(salt);
     let mush = &security::aes::decrypt(enc_message);
-    return security::aes::decrypt_with_key(mush, dec_salt);
+    security::aes::decrypt_with_key(mush, dec_salt)
 }
 
 pub fn encrypt(plain_message: &str, salt: &str) -> (String, String) {
     let mush = security::aes::encrypt_with_key(plain_message, salt);
-    return (security::aes::encrypt(&mush), security::aes::encrypt(salt));
+    (security::aes::encrypt(&mush), security::aes::encrypt(salt))
 }
 
 mod tests {

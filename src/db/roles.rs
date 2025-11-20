@@ -155,7 +155,7 @@ pub async fn fetch_server_roles(
             });
         }
     }
-    if roles.len() > 0 {
+    if !roles.is_empty() {
         Some(roles)
     } else {
         None
@@ -180,7 +180,7 @@ pub async fn fetch_user_roles(
             role_names.push(role_name);
         }
     }
-    if role_names.len() > 0 {
+    if !role_names.is_empty() {
         Some(role_names)
     } else {
         None
@@ -200,10 +200,9 @@ pub async fn check_role_exists(
         .ok()?;
 
     Some(
-        !query_rows
+        query_rows
             .rows::<(Option<String>,)>()
             .ok()?
-            .next()
-            .is_none(),
+            .next().is_some(),
     )
 }

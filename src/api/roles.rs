@@ -71,12 +71,10 @@ pub async fn delete_server_role(
     {
         if let Some(role_exists) =
             db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
-        {
-            if !role_exists {
+            && !role_exists {
                 return actix_web::HttpResponse::BadRequest()
                     .body("Role does not exist on this server.");
             }
-        }
 
         if let Some(result) = db::roles::remove_role_from_all_users(
             &scylla_session,

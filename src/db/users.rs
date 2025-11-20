@@ -15,7 +15,7 @@ pub async fn insert_new_user(
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
-                return None;
+                None
             } else {
                 let insert_user_result = session
                     .query_unpaged(
@@ -34,7 +34,7 @@ pub async fn insert_new_user(
                     .map(|_| ())
                     .map_err(From::from);
                 if insert_user_result.is_err() {
-                    return Some(insert_user_result);
+                    Some(insert_user_result)
                 } else {
                     return Some(
                         session
@@ -64,7 +64,7 @@ pub async fn insert_new_user(
                 .map(|_| ())
                 .map_err(From::from);
             if insert_user_result.is_err() {
-                return Some(insert_user_result);
+                Some(insert_user_result)
             } else {
                 return Some(
                     session
@@ -107,7 +107,7 @@ pub async fn get_user_password_hash(
             }
         };
     }
-    if secrets.len() > 0 {
+    if !secrets.is_empty() {
         Some(secrets)
     } else {
         None
@@ -153,7 +153,7 @@ pub async fn fetch_user_info(
             }
         };
     }
-    if user_info.len() > 0 {
+    if !user_info.is_empty() {
         Some(user_info)
     } else {
         None
@@ -170,7 +170,7 @@ pub async fn fetch_user_pfp(
         .ok()?
         .into_rows_result()
         .ok()?;
-    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+    if let Some(row) = (query_rows.rows::<(Option<&str>,)>().ok()?).next() {
         match row.ok()? {
             (Some(pfp),) => {
                 return Some(structures::UserPfp {

@@ -38,13 +38,13 @@ pub async fn get_channel_messages(
             .await
             {
                 Some(messages) => {
-                    return actix_web::HttpResponse::Ok()
-                        .json(&structures::Messages { m_list: messages });
+                    actix_web::HttpResponse::Ok()
+                        .json(&structures::Messages { m_list: messages })
                 }
                 None => {
                     println!("SERVERS FAIL: fetch_server_channel_messages");
-                    return actix_web::HttpResponse::InternalServerError()
-                        .body("Failed to fetch messages");
+                    actix_web::HttpResponse::InternalServerError()
+                        .body("Failed to fetch messages")
                 }
             }
         }
@@ -89,10 +89,10 @@ pub async fn get_channel_messages_migration(
         )
         .await
         {
-            return actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: messages });
+            actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: messages })
         } else {
             println!("SERVERS FAIL: fetch_server_channel_messages");
-            return actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages");
+            actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
         }
     } else {
         println!("SERVERS FAIL: invalid token in fetch_server_channel_messages");
@@ -136,20 +136,20 @@ pub async fn send_message(
             .await
             {
                 Some(_) => {
-                    return actix_web::HttpResponse::Ok()
-                        .json(&structures::Messages { m_list: Vec::new() });
+                    actix_web::HttpResponse::Ok()
+                        .json(&structures::Messages { m_list: Vec::new() })
                 }
                 None => {
                     println!("FAILED AT SEND MESSAGE");
-                    return actix_web::HttpResponse::InternalServerError()
-                        .body("Failed to send message");
+                    actix_web::HttpResponse::InternalServerError()
+                        .body("Failed to send message")
                 }
             }
         }
         None => {
             println!("FAILED AT USER IN SERVER");
-            return actix_web::HttpResponse::Unauthorized()
-                .body("Invalid token or user not in server");
+            actix_web::HttpResponse::Unauthorized()
+                .body("Invalid token or user not in server")
         }
     }
 }
@@ -187,7 +187,7 @@ pub async fn delete_message(
         &scylla_session,
         sid.clone(),
         channel_name.clone(),
-        cql_datetime.clone(),
+        cql_datetime,
         req.username.clone(),
     )
     .await
@@ -203,13 +203,13 @@ pub async fn delete_message(
         )
         .await
         {
-            return actix_web::HttpResponse::Ok().body("Message deleted successfully");
+            actix_web::HttpResponse::Ok().body("Message deleted successfully")
         } else {
-            return actix_web::HttpResponse::InternalServerError().body("Failed to delete message");
+            actix_web::HttpResponse::InternalServerError().body("Failed to delete message")
         }
     } else {
         println!("Unauthorized: not message owner or server owner");
-        return actix_web::HttpResponse::Unauthorized()
-            .body("You are not authorized to delete this message");
+        actix_web::HttpResponse::Unauthorized()
+            .body("You are not authorized to delete this message")
     }
 }

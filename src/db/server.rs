@@ -60,7 +60,7 @@ pub async fn fetch_server_users(
                             username: username.to_string(),
                             bio: user_info[0].bio.clone()?.to_string(),
                             img_url: user_info[0].pfp.clone()?.to_string(),
-                            roles: roles,
+                            roles,
                         });
                     } else {
                         users.push(api::structures::PublicInfoUser {
@@ -78,7 +78,7 @@ pub async fn fetch_server_users(
         }
     }
 
-    if users.len() > 0 { Some(users) } else { None }
+    if !users.is_empty() { Some(users) } else { None }
 }
 
 pub async fn fetch_server_info(
@@ -91,9 +91,9 @@ pub async fn fetch_server_info(
         .ok()?
         .into_rows_result()
         .ok()?;
-    for row in query_rows
+    if let Some(row) = (query_rows
         .rows::<(Option<&str>, Option<&str>, Option<&str>)>()
-        .ok()?
+        .ok()?).next()
     {
         match row.ok()? {
             (Some(name), Some(desc), Some(img_url)) => {
@@ -189,7 +189,7 @@ pub async fn fetch_user_servers(
         }
     }
 
-    if sids.len() > 0 { Some(sids) } else { None }
+    if !sids.is_empty() { Some(sids) } else { None }
 }
 
 pub async fn fetch_server_channels(
@@ -217,7 +217,7 @@ pub async fn fetch_server_channels(
         }
     }
 
-    if channels.len() > 0 {
+    if !channels.is_empty() {
         Some(channels)
     } else {
         None
@@ -271,7 +271,7 @@ pub async fn check_user_is_owner(
         .into_rows_result()
         .ok()?;
 
-    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+    if let Some(row) = (query_rows.rows::<(Option<&str>,)>().ok()?).next() {
         match row.ok()? {
             (Some(owner),) => {
                 if owner == username {

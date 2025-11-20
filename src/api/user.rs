@@ -29,11 +29,11 @@ pub async fn new_user_login(
     let scylla_session = session.lock.lock().unwrap();
     match db::users::insert_new_user(&scylla_session, user_instance).await {
         None => {
-            return actix_web::HttpResponse::Conflict()
-                .body("User already exists or insert failed");
+            actix_web::HttpResponse::Conflict()
+                .body("User already exists or insert failed")
         }
         Some(_) => {
-            return actix_web::HttpResponse::Ok().json(&token_holder);
+            actix_web::HttpResponse::Ok().json(&token_holder)
         }
     }
 }
