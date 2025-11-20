@@ -71,14 +71,14 @@ pub async fn get_channel_messages_migration(
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
-    if let Some(_) = db::prelude::check_user_is_in_server(
+    if db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
     )
-    .await
+    .await.is_some()
     {
         if let Some(messages) = db::messages::fetch_server_channel_messages(
             &scylla_session,
@@ -195,13 +195,13 @@ pub async fn delete_message(
         || db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await
             == Some(true)
     {
-        if let Some(_) = db::messages::delete_message(
+        if db::messages::delete_message(
             &scylla_session,
             sid.clone(),
             cql_datetime,
             channel_name.clone(),
         )
-        .await
+        .await.is_some()
         {
             actix_web::HttpResponse::Ok().body("Message deleted successfully")
         } else {

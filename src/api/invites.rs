@@ -38,14 +38,14 @@ pub async fn send_dm_invite(
             });
         }
         let invite_id = uuid::Uuid::new_v4().to_string();
-        if let Some(_) = db::invites::send_dm_invite(
+        if db::invites::send_dm_invite(
             &scylla_session,
             u1.clone(),
             u2.clone(),
             invite_id.clone(),
             req.sender.clone(),
         )
-        .await
+        .await.is_some()
         {
             actix_web::HttpResponse::Ok().json(structures::SendInviteResp {
                 status: "invite_created".to_string(),

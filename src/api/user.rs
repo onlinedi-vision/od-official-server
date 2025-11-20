@@ -105,13 +105,13 @@ pub async fn token_login(
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         match db::users::get_user_password_hash(&scylla_session, username).await {
             Some(secrets) => {
@@ -175,13 +175,13 @@ pub async fn get_user_servers(
     };
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         match db::server::fetch_user_servers(&scylla_session, req.username.clone()).await {
             Some(sids) => {
@@ -229,13 +229,13 @@ pub async fn get_user_pfp(
     };
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         match db::users::fetch_user_pfp(&scylla_session, &req.username).await {
             Some(pfp_row) => {
@@ -280,13 +280,13 @@ pub async fn set_user_pfp(
     };
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         let img_opt = match req.img_url.as_deref() {
             // If "" -> None

@@ -135,7 +135,7 @@ pub async fn delete_channel(
 
     if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await == Some(true) 
     {
-        if let Some(_) = db::server::delete_channel(&scylla_session, sid, channel_name).await {
+        if (db::server::delete_channel(&scylla_session, sid, channel_name).await).is_some() {
             actix_web::HttpResponse::Ok().body("Channel deleted successfully")
         } 
         else {

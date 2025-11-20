@@ -94,7 +94,7 @@ pub async fn check_user_is_in_server(
     token: String,
     un: String,
 ) -> Option<Vec<structures::UserUsername>> {
-    if let Some(_) = db::prelude::check_token(session, cache, token.clone(), Some(un.clone())).await {
+    if (db::prelude::check_token(session, cache, token.clone(), Some(un.clone())).await).is_some() {
         let query_rows = session
             .query_unpaged(statics::SELECT_SERVER_USER, (sid, un.clone()))
             .await
