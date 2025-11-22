@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install jq
-      run: sudo update
+      run: sudo apt update
     - name: Install jq
       run: sudo apt install -y jq
     - name: Run E2E tests
