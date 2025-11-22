@@ -18,10 +18,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Install jq
-      run: sudo apt update
-    - name: Install jq
-      run: sudo apt install -y jq
     - name: Run E2E tests
       run: |
         ./launch-test-env.sh -vcup 9999 -t 6
