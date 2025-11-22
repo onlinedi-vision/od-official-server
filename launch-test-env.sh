@@ -19,7 +19,11 @@ function cleanup() {
   echo " * killing scylla container * "
   docker kill scylla-division-online
   echo " * killing api process * "
-  kill -9 "$(ps -e | pgrep "${EXECUTABLE_NAME:-api}")"
+  jobs -p
+  jobs -p |  while read -r proc
+  do
+    kill "$proc"
+  done 
 }
 
 function print_usage() {
@@ -85,6 +89,7 @@ if ! [[ "${EXECUTABLE_NAME}" == "api" ]]; then
   "./target/release/${EXECUTABLE_NAME}" > test_env.stdout 2> test_env.stderr &
 else
   ./target/release/api > test_env.stdout 2> test_env.stderr &
+  sleep 1
 fi
 
 if [[ "${s_flag}" == "true" ]]; then

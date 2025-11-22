@@ -1,0 +1,5 @@
+[2025-11-22T19:08:14Z ERROR scylla::cluster::metadata] Could not fetch metadata error=Control connection pool error: The pool is broken; Last connection failed with: No route to host (os error 113)
+
+thread 'main' panicked at src/main.rs:32:109:
+Failed to create Scylla Connection.: MetadataError(ConnectionPoolError(Broken { last_connection_error: IoError(Os { code: 113, kind: HostUnreachable, message: "No route to host" }) }))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
