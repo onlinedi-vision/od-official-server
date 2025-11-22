@@ -20,5 +20,5 @@ jobs:
     - uses: actions/checkout@v4
     - name: Run E2E tests
       run: |
-        ./launch-test-env.sh -vcup 9999 -t 6
+        ./launch-test-env.sh -cup 9999 -t 10 -T 10
 

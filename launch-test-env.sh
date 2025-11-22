@@ -38,6 +38,7 @@ function print_usage() {
   echo "   -p <PORT>   port on which the api should run"
   echo "   -a <NAME>   change name of compiled binary / process (experimental)"
   echo "   -t <SECS>   how many seconds to wait for scylla container to settle (experimental)"
+  echo "   -T <SECS>   how many seconds to wait for API program to settle (experimental)"
 }
 
 trap 'cleanup' SIGINT SIGTERM
@@ -47,7 +48,6 @@ export SALT_ENCRYPTION_KEY='#a1aA3!h4a@ah3a4'
 export SCYLLA_CASSANDRA_PASSWORD='cassandra'
 export API_PORT=1313
 export NO_OF_WORKERS=32
-export SCYLLA_INET=172.17.0.2
 export EXECUTABLE_NAME="api"
 
 c_flag=''
@@ -56,11 +56,13 @@ S_flag=''
 u_flag=''
 cargo_args=''
 scylla_wait_time=''
-while getopts 't:a:vchsSup:' flag; do
+api_wait_time=''
+while getopts 't:T:a:vchsSup:' flag; do
   case "${flag}" in
     c) c_flag='true' ;;
     s) s_flag='true' ;;
     t) scylla_wait_time="${OPTARG:-5}" ;;
+    T) api_wait_time="${OPTARG:-1}" ;;
     v) cargo_args="--verbose";;
     a) export EXECUTABLE_NAME="${OPTARG:-api}";;
     S) S_flag='true' ;;
@@ -88,8 +90,10 @@ if ! [[ "${EXECUTABLE_NAME}" == "api" ]]; then
   mv ./target/release/api "./target/release/${EXECUTABLE_NAME}"
   "./target/release/${EXECUTABLE_NAME}" > test_env.stdout 2> test_env.stderr &
 else
-  ./target/release/api > test_env.stdout 2> test_env.stderr &
-  sleep 1
+  
+  SCYLLA_INET="$(docker inspect scylla-division-online | jq -r '.[0].NetworkSettings.Networks.bridge.IPAddress')" \
+    ./target/release/api > test_env.stdout 2> test_env.stderr &
+  sleep "${api_wait_time:-1}"
 fi
 
 if [[ "${s_flag}" == "true" ]]; then

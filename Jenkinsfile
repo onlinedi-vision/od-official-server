@@ -9,7 +9,7 @@ pipeline {
   stages {
 
 		stage('Run Test Env Tests') {
-			sh './launch-test-env.sh -vcup 9171 -t 6'
+			sh './launch-test-env.sh -cup 9171 -t 10 -T 10'
 		}
 	  
 	  stage('Docker Build') {
