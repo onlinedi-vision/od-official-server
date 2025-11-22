@@ -19,7 +19,7 @@ function cleanup() {
   echo " * killing scylla container * "
   docker kill scylla-division-online
   echo " * killing api process * "
-  kill -9 "$(ps -e | pgrep \"${EXECUTABLE_NAME:-api}\")"
+  kill -9 "$(ps -e | pgrep "${EXECUTABLE_NAME:-api}")"
 }
 
 function print_usage() {
@@ -56,7 +56,7 @@ while getopts 't:a:vchsSup:' flag; do
     c) c_flag='true' ;;
     s) s_flag='true' ;;
     t) scylla_wait_time="${OPTARG:-5}" ;;
-    v) cargo_args="${cargo_args} --verbose";;
+    v) cargo_args="--verbose";;
     a) export EXECUTABLE_NAME="${OPTARG:-api}";;
     S) S_flag='true' ;;
     u) u_flag='true' ;;
@@ -79,7 +79,7 @@ if ! [[ "${S_flag}" == "true" ]]; then
 fi
 
 echo "======================== COMPILING API ========================="
-cargo build --release $cargo_args
+cargo build --release "$cargo_args"
 
 echo "======================= LAUNCHING API ========================="
 echo " * api is lauching on 127.0.0.1:${API_PORT} * "
@@ -98,7 +98,7 @@ fi
 
 if ! [[ "${u_flag}" == "true" ]]; then
   echo "================== LAUNCHING API UNIT TESTS ===================="
-  cargo test $cargo_args 
+  cargo test "$cargo_args"
 fi
 
 echo "================== LAUNCHING API E2E TESTS ===================="
