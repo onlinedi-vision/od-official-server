@@ -25,7 +25,8 @@ function cleanup() {
 function print_usage() {
   echo "Usage: ./launch-test-env.sh [OPTION]"
   echo "OPTION:"
-  echo "   -c          clean the environment (stop processes / kill docker)"
+  echo "   -c          clean the environment (stop processes / kill docker) after everything"
+  echo "               is done working"
   echo "   -h          display this message" 
   echo "   -S          skip scylla DB creation (only use if it already exists)"
   echo "   -s          skip *all* tests, only run programs"
@@ -68,11 +69,6 @@ while getopts 't:a:vchsSup:' flag; do
   esac
 done
 
-if [[ "${c_flag}" == "true" ]]; then
-  cleanup
-  exit 0
-fi
-
 if ! [[ "${S_flag}" == "true" ]]; then
   echo "======================= LAUNCHING SCYLLA ======================="
   ./launch-scylla-locally.sh "${scylla_wait_time}"
@@ -103,3 +99,8 @@ fi
 
 echo "================== LAUNCHING API E2E TESTS ===================="
 ./shadow/e2e.sh "http://localhost:${API_PORT}"
+
+if [[ "${c_flag}" == "true" ]]; then
+  cleanup
+fi
+
