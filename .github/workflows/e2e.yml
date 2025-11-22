@@ -1,0 +1,24 @@
+name: E2E CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:latest
+        options: --privileged
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run E2E tests
+      run: |
+        ./launch-test-env.sh -cup 9999 -t 10 -T 10
+

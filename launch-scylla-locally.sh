@@ -9,6 +9,9 @@
 # And then connect to localhost:9042 to interact
 # with your scylla cluster.
 
+set -o pipefail
+
+wait_for_settle_time="${1:-5}"
 
 CREATE_USERS="
 CREATE KEYSPACE division_online WITH replication = {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1'} AND durable_writes = true AND tablets = {'enabled': false};
@@ -118,6 +121,8 @@ CREATE TABLE division_online.o_servers (
     AND min_index_interval = 128
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
+
+INSERT INTO division_online.o_servers(sid, name) VALUES ('1313', 'division');
 
 CREATE TABLE division_online.o_server_users (
     sid text,
@@ -276,7 +281,7 @@ echo " * Running scylladb/scylla image."
 docker run --name scylla-division-online -d scylladb/scylla --reactor-backend=epoll 
 
 echo " * Waiting for docker container to settle."
-sleep 5
+sleep "${wait_for_settle_time}"
 
 echo " * Creating scylla keyspaces and tables."
 echo "${CREATE_USERS}" | docker exec -i scylla-division-online cqlsh
