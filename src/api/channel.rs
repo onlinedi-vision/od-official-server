@@ -27,21 +27,21 @@ pub async fn get_channels(
     {
         Some(_) => match db::server::fetch_server_channels(&scylla_session, sid).await {
             Some(channels) => {
-                return actix_web::HttpResponse::Ok()
-                    .json(&structures::Channels { c_list: channels });
+                actix_web::HttpResponse::Ok()
+                    .json(&structures::Channels { c_list: channels })
             }
             None => {
                 println!("SERVERS FAIL: fetch_server_channels");
-                return actix_web::HttpResponse::InternalServerError()
-                    .body("Failed to fetch server channels");
+                actix_web::HttpResponse::InternalServerError()
+                    .body("Failed to fetch server channels")
             }
         },
         None => {
             println!("SERVERS FAIL: invalid token in fetch_server_channels");
-            return actix_web::HttpResponse::Unauthorized()
-                .body("Invalid token or user not in server");
+            actix_web::HttpResponse::Unauthorized()
+                .body("Invalid token or user not in server")
         }
-    };
+    }
 }
 
 #[actix_web::post("/servers/{sid}/api/create_channel")]
@@ -87,19 +87,19 @@ pub async fn create_channel(
                     )
                     .await;
 
-                    return actix_web::HttpResponse::Ok().json(&new_token_holder);
+                    actix_web::HttpResponse::Ok().json(&new_token_holder)
                 }
                 None => {
                     println!("SERVERS FAIL: create_channel");
-                    return actix_web::HttpResponse::InternalServerError()
-                        .body("Could not create channel");
+                    actix_web::HttpResponse::InternalServerError()
+                        .body("Could not create channel")
                 }
             }
         }
         None => {
             println!("SERVERS FAIL: invalid token in create_channel");
-            return actix_web::HttpResponse::Unauthorized()
-                .body("Invalid token or user not in server");
+            actix_web::HttpResponse::Unauthorized()
+                .body("Invalid token or user not in server")
         }
     }
 }
@@ -135,15 +135,15 @@ pub async fn delete_channel(
 
     if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await == Some(true) 
     {
-        if let Some(_) = db::server::delete_channel(&scylla_session, sid, channel_name).await {
-            return actix_web::HttpResponse::Ok().body("Channel deleted successfully");
+        if (db::server::delete_channel(&scylla_session, sid, channel_name).await).is_some() {
+            actix_web::HttpResponse::Ok().body("Channel deleted successfully")
         } 
         else {
-            return actix_web::HttpResponse::InternalServerError().body("Failed to delete channel");
+            actix_web::HttpResponse::InternalServerError().body("Failed to delete channel")
         }
     } 
     else {
         println!("Unauthorized: not server owner");
-        return actix_web::HttpResponse::Unauthorized().body("You don't have permission to delete this channel");
+        actix_web::HttpResponse::Unauthorized().body("You don't have permission to delete this channel")
     }
 }

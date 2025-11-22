@@ -51,7 +51,7 @@ pub fn token() -> String {
 
     let mut hasher = sha2::Sha256::new();
 
-    hasher.update(format!("{}", salt,).to_string().into_bytes());
+    hasher.update(salt.to_string().to_string().into_bytes());
 
     format!("{:x}", hasher.finalize())
 }

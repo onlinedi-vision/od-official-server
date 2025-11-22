@@ -15,13 +15,13 @@ pub async fn add_server_role(
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         let role = db::structures::ServerRole {
             role_name: req.role_name.clone(),
@@ -61,22 +61,20 @@ pub async fn delete_server_role(
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         if let Some(role_exists) =
             db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
-        {
-            if !role_exists {
+            && !role_exists {
                 return actix_web::HttpResponse::BadRequest()
                     .body("Role does not exist on this server.");
             }
-        }
 
         if let Some(result) = db::roles::remove_role_from_all_users(
             &scylla_session,
@@ -128,13 +126,13 @@ pub async fn assign_role_to_user(
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         if let Some(role_exists) =
             db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
@@ -177,13 +175,13 @@ pub async fn remove_role_from_user(
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         let user_role = db::structures::UserServerRole {
             server_id: req.server_id.clone(),
@@ -214,13 +212,13 @@ pub async fn fetch_server_roles(
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         query.token.clone(),
         Some(query.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         if let Some(roles) = db::roles::fetch_server_roles(&scylla_session, &query.server_id).await
         {
@@ -242,13 +240,13 @@ pub async fn fetch_user_roles(
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         query.token.clone(),
         Some(query.username.clone()),
     )
-    .await
+    .await.is_some()
     {
         if let Some(roles) = db::roles::fetch_user_roles(
             &scylla_session,

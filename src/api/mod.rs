@@ -16,5 +16,5 @@ pub mod spell_caster;
 
 #[actix_web::get("/api/version")]
 pub async fn get_api_version() -> impl actix_web::Responder {
-    return actix_web::HttpResponse::Ok().body("v0.0.1".to_string());
+    actix_web::HttpResponse::Ok().body("v0.0.1".to_string())
 }

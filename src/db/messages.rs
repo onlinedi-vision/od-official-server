@@ -38,7 +38,7 @@ pub async fn fetch_server_channel_messages_unlimited(
         }
     }
 
-    if messages.len() > 0 {
+    if !messages.is_empty() {
         Some(messages)
     } else {
         None
@@ -96,7 +96,7 @@ pub async fn fetch_server_channel_messages_limited(
         }
     }
 
-    if messages.len() > 0 {
+    if !messages.is_empty() {
         Some(messages)
     } else {
         None
@@ -110,8 +110,8 @@ pub async fn fetch_server_channel_messages(
     limit_option: Option<usize>,
     offset_option: Option<usize>,
 ) -> Option<Vec<db::structures::Message>> {
-    if let Some(limit) = limit_option {
-        if let Some(offset) = offset_option {
+    if let Some(limit) = limit_option
+        && let Some(offset) = offset_option {
             return fetch_server_channel_messages_limited(
                 session,
                 sid.clone(),
@@ -121,7 +121,6 @@ pub async fn fetch_server_channel_messages(
             )
             .await;
         }
-    }
     return fetch_server_channel_messages_unlimited(session, sid.clone(), channel_name.clone())
         .await;
 }
@@ -160,10 +159,10 @@ pub async fn verify_message_ownership(
         .into_rows_result()
         .ok()?;
 
-    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+    if let Some(row) = (query_rows.rows::<(Option<&str>,)>().ok()?).next() {
         match row.ok()? {
             (Some(un),) => {
-                if un.to_string() == username {
+                if un == username {
                     return Some(true);
                 } else {
                     return Some(false);

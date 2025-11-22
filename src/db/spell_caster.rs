@@ -32,7 +32,7 @@ pub async fn spell_check(
         .into_rows_result()
         .ok()?;
 
-    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+    if let Some(row) = (query_rows.rows::<(Option<&str>,)>().ok()?).next() {
         return match row.ok()? {
             (Some(spell),) => Some(spell.to_string()),
             _ => None

@@ -22,9 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let no_of_workers = match env::get_option_env_var("NO_OF_WORKERS") {
         Some(s_workers_count) => {
-            if let Ok(workers_count) = s_workers_count.parse::<usize>() {
-                workers_count
-            } else {512}
+            s_workers_count.parse::<usize>().unwrap_or(512)
         },
         None => 512,
     };

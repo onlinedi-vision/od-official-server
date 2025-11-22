@@ -38,27 +38,27 @@ pub async fn send_dm_invite(
             });
         }
         let invite_id = uuid::Uuid::new_v4().to_string();
-        if let Some(_) = db::invites::send_dm_invite(
+        if db::invites::send_dm_invite(
             &scylla_session,
             u1.clone(),
             u2.clone(),
             invite_id.clone(),
             req.sender.clone(),
         )
-        .await
+        .await.is_some()
         {
-            return actix_web::HttpResponse::Ok().json(structures::SendInviteResp {
+            actix_web::HttpResponse::Ok().json(structures::SendInviteResp {
                 status: "invite_created".to_string(),
                 invite_id: Some(invite_id),
                 u1,
                 u2,
                 sender: Some(req.sender.clone()),
-            });
+            })
         } else {
-            return actix_web::HttpResponse::InternalServerError().body("Failed to create invite");
+            actix_web::HttpResponse::InternalServerError().body("Failed to create invite")
         }
     } else {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
@@ -111,23 +111,23 @@ pub async fn accept_dm_invite(
                     .await;
                 let _ =
                     db::invites::delete_dm_invite(&scylla_session, u1.clone(), u2.clone()).await;
-                return actix_web::HttpResponse::Ok().json(structures::AcceptInviteResp {
+                actix_web::HttpResponse::Ok().json(structures::AcceptInviteResp {
                     status: "dm_created".to_string(),
                     sid: Some(sid),
                     invite_id,
                     u1,
                     u2,
                     sender: Some(sender),
-                });
+                })
             } else {
-                return actix_web::HttpResponse::InternalServerError()
-                    .body("Failed to create DM server");
+                actix_web::HttpResponse::InternalServerError()
+                    .body("Failed to create DM server")
             }
         } else {
-            return actix_web::HttpResponse::NotFound().body("Invite not found");
+            actix_web::HttpResponse::NotFound().body("Invite not found")
         }
     } else {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
@@ -160,17 +160,17 @@ pub async fn reject_dm_invite(
             db::invites::fetch_dm_invite(&scylla_session, u1.clone(), u2.clone()).await
         {
             let _ = db::invites::delete_dm_invite(&scylla_session, u1.clone(), u2.clone()).await;
-            return actix_web::HttpResponse::Ok().json(structures::RejectInviteResp {
+            actix_web::HttpResponse::Ok().json(structures::RejectInviteResp {
                 status: "invite_rejected".to_string(),
                 invite_id,
                 u1,
                 u2,
-            });
+            })
         } else {
-            return actix_web::HttpResponse::NotFound().body("Invite not found");
+            actix_web::HttpResponse::NotFound().body("Invite not found")
         }
     } else {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
@@ -201,14 +201,14 @@ pub async fn fetch_pending_dm_invites(
                 .map(|(invite_id, sender)| structures::PendingInvite { invite_id, sender })
                 .collect();
 
-            return actix_web::HttpResponse::Ok()
-                .json(structures::PendingInvitesResp { invites: pending });
+            actix_web::HttpResponse::Ok()
+                .json(structures::PendingInvitesResp { invites: pending })
         } else {
-            return actix_web::HttpResponse::Ok().json(structures::PendingInvitesResp {
+            actix_web::HttpResponse::Ok().json(structures::PendingInvitesResp {
                 invites: Vec::new(),
-            });
+            })
         }
     } else {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
