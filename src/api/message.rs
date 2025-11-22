@@ -110,6 +110,7 @@ pub async fn send_message(
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
 
+    // test
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
 
