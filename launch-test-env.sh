@@ -79,7 +79,7 @@ if ! [[ "${S_flag}" == "true" ]]; then
 fi
 
 echo "======================== COMPILING API ========================="
-cargo build --release "$cargo_args"
+cargo build --release $cargo_args
 
 echo "======================= LAUNCHING API ========================="
 echo " * api is lauching on 127.0.0.1:${API_PORT} * "
@@ -98,7 +98,7 @@ fi
 
 if ! [[ "${u_flag}" == "true" ]]; then
   echo "================== LAUNCHING API UNIT TESTS ===================="
-  cargo test "$cargo_args"
+  cargo test $cargo_args
 fi
 
 echo "================== LAUNCHING API E2E TESTS ===================="
