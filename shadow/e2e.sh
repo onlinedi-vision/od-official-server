@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 HOST=${1:-https://onlinedi.vision}
+printf "HOST: %s\n" "${HOST}"
 QA_USERNAME=qa_e2e_user-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13)
 
 printf "QA_USERNAME: %s\n" "${QA_USERNAME}"
@@ -113,3 +114,4 @@ assert 'Server deleted successfully' "${payload}" "/servers/{sid}/api/delete_ser
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is _NOT_ owner)" ""
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/1313/api/delete_server"  )
 assert "You don't have permission to delete this server" "${payload}" "/servers/{sid}/api/delete_server"
+
