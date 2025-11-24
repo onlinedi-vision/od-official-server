@@ -16,8 +16,11 @@ COPY --from=cacher /app/target target/
 COPY . .
 RUN cargo build --release
 
-FROM rust:1.91-alpine AS runtime
+FROM rust:1.91-slim AS runtime
 WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/api /usr/local/bin/
 
