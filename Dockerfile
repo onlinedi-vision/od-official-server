@@ -16,7 +16,7 @@ COPY --from=cacher /app/target target/
 COPY . .
 RUN cargo build --release
 
-FROM rust:1.91 AS runtime
+FROM rust:1.91-slim AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
