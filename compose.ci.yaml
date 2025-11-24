@@ -2,7 +2,12 @@ services:
   od-official-server:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.test
+      args:
+        - SALT_ENCRYPTION_KEY=${SALT_ENCRYPTION_KEY}
+        - SALT_ENCRYPTION_IV=${SALT_ENCRYPTION_IV}
+        - SCYLLA_CASSANDRA_PASSWORD=${SCYLLA_CASSANDRA_PASSWORD}
+        - API_PORT=1313              
     mem_limit: 1G
     cpus: '2'
     ports: 

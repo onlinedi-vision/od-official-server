@@ -10,6 +10,6 @@ ENV SCYLLA_CASSANDRA_PASSWORD $SCYLLA_CASSANDRA_PASSWORD
 LABEL maintainer=kickhead13<ana.alexandru.gabriel@proton.me>
 
 COPY . .
-RUN cargo build --release
+RUN cargo test && cargo build --release
 
 ENTRYPOINT ["./target/release/api"]
