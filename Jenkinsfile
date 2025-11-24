@@ -38,9 +38,4 @@ pipeline {
 			}
 		}
   }
-	post {
-		always {
-			archiveArtifacts artifacts: 'test_env*'
-		}
-	}
 }
