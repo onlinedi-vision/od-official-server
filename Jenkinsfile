@@ -8,12 +8,6 @@ pipeline {
 
   stages {
 
-		stage('Run Test Env Tests') {
-			steps {
-				sh 'ls'
-			}
-		}
-	  
 	  stage('Docker Build') {
 		  steps {
 				withCredentials([vaultString(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
