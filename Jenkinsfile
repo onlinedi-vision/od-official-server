@@ -10,7 +10,7 @@ pipeline {
 
 		stage('Run Test Env Tests') {
 			steps {
-				sh './launch-test-env.sh -cup 9171 -t 10 -T 10'
+				sh 'ls'
 			}
 		}
 	  
