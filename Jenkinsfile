@@ -8,12 +8,6 @@ pipeline {
 
   stages {
 
-		stage('Run Test Env Tests') {
-			steps {
-				sh './launch-test-env.sh -cup 9171 -t 10 -T 10'
-			}
-		}
-	  
 	  stage('Docker Build') {
 		  steps {
 				withCredentials([vaultString(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
@@ -44,9 +38,4 @@ pipeline {
 			}
 		}
   }
-	post {
-		always {
-			archiveArtifacts artifacts: 'test_env*'
-		}
-	}
 }

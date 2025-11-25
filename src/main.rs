@@ -10,6 +10,7 @@ use actix_web_ratelimit::{config::RateLimitConfig, store::MemoryStore, RateLimit
 static API_RATELIMIT_COUNT: usize = 200;
 static API_RATELIMIT_WINDOW_SECONDS: u64 = 60;
 
+
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
@@ -50,6 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .app_data(cache.clone())
 
             .service(api::get_api_version)
+            .service(api::get_api_time)
             .service(api::user::new_user_login)                     // API route for signing up
             .service(api::user::try_login)
             .service(api::user::get_user_servers)
