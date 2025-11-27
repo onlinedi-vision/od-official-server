@@ -87,7 +87,7 @@ echo "========================= KILLING API ========================="
 cat "$PIDS_FILE"
 cat < "$PIDS_FILE" |  while read -r proc
 do
-  kill "$proc" || rm "$PIDS_FILE"
+  kill "$proc" || echo "failed to kill proccess $PIDS_FILE"
 done 
 
 if ! [[ "${S_flag}" == "true" ]]; then
