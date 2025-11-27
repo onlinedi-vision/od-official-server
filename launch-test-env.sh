@@ -14,13 +14,19 @@
 
 set -eu
 
+PIDS_FILE=".pids"
+
+if ! [ -e "$PIDS_FILE" ]; then
+  touch "$PIDS_FILE"
+fi
+
 function cleanup() {
   echo "======================= CLEANING UP ========================"
   echo " * killing scylla container * "
   docker kill scylla-division-online
   echo " * killing api process * "
-  jobs -p
-  jobs -p |  while read -r proc
+  cat "$PIDS_FILE"
+  cat < "$PIDS_FILE" |  while read -r proc
   do
     kill "$proc"
   done 
@@ -31,6 +37,7 @@ function print_usage() {
   echo "OPTION:"
   echo "   -c          clean the environment (stop processes / kill docker) after everything"
   echo "               is done working"
+  echo "   -C          cleanup all processes and quit"
   echo "   -h          display this message" 
   echo "   -S          skip scylla DB creation (only use if it already exists)"
   echo "   -s          skip *all* tests, only run programs"
@@ -57,9 +64,10 @@ u_flag=''
 cargo_args=''
 scylla_wait_time=''
 api_wait_time=''
-while getopts 't:T:a:vchsSup:' flag; do
+while getopts 't:T:a:vchsCSup:' flag; do
   case "${flag}" in
     c) c_flag='true' ;;
+    C) cleanup && exit 1 ;;
     s) s_flag='true' ;;
     t) scylla_wait_time="${OPTARG:-5}" ;;
     T) api_wait_time="${OPTARG:-1}" ;;
@@ -74,6 +82,13 @@ while getopts 't:T:a:vchsSup:' flag; do
        exit 1 ;;
   esac
 done
+
+echo "========================= KILLING API ========================="
+cat "$PIDS_FILE"
+cat < "$PIDS_FILE" |  while read -r proc
+do
+  kill "$proc" || rm "$PIDS_FILE"
+done 
 
 if ! [[ "${S_flag}" == "true" ]]; then
   echo "======================= LAUNCHING SCYLLA ======================="
@@ -93,6 +108,7 @@ else
   
   SCYLLA_INET="$(docker inspect scylla-division-online | jq -r '.[0].NetworkSettings.Networks.bridge.IPAddress')" \
     ./target/release/api > test_env.stdout 2> test_env.stderr &
+  jobs -p > "$PIDS_FILE"
   sleep "${api_wait_time:-1}"
 fi
 

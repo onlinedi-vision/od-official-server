@@ -78,14 +78,19 @@ token=$(post "{\"username\":\"${QA_USERNAME}\", \"password\":\"${QA_E2E_ACCOUNT_
 assert_neq "null" "${token}" "/api/new_user"
 
 eetest "/api/create_server"
-token=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER\", \"img_url\":\"L\"}" "/api/create_server" | jq '.token')
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER\", \"img_url\":\"L\"}" "/api/create_server")
+token=$(echo "$payload"  | jq '.token')
+sid1=$(echo "$payload" | jq '.sid')
 assert_neq "null" "${token}" "/api/create_server"
 
 eetest "/api/get_user_servers"
 user_servers_payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/api/get_user_servers")
 sid=$(echo -e "${user_servers_payload}" | jq -r '.s_list[0]')
 token=$(echo -e "${user_servers_payload}" | jq '.token')
-assert_neq "null" "${token}" "/api/create_server"
+assert_neq "null" "${token}" "/api/get_user_servers"
+
+eetest "/api/create_server -- check api sent SID"
+assert "$sid1" "\"$sid\"" "/api/create_server -- check api sent SID"
 
 eetest "/servers/{sid}/api/get_server_info (part2) -- name" ""
 get_server_info=$(get "/servers/${sid}/api/get_server_info"  | jq '.name')
@@ -114,4 +119,3 @@ assert 'Server deleted successfully' "${payload}" "/servers/{sid}/api/delete_ser
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is _NOT_ owner)" ""
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/1313/api/delete_server"  )
 assert "You don't have permission to delete this server" "${payload}" "/servers/{sid}/api/delete_server"
-
