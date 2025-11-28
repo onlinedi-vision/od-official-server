@@ -67,7 +67,7 @@ api_wait_time=''
 while getopts 't:T:a:vchsCSup:' flag; do
   case "${flag}" in
     c) c_flag='true' ;;
-    C) cleanup && exit 1 ;;
+    C) cleanup && exit 0 || exit 1;;
     s) s_flag='true' ;;
     t) scylla_wait_time="${OPTARG:-5}" ;;
     T) api_wait_time="${OPTARG:-1}" ;;

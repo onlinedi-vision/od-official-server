@@ -83,6 +83,14 @@ token=$(echo "$payload"  | jq '.token')
 sid1=$(echo "$payload" | jq '.sid')
 assert_neq "null" "${token}" "/api/create_server"
 
+eetest "/api/am_i_in_server"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"sid\":${sid1}}" "/api/am_i_in_server")
+assert "Yes you are part of the server." "${payload}" "/api/am_i_in_server"
+
+eetest "/api/am_i_in_server -- (not in server)"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"sid\":\"AAA\"}" "/api/am_i_in_server")
+assert "You are not part of this server." "${payload}" "/api/am_i_in_server -- (not in server)"
+
 eetest "/api/get_user_servers"
 user_servers_payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/api/get_user_servers")
 sid=$(echo -e "${user_servers_payload}" | jq -r '.s_list[0]')
