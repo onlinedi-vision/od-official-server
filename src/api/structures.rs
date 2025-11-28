@@ -65,6 +65,12 @@ pub struct TokenHolder {
     pub token: String,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct ServerCreatedResponse {
+    pub token: String,
+    pub sid: String
+}
+
 #[derive(serde::Serialize)]
 pub struct Status {
     pub status: String,
