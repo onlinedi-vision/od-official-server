@@ -64,6 +64,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::server::get_server_users)                 
             .service(api::server::get_server_info)
             .service(api::server::delete_server)
+            .service(api::server::am_i_in_server)
             
             .service(api::invites::send_dm_invite)
             .service(api::invites::accept_dm_invite)

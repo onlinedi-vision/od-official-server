@@ -116,9 +116,9 @@ pub async fn check_user_is_in_server(
                 }
             }
         }
-        Some(ret_vec)
-    } else {
-        println!("????????? TOKEN");
-        None
-    }
+        if ret_vec.len() > 0 {
+            return Some(ret_vec);
+        }
+    } 
+    None
 }
