@@ -53,6 +53,13 @@ pub struct TokenUser {
 }
 
 #[derive(serde::Deserialize)]
+pub struct TokenUserServer {
+    pub username: String,
+    pub token: String,
+    pub sid: String,
+}
+
+#[derive(serde::Deserialize)]
 pub struct LimitMessageTokenUser {
     pub username: String,
     pub token: String,
