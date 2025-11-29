@@ -54,6 +54,11 @@ pub async fn create_channel(
     let sid: String = http.match_info().get("sid").unwrap().to_string();
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
+    if req.channel_name.len() > db::statics::MAX_CHANNEL_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to create channel: Channel name longer than {}", db::statics::MAX_CHANNEL_LENGTH));
+		}
+		
     match db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,

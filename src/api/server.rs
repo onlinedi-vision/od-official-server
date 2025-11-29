@@ -14,10 +14,13 @@ pub async fn create_server(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
     req: actix_web::web::Json<structures::CreateServer>,
 ) -> impl actix_web::Responder {
-    
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
-
+	if req.name.len() > db::statics::MAX_SERVER_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to create server: Server name longer than {}", db::statics::MAX_SERVER_LENGTH));
+		}
+		
     if db::prelude::check_token(
         &scylla_session,
         &cache,

@@ -1,6 +1,10 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+pub static MAX_MESSAGE_LENGTH: usize = 2000;
+pub static MAX_CHANNEL_LENGTH: usize = 20;
+pub static MAX_SERVER_LENGTH: usize = 30;
+
 pub static SELECT_USER_USERNAME: &str = r#"
     SELECT username FROM division_online.users
         WHERE username = ?;
