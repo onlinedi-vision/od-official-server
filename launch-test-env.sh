@@ -25,6 +25,8 @@ function cleanup() {
   echo " * killing scylla container * "
   docker kill scylla-division-online
   echo " * killing api process * "
+
+
   cat "$PIDS_FILE"
   cat < "$PIDS_FILE" |  while read -r proc
   do

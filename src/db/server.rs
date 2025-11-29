@@ -11,6 +11,9 @@ pub async fn create_server(
     name: &String,
     owner: String,
 ) -> Option<Result<()>> {
+	if name.len() > statics::MAX_SERVER_LENGTH {
+		return Some(Err(Box::from(format!("Server name exceeds the maximum length of {}", statics::MAX_SERVER_LENGTH))));
+	}
     Some(
         session
             .query_unpaged(

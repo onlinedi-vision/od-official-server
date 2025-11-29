@@ -112,8 +112,13 @@ pub async fn send_message(
 
     let scylla_session = session.lock.lock().unwrap();
     let cache = shared_cache.lock.lock().unwrap();
-
+	
+	if req.m_content.len() > db::statics::MAX_MESSAGE_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to send message: Message longer than {}", db::statics::MAX_MESSAGE_LENGTH));
+		}
     match db::prelude::check_user_is_in_server(
+    
         &scylla_session,
         &cache,
         sid.clone(),
