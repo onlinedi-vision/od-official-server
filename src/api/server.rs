@@ -42,14 +42,15 @@ pub async fn create_server(
         {
             let _ =
                 db::server::create_channel(&scylla_session, sid.clone(), "info".to_string()).await;
-            let new_token_holder = structures::TokenHolder {
+            let server_created = structures::ServerCreatedResponse {
                 token: security::token(),
+                sid: sid.clone()
             };
             let _ = db::prelude::insert_user_token(
                 &scylla_session,
                 &cache,
                 db::structures::KeyUser {
-                    key: Some(security::armor_token(new_token_holder.token.clone())),
+                    key: Some(security::armor_token(server_created.token.clone())),
                     username: Some(req.username.clone()),
                 },
             )
@@ -73,7 +74,7 @@ pub async fn create_server(
 
             if db::server::add_user_to_server(&scylla_session, sid, req.username.clone()).await.is_some()
             {
-                actix_web::HttpResponse::Ok().json(&new_token_holder)
+                actix_web::HttpResponse::Ok().json(&server_created)
             } else {
                 println!("SERVERS FAIL: add_user_to_server");
                 actix_web::HttpResponse::InternalServerError()
@@ -228,4 +229,25 @@ pub async fn delete_server(
         println!("Unauthorized: not server owner");
         actix_web::HttpResponse::Unauthorized().body("You don't have permission to delete this server")
     }
+}
+
+#[actix_web::post("/api/am_i_in_server")]
+pub async fn am_i_in_server(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    req: actix_web::web::Json<structures::TokenUserServer>,
+) -> impl actix_web::Responder {
+
+    let scylla_session = session.lock.lock().unwrap();
+    let cache = shared_cache.lock.lock().unwrap();
+    
+    if db::prelude::check_user_is_in_server(&scylla_session, &cache, req.sid.clone(), req.token.clone(), req.username.clone())
+        .await
+        .is_some()
+    {
+        return actix_web::HttpResponse::Ok().body("Yes you are part of the server.");
+    }
+    
+    actix_web::HttpResponse::NotFound().body("You are not part of this server.")
+    
 }

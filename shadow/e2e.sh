@@ -78,18 +78,32 @@ token=$(post "{\"username\":\"${QA_USERNAME}\", \"password\":\"${QA_E2E_ACCOUNT_
 assert_neq "null" "${token}" "/api/new_user"
 
 eetest "/api/create_server"
-token=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER\", \"img_url\":\"L\"}" "/api/create_server" | jq '.token')
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER\", \"img_url\":\"L\"}" "/api/create_server")
+token=$(echo "$payload"  | jq '.token')
+sid1=$(echo "$payload" | jq '.sid')
 assert_neq "null" "${token}" "/api/create_server"
+
 
 eetest "/api/create_server (part2) -- max_server_length"
 nutoken=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER_BUT_A_LITTLE_LONGER_THAN_MAX\", \"img_url\":\"L\"}" "/api/create_server" )
 assert_match "Failed to create server: Server name longer than "* "${nutoken}" "/api/create_server"
 
+eetest "/api/am_i_in_server"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"sid\":${sid1}}" "/api/am_i_in_server")
+assert "Yes you are part of the server." "${payload}" "/api/am_i_in_server"
+
+eetest "/api/am_i_in_server -- (not in server)"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"sid\":\"AAA\"}" "/api/am_i_in_server")
+assert "You are not part of this server." "${payload}" "/api/am_i_in_server -- (not in server)"
+
 eetest "/api/get_user_servers"
 user_servers_payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/api/get_user_servers")
 sid=$(echo -e "${user_servers_payload}" | jq -r '.s_list[0]')
 token=$(echo -e "${user_servers_payload}" | jq '.token')
-assert_neq "null" "${token}" "/api/create_server"
+assert_neq "null" "${token}" "/api/get_user_servers"
+
+eetest "/api/create_server -- check api sent SID"
+assert "$sid1" "\"$sid\"" "/api/create_server -- check api sent SID"
 
 eetest "/servers/{sid}/api/get_server_info (part2) -- name" ""
 get_server_info=$(get "/servers/${sid}/api/get_server_info"  | jq '.name')
@@ -130,4 +144,3 @@ assert 'Server deleted successfully' "${payload}" "/servers/{sid}/api/delete_ser
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is _NOT_ owner)" ""
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/1313/api/delete_server"  )
 assert "You don't have permission to delete this server" "${payload}" "/servers/{sid}/api/delete_server"
-
