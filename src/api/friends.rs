@@ -8,20 +8,8 @@ pub async fn fetch_friend_list(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock posioned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -60,20 +48,8 @@ pub async fn delete_friend(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::FriendListReq>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock posioned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,

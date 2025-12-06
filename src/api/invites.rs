@@ -8,20 +8,8 @@ pub async fn send_dm_invite(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SendInviteReq>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -80,20 +68,8 @@ pub async fn accept_dm_invite(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::AcceptInviteReq>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -159,20 +135,8 @@ pub async fn reject_dm_invite(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::RejectInviteReq>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -213,20 +177,8 @@ pub async fn fetch_pending_dm_invites(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,

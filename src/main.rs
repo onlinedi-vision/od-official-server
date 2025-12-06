@@ -1,4 +1,5 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
+#[macro_use]
 mod api;
 mod security;
 mod db;

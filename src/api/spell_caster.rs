@@ -12,13 +12,7 @@ pub async fn spell_cast(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<structures::SpellCaster>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisioned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
 
     let new_key = security::token();
     let new_spell = security::token();
@@ -47,20 +41,8 @@ pub async fn spell_check(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SpellChecker>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisioned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,

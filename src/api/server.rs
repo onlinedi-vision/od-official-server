@@ -14,20 +14,8 @@ pub async fn create_server(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::CreateServer>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisioned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -108,26 +96,9 @@ pub async fn join_server(
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = match http.match_info().get("sid") {
-        Some(sid) => sid.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
-        }
-    };
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisioned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let sid: String = param!(http, "sid");
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -181,26 +152,9 @@ pub async fn get_server_users(
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = match http.match_info().get("sid") {
-        Some(sid) => sid.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
-        }
-    };
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisioned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let sid: String = param!(http, "sid");
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -227,19 +181,8 @@ pub async fn get_server_info(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = match http.match_info().get("sid") {
-        Some(sid) => sid.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
-        }
-    };
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisioned.");
-        }
-    };
+    let sid: String = param!(http, "sid");
+    let scylla_session = scylla_session!(session);
     if let Some(server_info) = db::server::fetch_server_info(&scylla_session, sid.clone()).await {
         actix_web::HttpResponse::Ok().json(&server_info)
     } else {
@@ -256,20 +199,8 @@ pub async fn delete_server(
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisioned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -283,12 +214,7 @@ pub async fn delete_server(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    let sid: String = match http.match_info().get("sid") {
-        Some(sid) => sid.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
-        }
-    };
+    let sid: String = param!(http, "sid");
 
     if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await
         == Some(true)
@@ -314,20 +240,8 @@ pub async fn am_i_in_server(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUserServer>,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisioned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,

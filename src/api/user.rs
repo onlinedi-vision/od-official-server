@@ -26,13 +26,7 @@ pub async fn new_user_login(
         security::aes::encrypt(&password_salt),
     );
 
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
     match db::users::insert_new_user(&scylla_session, user_instance).await {
         None => actix_web::HttpResponse::Conflict().body("User already exists or insert failed"),
         Some(_) => actix_web::HttpResponse::Ok().json(&token_holder),
@@ -51,20 +45,8 @@ pub async fn try_login(
     let username = db::structures::UserUsername {
         username: Some(req.username.clone()),
     };
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
     match db::users::get_user_password_hash(&scylla_session, username).await {
         Some(secrets) => {
             let password_hash = secrets[0].password_hash.clone().unwrap();
@@ -115,20 +97,8 @@ pub async fn token_login(
         username: Some(req.username.clone()),
     };
 
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -199,20 +169,8 @@ pub async fn get_user_servers(
     let username = db::structures::UserUsername {
         username: Some(req.username.clone()),
     };
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
@@ -266,20 +224,8 @@ pub async fn get_user_pfp(
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
@@ -330,20 +276,8 @@ pub async fn set_user_pfp(
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
     if db::prelude::check_token(
         &scylla_session,
         &cache,

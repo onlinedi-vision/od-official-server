@@ -16,32 +16,10 @@ pub async fn get_channel_messages(
     req: actix_web::web::Json<TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = match http.match_info().get("sid") {
-        Some(sid) => sid.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
-        }
-    };
-    let channel_name: String = match http.match_info().get("channel_name") {
-        Some(channel_name) => channel_name.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `channel_name` parameter");
-        }
-    };
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let sid = param!(http, "sid");
+    let channel_name = param!(http, "channel_name");
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
     match db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
@@ -84,18 +62,8 @@ pub async fn get_channel_messages_migration(
     req: actix_web::web::Json<LimitMessageTokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = match http.match_info().get("sid") {
-        Some(sid) => sid.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
-        }
-    };
-    let channel_name: String = match http.match_info().get("channel_name") {
-        Some(channel_name) => channel_name.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `channel_name` parameter");
-        }
-    };
+    let sid = param!(http, "sid");
+    let channel_name = param!(http, "channel_name");
 
     let limit: usize = match req.limit.parse::<usize>() {
         Ok(value) => value,
@@ -112,20 +80,8 @@ pub async fn get_channel_messages_migration(
         }
     };
 
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -164,33 +120,11 @@ pub async fn send_message(
     req: actix_web::web::Json<structures::SendMessage>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = match http.match_info().get("sid") {
-        Some(sid) => sid.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
-        }
-    };
-    let channel_name: String = match http.match_info().get("channel_name") {
-        Some(channel_name) => channel_name.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `channel_name` parameter");
-        }
-    };
+    let sid = param!(http, "sid");
+    let channel_name = param!(http, "channel_name");
 
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     match db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -237,20 +171,8 @@ pub async fn delete_message(
     req: actix_web::web::Json<structures::DeleteMessage>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let scylla_session = match session.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: scylla session lock poisoned.");
-        }
-    };
-    let cache = match shared_cache.lock.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Internal error: cache lock poisoned.");
-        }
-    };
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -264,18 +186,8 @@ pub async fn delete_message(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    let sid: String = match http.match_info().get("sid") {
-        Some(sid) => sid.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
-        }
-    };
-    let channel_name: String = match http.match_info().get("channel_name") {
-        Some(channel_name) => channel_name.to_string(),
-        None => {
-            return actix_web::HttpResponse::BadRequest().body("missing `channel_name` parameter");
-        }
-    };
+    let sid = param!(http, "sid");
+    let channel_name = param!(http, "channel_name");
 
     let dt = match chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f") {
         Ok(dt) => dt,
