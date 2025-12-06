@@ -1,4 +1,6 @@
 #![allow(unused_imports)]
+use actix_web::guard;
+
 use crate::api::structures;
 use crate::api::structures::{LimitMessageTokenUser, TokenHolder, TokenLoginUser, TokenUser};
 use crate::db;
@@ -14,10 +16,32 @@ pub async fn get_channel_messages(
     req: actix_web::web::Json<TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
-    let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let sid: String = match http.match_info().get("sid") {
+        Some(sid) => sid.to_string(),
+        None => {
+            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
+        }
+    };
+    let channel_name: String = match http.match_info().get("channel_name") {
+        Some(channel_name) => channel_name.to_string(),
+        None => {
+            return actix_web::HttpResponse::BadRequest().body("missing `channel_name` parameter");
+        }
+    };
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
     match db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
@@ -38,13 +62,11 @@ pub async fn get_channel_messages(
             .await
             {
                 Some(messages) => {
-                    actix_web::HttpResponse::Ok()
-                        .json(&structures::Messages { m_list: messages })
+                    actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: messages })
                 }
                 None => {
                     println!("SERVERS FAIL: fetch_server_channel_messages");
-                    actix_web::HttpResponse::InternalServerError()
-                        .body("Failed to fetch messages")
+                    actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
                 }
             }
         }
@@ -62,14 +84,48 @@ pub async fn get_channel_messages_migration(
     req: actix_web::web::Json<LimitMessageTokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
-    let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
+    let sid: String = match http.match_info().get("sid") {
+        Some(sid) => sid.to_string(),
+        None => {
+            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
+        }
+    };
+    let channel_name: String = match http.match_info().get("channel_name") {
+        Some(channel_name) => channel_name.to_string(),
+        None => {
+            return actix_web::HttpResponse::BadRequest().body("missing `channel_name` parameter");
+        }
+    };
 
-    let limit: usize = req.limit.clone().parse::<usize>().unwrap();
-    let offset: usize = req.offset.clone().parse::<usize>().unwrap();
+    let limit: usize = match req.limit.parse::<usize>() {
+        Ok(value) => value,
+        Err(_) => {
+            return actix_web::HttpResponse::BadRequest()
+                .body("invalid `limit` (must be positive integer)");
+        }
+    };
+    let offset: usize = match req.offset.parse::<usize>() {
+        Ok(value) => value,
+        Err(_) => {
+            return actix_web::HttpResponse::BadRequest()
+                .body("invalid `offset` (must be positive integer)");
+        }
+    };
 
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -78,7 +134,8 @@ pub async fn get_channel_messages_migration(
         req.token.clone(),
         req.username.clone(),
     )
-    .await.is_some()
+    .await
+    .is_some()
     {
         if let Some(messages) = db::messages::fetch_server_channel_messages(
             &scylla_session,
@@ -107,11 +164,33 @@ pub async fn send_message(
     req: actix_web::web::Json<structures::SendMessage>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
-    let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
+    let sid: String = match http.match_info().get("sid") {
+        Some(sid) => sid.to_string(),
+        None => {
+            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
+        }
+    };
+    let channel_name: String = match http.match_info().get("channel_name") {
+        Some(channel_name) => channel_name.to_string(),
+        None => {
+            return actix_web::HttpResponse::BadRequest().body("missing `channel_name` parameter");
+        }
+    };
 
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     match db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -136,20 +215,17 @@ pub async fn send_message(
             .await
             {
                 Some(_) => {
-                    actix_web::HttpResponse::Ok()
-                        .json(&structures::Messages { m_list: Vec::new() })
+                    actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: Vec::new() })
                 }
                 None => {
                     println!("FAILED AT SEND MESSAGE");
-                    actix_web::HttpResponse::InternalServerError()
-                        .body("Failed to send message")
+                    actix_web::HttpResponse::InternalServerError().body("Failed to send message")
                 }
             }
         }
         None => {
             println!("FAILED AT USER IN SERVER");
-            actix_web::HttpResponse::Unauthorized()
-                .body("Invalid token or user not in server")
+            actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
         }
     }
 }
@@ -161,8 +237,20 @@ pub async fn delete_message(
     req: actix_web::web::Json<structures::DeleteMessage>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     if db::prelude::check_token(
         &scylla_session,
@@ -176,10 +264,26 @@ pub async fn delete_message(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
-    let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
+    let sid: String = match http.match_info().get("sid") {
+        Some(sid) => sid.to_string(),
+        None => {
+            return actix_web::HttpResponse::BadRequest().body("missing `sid` parameter");
+        }
+    };
+    let channel_name: String = match http.match_info().get("channel_name") {
+        Some(channel_name) => channel_name.to_string(),
+        None => {
+            return actix_web::HttpResponse::BadRequest().body("missing `channel_name` parameter");
+        }
+    };
 
-    let dt = chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f").unwrap();
+    let dt = match chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f") {
+        Ok(dt) => dt,
+        Err(_) => {
+            return actix_web::HttpResponse::BadRequest()
+                .body("invalid `datetime` format, expected `%Y-%m-%d %H:%M:%S%.f`");
+        }
+    };
     let millis = dt.and_utc().timestamp_millis();
     let cql_datetime = scylla::value::CqlTimestamp(millis);
 
@@ -201,7 +305,8 @@ pub async fn delete_message(
             cql_datetime,
             channel_name.clone(),
         )
-        .await.is_some()
+        .await
+        .is_some()
         {
             actix_web::HttpResponse::Ok().body("Message deleted successfully")
         } else {

@@ -8,12 +8,23 @@ use crate::security;
 #[actix_web::post("/api/add_server_role")]
 pub async fn add_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::ServerRoleRequest>,
 ) -> impl actix_web::Responder {
-    
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     if db::prelude::check_token(
         &scylla_session,
@@ -21,7 +32,8 @@ pub async fn add_server_role(
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await.is_some()
+    .await
+    .is_some()
     {
         let role = db::structures::ServerRole {
             role_name: req.role_name.clone(),
@@ -54,12 +66,23 @@ pub async fn add_server_role(
 #[actix_web::post("/api/delete_server_role")]
 pub async fn delete_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::DeleteServerRoleRequest>,
 ) -> impl actix_web::Responder {
-
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     if db::prelude::check_token(
         &scylla_session,
@@ -67,14 +90,16 @@ pub async fn delete_server_role(
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await.is_some()
+    .await
+    .is_some()
     {
         if let Some(role_exists) =
             db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
-            && !role_exists {
-                return actix_web::HttpResponse::BadRequest()
-                    .body("Role does not exist on this server.");
-            }
+            && !role_exists
+        {
+            return actix_web::HttpResponse::BadRequest()
+                .body("Role does not exist on this server.");
+        }
 
         if let Some(result) = db::roles::remove_role_from_all_users(
             &scylla_session,
@@ -119,12 +144,23 @@ pub async fn delete_server_role(
 #[actix_web::post("/api/assign_role_to_user")]
 pub async fn assign_role_to_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::UserServerRoleRequest>,
 ) -> impl actix_web::Responder {
-
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     if db::prelude::check_token(
         &scylla_session,
@@ -132,7 +168,8 @@ pub async fn assign_role_to_user(
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await.is_some()
+    .await
+    .is_some()
     {
         if let Some(role_exists) =
             db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
@@ -168,12 +205,23 @@ pub async fn assign_role_to_user(
 #[actix_web::post("/api/remove_role_from_user")]
 pub async fn remove_role_from_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::UserServerRoleRequest>,
 ) -> impl actix_web::Responder {
-
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     if db::prelude::check_token(
         &scylla_session,
@@ -181,7 +229,8 @@ pub async fn remove_role_from_user(
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await.is_some()
+    .await
+    .is_some()
     {
         let user_role = db::structures::UserServerRole {
             server_id: req.server_id.clone(),
@@ -205,12 +254,23 @@ pub async fn remove_role_from_user(
 #[actix_web::get("/api/fetch_server_roles")]
 pub async fn fetch_server_roles(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     query: actix_web::web::Query<structures::ServerRoleQuery>,
 ) -> impl actix_web::Responder {
-    
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     if db::prelude::check_token(
         &scylla_session,
@@ -218,7 +278,8 @@ pub async fn fetch_server_roles(
         query.token.clone(),
         Some(query.username.clone()),
     )
-    .await.is_some()
+    .await
+    .is_some()
     {
         if let Some(roles) = db::roles::fetch_server_roles(&scylla_session, &query.server_id).await
         {
@@ -233,12 +294,23 @@ pub async fn fetch_server_roles(
 #[actix_web::get("/api/fetch_user_roles")]
 pub async fn fetch_user_roles(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     query: actix_web::web::Query<structures::UserRoleQuery>,
 ) -> impl actix_web::Responder {
-    
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = match session.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: scylla session lock poisoned.");
+        }
+    };
+    let cache = match shared_cache.lock.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return actix_web::HttpResponse::InternalServerError()
+                .body("Internal error: cache lock poisoned.");
+        }
+    };
 
     if db::prelude::check_token(
         &scylla_session,
@@ -246,7 +318,8 @@ pub async fn fetch_user_roles(
         query.token.clone(),
         Some(query.username.clone()),
     )
-    .await.is_some()
+    .await
+    .is_some()
     {
         if let Some(roles) = db::roles::fetch_user_roles(
             &scylla_session,
