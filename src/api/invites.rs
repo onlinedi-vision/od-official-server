@@ -118,7 +118,7 @@ pub async fn accept_dm_invite(
                 sid.clone(),
                 &"Direct Message".to_string(),
                 &"".to_string(),
-                &format!("DM: {} & {}", u1, u2),
+                &format!("DM: {u1} & {u2}"),
                 u1.clone(),
             )
             .await

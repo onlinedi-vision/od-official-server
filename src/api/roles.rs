@@ -53,7 +53,7 @@ pub async fn add_server_role(
             return match result {
                 Ok(_) => actix_web::HttpResponse::Ok().body("Role added successfully"),
                 Err(err) => {
-                    println!("Error inserting role: {:?}", err);
+                    println!("Error inserting role: {err:?}");
                     actix_web::HttpResponse::InternalServerError().body("Failed to insert role")
                 }
             };
@@ -122,7 +122,7 @@ pub async fn delete_server_role(
                                 actix_web::HttpResponse::Ok().body("Role deleted successfully")
                             }
                             Err(err) => {
-                                println!("Error deleting role: {:?}", err);
+                                println!("Error deleting role: {err:?}");
                                 actix_web::HttpResponse::InternalServerError()
                                     .body("Failed to delete role from server.")
                             }
@@ -130,7 +130,7 @@ pub async fn delete_server_role(
                     }
                 }
                 Err(err) => {
-                    println!("Error removing role from users: {:?}", err);
+                    println!("Error removing role from users: {err:?}");
                     return actix_web::HttpResponse::InternalServerError()
                         .body("Failed to remove role from users.");
                 }
@@ -192,7 +192,7 @@ pub async fn assign_role_to_user(
             return match result {
                 Ok(_) => actix_web::HttpResponse::BadRequest().body("Role assigned successfully"),
                 Err(err) => {
-                    println!("Error assigning role: {:?}", err);
+                    println!("Error assigning role: {err:?}");
                     actix_web::HttpResponse::InternalServerError().body("Failed to assign role")
                 }
             };
@@ -242,7 +242,7 @@ pub async fn remove_role_from_user(
             return match result {
                 Ok(_) => actix_web::HttpResponse::Ok().body("Role removed successfully"),
                 Err(err) => {
-                    println!("Error removing role: {:?}", err);
+                    println!("Error removing role: {err:?}");
                     actix_web::HttpResponse::InternalServerError().body("Failed to remove role")
                 }
             };

@@ -101,7 +101,7 @@ pub async fn delete_friend(
             })
         }
         (Some(Err(e)), _) | (_, Some(Err(e))) => {
-            eprintln!("Error detecting friend: {}", e);
+            eprintln!("Error detecting friend: {e}");
             actix_web::HttpResponse::InternalServerError().body("Failed to delete friend.")
         }
         _ => actix_web::HttpResponse::InternalServerError().body("Failed to delete friend."),

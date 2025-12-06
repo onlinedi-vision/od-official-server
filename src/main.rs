@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     // connection to scylla-server
     let session = actix_web::web::Data::new(security::structures::ScyllaSession {
-        lock: std::sync::Mutex::new(db::prelude::new_scylla_session(&format!("{}:9042", scylla_inet)).await.expect("Failed to create Scylla Connection."))
+        lock: std::sync::Mutex::new(db::prelude::new_scylla_session(&format!("{scylla_inet}:9042")).await.expect("Failed to create Scylla Connection."))
     });
 
     

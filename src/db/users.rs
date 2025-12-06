@@ -119,7 +119,7 @@ pub async fn delete_token(
     username: String,
     token: String,
 ) -> Option<Result<()>> {
-    println!("DELETE: {} {}", username, token);
+    println!("DELETE: {username} {token}");
     Some(
         session
             .query_unpaged(statics::DELETE_TOKEN, (username, token))

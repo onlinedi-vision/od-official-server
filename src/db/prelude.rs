@@ -9,15 +9,15 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub async fn insert_user_token(
     session: &scylla::client::session::Session,
-    cache: &moka::future::Cache<String,String>,
+    cache: &moka::future::Cache<String, String>,
     user: structures::KeyUser,
 ) -> Option<Result<()>> {
-
     if let Some(username) = user.username.clone()
-        && let Some(key) = user.key.clone() {
-            let _ = cache.insert(username.clone(), key.clone()).await;
-        }
-       
+        && let Some(key) = user.key.clone()
+    {
+        let _ = cache.insert(username.clone(), key.clone()).await;
+    }
+
     Some(
         session
             .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key))
@@ -37,7 +37,7 @@ pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Se
 }
 
 pub async fn new_moka_cache(cache_size: u64) -> Result<moka::future::Cache<String, String>> {
-    Ok(moka::future::Cache::<String,String>::new(cache_size))
+    Ok(moka::future::Cache::<String, String>::new(cache_size))
 }
 
 pub async fn check_token(
@@ -50,15 +50,14 @@ pub async fn check_token(
     let plain_token = token.clone();
     let crypted_token = security::armor_token(plain_token);
 
-    
-
     if let Some(username) = un.clone() {
         println!("{}", crypted_token.clone());
 
         if let Some(cache_token) = cache.get(&username.clone()).await
-            && cache_token == crypted_token.clone() {
-                return Some(());
-            }
+            && cache_token == crypted_token.clone()
+        {
+            return Some(());
+        }
 
         query_rows = session
             .query_unpaged(statics::CHECK_TOKEN_USER, (crypted_token.clone(), username))
@@ -74,7 +73,7 @@ pub async fn check_token(
             .into_rows_result()
             .ok()?;
     }
-    println!(" db/check_token {:?} {:?}", token, un);
+    println!(" db/check_token {token:?} {un:?}");
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
@@ -89,7 +88,7 @@ pub async fn check_token(
 
 pub async fn check_user_is_in_server(
     session: &scylla::client::session::Session,
-    cache: &moka::future::Cache<String,String>,
+    cache: &moka::future::Cache<String, String>,
     sid: String,
     token: String,
     un: String,
@@ -116,9 +115,9 @@ pub async fn check_user_is_in_server(
                 }
             }
         }
-        if ret_vec.len() > 0 {
+        if !ret_vec.is_empty() {
             return Some(ret_vec);
         }
-    } 
+    }
     None
 }

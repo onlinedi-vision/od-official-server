@@ -15,7 +15,7 @@ pub async fn add_friend(
         .await
         .map(|_| ())
         .map_err(From::from);
-    println!("Add friend result for {} -> {}: {:?}", user, friend, res);
+    println!("Add friend result for {user} -> {friend}: {res:?}");
 
     Some(res)
 }
