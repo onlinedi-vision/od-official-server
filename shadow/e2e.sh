@@ -77,6 +77,10 @@ eetest "/api/new_user"
 token=$(post "{\"username\":\"${QA_USERNAME}\", \"password\":\"${QA_E2E_ACCOUNT_PASSWORD}\", \"email\":\"L\"}" "/api/new_user"| jq '.token')
 assert_neq "null" "${token}" "/api/new_user"
 
+eetest "/api/new_user (part2) -- max_username_length"
+nutoken=$(post "{\"username\":\"$(tr -dc A-Za-z0-9 </dev/urandom | head -c 31)\", \"password\":\"${QA_E2E_ACCOUNT_PASSWORD}\", \"email\":\"L\"}" "/api/new_user")
+assert_match "Failed to create user: Username longer than "* "${nutoken}" "/api/new_user"
+
 eetest "/api/create_server"
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER\", \"img_url\":\"L\"}" "/api/create_server")
 token=$(echo "$payload"  | jq '.token')

@@ -7,54 +7,6 @@ use crate::security;
 use std::clone;
 use std::io::Write;
 
-#[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages")]
-pub async fn get_channel_messages(
-    session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
-    req: actix_web::web::Json<TokenUser>,
-    http: actix_web::HttpRequest,
-) -> impl actix_web::Responder {
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
-    let channel_name: String = http.match_info().get("channel_name").unwrap().to_string();
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
-    match db::prelude::check_user_is_in_server(
-        &scylla_session,
-        &cache,
-        sid.clone(),
-        req.token.clone(),
-        req.username.clone(),
-    )
-    .await
-    {
-        Some(_) => {
-            match db::messages::fetch_server_channel_messages(
-                &scylla_session,
-                sid.clone(),
-                channel_name,
-                None,
-                None,
-            )
-            .await
-            {
-                Some(messages) => {
-                    actix_web::HttpResponse::Ok()
-                        .json(&structures::Messages { m_list: messages })
-                }
-                None => {
-                    println!("SERVERS FAIL: fetch_server_channel_messages");
-                    actix_web::HttpResponse::InternalServerError()
-                        .body("Failed to fetch messages")
-                }
-            }
-        }
-        None => {
-            println!("SERVERS FAIL: invalid token in fetch_server_channel_messages");
-            actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
-        }
-    }
-}
-
 #[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages_migration")]
 pub async fn get_channel_messages_migration(
     session: actix_web::web::Data<security::structures::ScyllaSession>,

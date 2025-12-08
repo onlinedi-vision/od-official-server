@@ -19,7 +19,7 @@ pub async fn create_server(
 	if req.name.len() > db::statics::MAX_SERVER_LENGTH {
 		return actix_web::HttpResponse::LengthRequired()
 			.body(format!("Failed to create server: Server name longer than {}", db::statics::MAX_SERVER_LENGTH));
-		}
+	}
 		
     if db::prelude::check_token(
         &scylla_session,

@@ -21,7 +21,3 @@ pub async fn get_api_version() -> impl actix_web::Responder {
     actix_web::HttpResponse::Ok().body("v0.0.1".to_string())
 }
 
-#[actix_web::get("/api/time")]
-pub async fn get_api_time() -> impl actix_web::Responder {
-    actix_web::HttpResponse::Ok().body(format!("{:?}", Local::now()))
-}

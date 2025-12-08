@@ -7,6 +7,10 @@ pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<structures::NewUser>,
 ) -> impl actix_web::Responder {
+	if req.username.len() > db::statics::MAX_USERNAME_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to create user: Username longer than {}", db::statics::MAX_SERVER_LENGTH));
+	}
     println!("test");
     let user_salt = security::salt();
     let password_salt = security::salt();
