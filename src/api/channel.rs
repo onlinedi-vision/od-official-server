@@ -51,9 +51,9 @@ pub async fn create_channel(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
     if req.channel_name.len() > db::statics::MAX_CHANNEL_LENGTH {
-		  return actix_web::HttpResponse::LengthRequired()
+		return actix_web::HttpResponse::LengthRequired()
 			.body(format!("Failed to create channel: Channel name longer than {}", db::statics::MAX_CHANNEL_LENGTH));
-		}
+	}
     match db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
