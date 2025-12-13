@@ -4,6 +4,7 @@
 use scylla::client::session::Session;
 
 use crate::api::structures;
+use crate::api::statics;
 use crate::db;
 use crate::security;
 
@@ -14,12 +15,12 @@ pub async fn create_server(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::CreateServer>,
 ) -> impl actix_web::Responder {
+	if req.name.len() > statics::MAX_SERVER_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to create server: Server name longer than {}", statics::MAX_SERVER_LENGTH));
+	}
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-	  if req.name.len() > db::statics::MAX_SERVER_LENGTH {
-		  return actix_web::HttpResponse::LengthRequired()
-			  .body(format!("Failed to create server: Server name longer than {}", db::statics::MAX_SERVER_LENGTH));
-	  }
     if db::prelude::check_token(
         &scylla_session,
         &cache,

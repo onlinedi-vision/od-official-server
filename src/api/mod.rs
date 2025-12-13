@@ -13,6 +13,7 @@ pub mod message;
 pub mod roles;
 pub mod server;
 pub mod spell_caster;
+pub mod statics;
 pub mod structures;
 pub mod user;
 use chrono::prelude::*;

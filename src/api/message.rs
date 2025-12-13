@@ -3,6 +3,7 @@ use actix_web::guard;
 
 use crate::api::structures;
 use crate::api::structures::{LimitMessageTokenUser, TokenHolder, TokenLoginUser, TokenUser};
+use crate::api::statics;
 use crate::db;
 use crate::db::statics::SELECT_USERS_BY_ROLE;
 use crate::security;
@@ -74,16 +75,16 @@ pub async fn send_message(
     req: actix_web::web::Json<structures::SendMessage>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+	if req.m_content.len() > statics::MAX_MESSAGE_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to send message: Message longer than {}", statics::MAX_MESSAGE_LENGTH));
+	}
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
 
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-	
-	if req.m_content.len() > db::statics::MAX_MESSAGE_LENGTH {
-		return actix_web::HttpResponse::LengthRequired()
-			.body(format!("Failed to send message: Message longer than {}", db::statics::MAX_MESSAGE_LENGTH));
-	}
+
     match db::prelude::check_user_is_in_server(
     
         &scylla_session,
