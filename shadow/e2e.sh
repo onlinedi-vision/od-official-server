@@ -138,7 +138,7 @@ send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_
 assert_neq "null" "${send_response}" "/servers/${sid}/api/{channel_name}/send_message"
 
 eetest "/servers/{sid}/api/{channel_name}/send_message (part2) -- max_message_length" ""
-send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"$(tr -dc A-Za-z0-9 </dev/urandom | head -c 2001)\"}" "/servers/${sid}/api/{channel_name}/send_message" )
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"$(tr -dc A-Za-z0-9 </dev/urandom | head -c 3001)\"}" "/servers/${sid}/api/{channel_name}/send_message" )
 assert_match "Failed to send message: Message longer than "* "${send_response}" "/servers/${sid}/api/{channel_name}/send_message"
 
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is owner)" ""
