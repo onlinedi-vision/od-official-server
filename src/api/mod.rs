@@ -13,6 +13,7 @@ pub mod message;
 pub mod roles;
 pub mod server;
 pub mod spell_caster;
+pub mod statics;
 pub mod structures;
 pub mod user;
 use chrono::prelude::*;
@@ -22,7 +23,3 @@ pub async fn get_api_version() -> impl actix_web::Responder {
     actix_web::HttpResponse::Ok().body("v0.0.1".to_string())
 }
 
-#[actix_web::get("/api/time")]
-pub async fn get_api_time() -> impl actix_web::Responder {
-    actix_web::HttpResponse::Ok().body(format!("{:?}", Local::now()))
-}

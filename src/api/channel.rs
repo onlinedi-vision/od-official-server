@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 use crate::api::structures;
 use crate::api::structures::{CreateChannel, TokenHolder, TokenUser};
+use crate::api::statics;
 use crate::db;
 use crate::security;
 
@@ -47,6 +48,10 @@ pub async fn create_channel(
     req: actix_web::web::Json<CreateChannel>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+	if req.channel_name.len() > statics::MAX_CHANNEL_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to create channel: Channel name longer than {}", statics::MAX_CHANNEL_LENGTH));
+	}
     let sid = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);

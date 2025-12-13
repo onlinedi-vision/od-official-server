@@ -3,57 +3,12 @@ use actix_web::guard;
 
 use crate::api::structures;
 use crate::api::structures::{LimitMessageTokenUser, TokenHolder, TokenLoginUser, TokenUser};
+use crate::api::statics;
 use crate::db;
 use crate::db::statics::SELECT_USERS_BY_ROLE;
 use crate::security;
 use std::clone;
 use std::io::Write;
-
-#[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages")]
-pub async fn get_channel_messages(
-    session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
-    req: actix_web::web::Json<TokenUser>,
-    http: actix_web::HttpRequest,
-) -> impl actix_web::Responder {
-    let sid = param!(http, "sid");
-    let channel_name = param!(http, "channel_name");
-    let scylla_session = scylla_session!(session);
-    let cache = cache!(shared_cache);
-    match db::prelude::check_user_is_in_server(
-        &scylla_session,
-        &cache,
-        sid.clone(),
-        req.token.clone(),
-        req.username.clone(),
-    )
-    .await
-    {
-        Some(_) => {
-            match db::messages::fetch_server_channel_messages(
-                &scylla_session,
-                sid.clone(),
-                channel_name,
-                None,
-                None,
-            )
-            .await
-            {
-                Some(messages) => {
-                    actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: messages })
-                }
-                None => {
-                    println!("SERVERS FAIL: fetch_server_channel_messages");
-                    actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
-                }
-            }
-        }
-        None => {
-            println!("SERVERS FAIL: invalid token in fetch_server_channel_messages");
-            actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
-        }
-    }
-}
 
 #[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages_migration")]
 pub async fn get_channel_messages_migration(
@@ -120,6 +75,10 @@ pub async fn send_message(
     req: actix_web::web::Json<structures::SendMessage>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+	if req.m_content.len() > statics::MAX_MESSAGE_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to send message: Message longer than {}", statics::MAX_MESSAGE_LENGTH));
+	}
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
 
@@ -127,6 +86,7 @@ pub async fn send_message(
     let cache = cache!(shared_cache);
 
     match db::prelude::check_user_is_in_server(
+    
         &scylla_session,
         &cache,
         sid.clone(),

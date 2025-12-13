@@ -77,11 +77,20 @@ eetest "/api/new_user"
 token=$(post "{\"username\":\"${QA_USERNAME}\", \"password\":\"${QA_E2E_ACCOUNT_PASSWORD}\", \"email\":\"L\"}" "/api/new_user"| jq '.token')
 assert_neq "null" "${token}" "/api/new_user"
 
+eetest "/api/new_user (part2) -- max_username_length"
+nutoken=$(post "{\"username\":\"$(tr -dc A-Za-z0-9 </dev/urandom | head -c 31)\", \"password\":\"${QA_E2E_ACCOUNT_PASSWORD}\", \"email\":\"L\"}" "/api/new_user")
+assert_match "Failed to create user: Username longer than "* "${nutoken}" "/api/new_user"
+
 eetest "/api/create_server"
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER\", \"img_url\":\"L\"}" "/api/create_server")
 token=$(echo "$payload"  | jq '.token')
 sid1=$(echo "$payload" | jq '.sid')
 assert_neq "null" "${token}" "/api/create_server"
+
+
+eetest "/api/create_server (part2) -- max_server_length"
+nutoken=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER_BUT_A_LITTLE_LONGER_THAN_MAX\", \"img_url\":\"L\"}" "/api/create_server" )
+assert_match "Failed to create server: Server name longer than "* "${nutoken}" "/api/create_server"
 
 eetest "/api/am_i_in_server"
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"sid\":${sid1}}" "/api/am_i_in_server")
@@ -116,9 +125,21 @@ eetest "/servers/{sid}/api/create_channel" ""
 token=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"main\"}" "/servers/${sid}/api/create_channel"  | jq '.token' )
 assert_neq "null" "${token}" "/servers/${sid}/api/create_channel"
 
+eetest "/servers/{sid}/api/create_channel (part2) -- max_channel_length" ""
+nutoken=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"flajkaldjflhkcvjhxzoyuafhldasjhfiocuzxgvhadfhsojk\"}" "/servers/${sid}/api/create_channel" )
+assert_match "Failed to create channel: Channel name longer than "* "${nutoken}" "/servers/${sid}/api/create_channel"
+
 eetest "/servers/{sid}/api/get_channels" ""
 main_channel=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/get_channels"  | jq -r '.c_list[1].channel_name' )
 assert "main" "${main_channel}" "/servers/${sid}/api/get_channels"
+
+eetest "/servers/{sid}/api/{channel_name}/send_message" ""
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"This is the sent message.\"}" "/servers/${sid}/api/{channel_name}/send_message" )
+assert_neq "null" "${send_response}" "/servers/${sid}/api/{channel_name}/send_message"
+
+eetest "/servers/{sid}/api/{channel_name}/send_message (part2) -- max_message_length" ""
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"$(tr -dc A-Za-z0-9 </dev/urandom | head -c 3001)\"}" "/servers/${sid}/api/{channel_name}/send_message" )
+assert_match "Failed to send message: Message longer than "* "${send_response}" "/servers/${sid}/api/{channel_name}/send_message"
 
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is owner)" ""
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/delete_server"  )
