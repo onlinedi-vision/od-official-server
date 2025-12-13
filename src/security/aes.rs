@@ -16,7 +16,7 @@ pub fn encrypt_with_key(plaintext: &str, key: &str) -> String {
     let padding_needed = block_size - (pos % block_size);
     buffer.resize(pos + padding_needed, 0);
     let ciphertext = cipher
-        .expect("")
+        .expect("Failed to load cipher for encrypt_with_key.")
         .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)
         .unwrap();
     hex::encode(ciphertext)
@@ -34,10 +34,10 @@ pub fn decrypt_with_key(ciphertext: &str, key: &str) -> String {
     let mut ciphertext_bytes = hex::decode(ciphertext).unwrap();
     let cipher = Aes128CbcDec::new_from_slices(key_bytes.as_bytes(), iv_bytes.as_bytes());
     let plaintext = cipher
-        .expect("")
+        .expect("Failed to load cipher for decrypt_with_key.")
         .decrypt_padded_mut::<Pkcs7>(&mut ciphertext_bytes)
         .unwrap();
-    String::from_utf8(plaintext.to_vec()).expect("")
+    String::from_utf8(plaintext.to_vec()).expect("Failed to obtain string from plaintext in decrypt_with_key")
 }
 
 #[inline(always)]
