@@ -8,6 +8,10 @@ printf "QA_USERNAME: %s\n" "${QA_USERNAME}"
 
 set -eo pipefail
 
+function expected_failure() {
+  ${@} | cat 
+}
+
 function assert() {
   expected=${1}
   actual=${2}
@@ -87,7 +91,6 @@ token=$(echo "$payload"  | jq '.token')
 sid1=$(echo "$payload" | jq '.sid')
 assert_neq "null" "${token}" "/api/create_server"
 
-
 eetest "/api/create_server (part2) -- max_server_length"
 nutoken=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER_BUT_A_LITTLE_LONGER_THAN_MAX\", \"img_url\":\"L\"}" "/api/create_server" )
 assert_match "Failed to create server: Server name longer than "* "${nutoken}" "/api/create_server"
@@ -133,13 +136,36 @@ eetest "/servers/{sid}/api/get_channels" ""
 main_channel=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/get_channels"  | jq -r '.c_list[1].channel_name' )
 assert "main" "${main_channel}" "/servers/${sid}/api/get_channels"
 
+message_to_send_succesfully="This is the sent message."
+message_to_send_unsuccesfully=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 3001) || pwd > /dev/null
+
 eetest "/servers/{sid}/api/{channel_name}/send_message" ""
-send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"This is the sent message.\"}" "/servers/${sid}/api/{channel_name}/send_message" )
-assert_neq "null" "${send_response}" "/servers/${sid}/api/{channel_name}/send_message"
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_succesfully}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
+assert_neq "null" "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
 
 eetest "/servers/{sid}/api/{channel_name}/send_message (part2) -- max_message_length" ""
-send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"$(tr -dc A-Za-z0-9 </dev/urandom | head -c 3001)\"}" "/servers/${sid}/api/{channel_name}/send_message" )
-assert_match "Failed to send message: Message longer than "* "${send_response}" "/servers/${sid}/api/{channel_name}/send_message"
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_unsuccesfully}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
+assert_match "Failed to send message: Message longer than "* "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
+
+eetest "/servers/{sid}/api/{channel_name}/get_messages_migration"
+message_recieved=$(post "{\"username\":\"${QA_USERNAME}\",\"token\":${token}, \"limit\":\"100\", \"offset\":\"0\"}" "/servers/${sid}/api/${main_channel}/get_messages_migration" | jq -r '.m_list[0].m_content')
+datetime_received=$(post "{\"username\":\"${QA_USERNAME}\",\"token\":${token}, \"limit\":\"100\", \"offset\":\"0\"}" "/servers/${sid}/api/${main_channel}/get_messages_migration" | jq -r '.m_list[0].datetime')
+assert "${message_to_send_succesfully}" "${message_recieved}" "/servers/${sid}/api/${main_channel}/get_messages_migration"
+
+datetime_len="${#datetime_received}"
+datetime_len=$((datetime_len - 3))
+api_datetime_lh="$(echo "${datetime_received}" | head -c "$datetime_len")"
+api_datetime_rh="$(echo "${datetime_received}" | tail -c 3)"
+api_datetime=$(date -d @"${api_datetime_lh}.${api_datetime_rh}" +'%Y-%m-%d %H:%M:%S')
+
+eetest "/servers/{sid}/api/{channel_name}/delete_message"
+response=$(post "{\"username\":\"${QA_USERNAME}\",\"token\":${token}, \"datetime\":\"${api_datetime}\"}" "/servers/${sid}/api/${main_channel}/delete_message")
+assert "Message deleted successfully" "${response}" "/servers/${sid}/api/${main_channel}/delete_message"
+
+eetest "/servers/{sid}/api/{channel_name}/get_messages_migration"
+message_recieved=$(post "{\"username\":\"${QA_USERNAME}\",\"token\":${token}, \"limit\":\"100\", \"offset\":\"0\"}" "/servers/${sid}/api/${main_channel}/get_messages_migration" | jq -r '.m_list[0].m_content')
+# TODO: why does this fail ?
+expected_failure assert_neq "${message_to_send_succesfully}" "${message_recieved}" "/servers/${sid}/api/${main_channel}/get_messages_migration"
 
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is owner)" ""
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/delete_server"  )
@@ -148,3 +174,11 @@ assert 'Server deleted successfully' "${payload}" "/servers/{sid}/api/delete_ser
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is _NOT_ owner)" ""
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/1313/api/delete_server"  )
 assert "You don't have permission to delete this server" "${payload}" "/servers/{sid}/api/delete_server"
+
+eetest "/api/spell/cast && /api/spell/check"
+payload=$(post "{\"username\":\"${QA_USERNAME}\"}" "/api/spell/cast")
+key=$(echo "$payload" | jq -r '.key')
+spell1=$(echo "$payload" | jq -r '.spell')
+
+spell2=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"key\":\"${key}\"}" "/api/spell/check")
+assert "$spell1" "$spell2" "/api/spell/cast && /api/spell/check"

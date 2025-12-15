@@ -124,6 +124,10 @@ pub async fn send_message(
     }
 }
 
+// TODO: what happens if invalid datetime tag is given?
+//     - currently a e2e test fails here... this will need to be investigated at some point
+//     - it seems that when the datetime is invalid the API doesn't fail with a proper message but instead says
+//       "Message deleted succesfully" without anything actually happening...
 #[actix_web::post("/servers/{sid}/api/{channel_name}/delete_message")]
 pub async fn delete_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
