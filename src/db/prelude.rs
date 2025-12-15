@@ -30,7 +30,7 @@ pub async fn insert_user_token(
 pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Session> {
     scylla::client::session_builder::SessionBuilder::new()
         .known_node(uri)
-        .user("cassandra", get_env_var("SCYLLA_CASSANDRA_PASSWORD"))
+        .user(get_env_var("SCYLLA_DB_USER"), get_env_var("SCYLLA_CASSANDRA_PASSWORD"))
         .build()
         .await
         .map_err(From::from)
