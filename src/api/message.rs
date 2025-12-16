@@ -68,6 +68,8 @@ pub async fn get_channel_messages_migration(
     }
 }
 
+// TODO: what happens if channel/server doesn't exist:
+//     - it seems you can send messages to *things* that don't exist
 #[actix_web::post("/servers/{sid}/api/{channel_name}/send_message")]
 pub async fn send_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
