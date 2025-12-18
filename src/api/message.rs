@@ -80,10 +80,10 @@ pub async fn send_message(
 			.body(format!("Failed to send message: Message longer than {}", statics::MAX_MESSAGE_LENGTH));
 	}
 	
-    let channel_name = param!(http, "channel_name");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
     let sid = param!(http, "sid", &scylla_session);
+    let channel_name = param!(http, "channel_name", &scylla_session, sid);
 
     match db::prelude::check_user_is_in_server(
         &scylla_session,

@@ -114,6 +114,36 @@ pub async fn check_sid(
     return false;
 }
 
+pub async fn check_channel_name(
+    session: &scylla::client::session::Session,
+    sid: String,
+    channel_name: String
+) -> bool {
+    if let Ok(query_result) = session
+        .query_unpaged(statics::SELECT_SERVER_CHANNEL, (sid.clone(), channel_name.clone()))
+        .await
+    {
+        if let Ok(query_rows) = query_result.into_rows_result()
+        {
+            if let Ok(rows) = query_rows.rows::<(Option<&str>,)>() {
+                for row in rows {
+                    if let Ok(row_ok) = row {
+                        match row_ok {
+                            (Some(db_channel_name),) => {
+                                return db_channel_name.to_string() == channel_name;
+                            }
+                            _ => {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 pub async fn check_user_is_in_server(
     session: &scylla::client::session::Session,
     cache: &moka::future::Cache<String,String>,

@@ -115,9 +115,9 @@ pub async fn delete_channel(
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
 
-    let channel_name = param!(http, "channel_name");
     let scylla_session = scylla_session!(session);
     let sid = param!(http, "sid", &scylla_session);
+    let channel_name = param!(http, "channel_name", &scylla_session, sid);
     let cache = cache!(shared_cache);
     
     if db::prelude::check_token(
