@@ -58,6 +58,12 @@ pub static SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION: &str = r#"
         ALLOW FILTERING; 
 "#;
 
+pub static SELECT_SERVER_SID: &str = r#"
+  SELECT sid FROM division_online.o_servers
+        WHERE sid=?
+        ALLOW FILTERING; 
+"#;
+
 pub static SELECT_SERVER_CHANNEL_MESSAGES: &str = r#"
     SELECT username, datetime, m_content FROM division_online.o_server_messages 
         WHERE sid=? AND channel_name=? 

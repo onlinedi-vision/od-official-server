@@ -68,8 +68,6 @@ pub async fn get_channel_messages_migration(
     }
 }
 
-// TODO: what happens if channel/server doesn't exist:
-//     - it seems you can send messages to *things* that don't exist
 #[actix_web::post("/servers/{sid}/api/{channel_name}/send_message")]
 pub async fn send_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -81,14 +79,13 @@ pub async fn send_message(
 		return actix_web::HttpResponse::LengthRequired()
 			.body(format!("Failed to send message: Message longer than {}", statics::MAX_MESSAGE_LENGTH));
 	}
-    let sid = param!(http, "sid");
+	
     let channel_name = param!(http, "channel_name");
-
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let sid = param!(http, "sid", &scylla_session);
 
     match db::prelude::check_user_is_in_server(
-    
         &scylla_session,
         &cache,
         sid.clone(),

@@ -50,8 +50,6 @@ pub async fn check_token(
     let plain_token = token.clone();
     let crypted_token = security::armor_token(plain_token);
 
-    
-
     if let Some(username) = un.clone() {
         println!("{}", crypted_token.clone());
 
@@ -85,6 +83,35 @@ pub async fn check_token(
         }
         _ => None,
     }
+}
+
+pub async fn check_sid(
+    session: &scylla::client::session::Session,
+    sid: String
+) -> bool {
+    if let Ok(query_result) = session
+        .query_unpaged(statics::SELECT_SERVER_SID, (sid.clone(),))
+        .await
+    {
+        if let Ok(query_rows) = query_result.into_rows_result()
+        {
+            if let Ok(rows) = query_rows.rows::<(Option<&str>,)>() {
+                for row in rows {
+                    if let Ok(row_ok) = row {
+                        match row_ok {
+                            (Some(db_sid),) => {
+                                return db_sid.to_string() == sid;
+                            }
+                            _ => {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 pub async fn check_user_is_in_server(

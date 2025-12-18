@@ -32,4 +32,19 @@ macro_rules! param {
             }
         }
     };
+
+    ($http:expr, $name:expr, $scylla_session:expr) => {
+        match $http.match_info().get($name) {
+            Some(param) => {
+                if ! db::prelude::check_sid($scylla_session, param.to_string().clone()).await {
+                    return actix_web::HttpResponse::NotFound().body(format!("Couldn't find that server. ({}) :(", param.to_string().clone()));
+                }
+                param.to_string()
+            },
+            None => {
+                return actix_web::HttpResponse::BadRequest()
+                    .body(format!("missing `{}` parameter", $name));
+            }
+        }
+    };
 }

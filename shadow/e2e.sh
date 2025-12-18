@@ -2,14 +2,28 @@
 
 HOST=${1:-https://onlinedi.vision}
 printf "HOST: %s\n" "${HOST}"
-QA_USERNAME=qa_e2e_user-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13)
+QA_USERNAME=$(mktemp --dry-run qa_e2e_user-XXXXXXXXXXXX)
 
 printf "QA_USERNAME: %s\n" "${QA_USERNAME}"
 
 set -eo pipefail
 
 function expected_failure() {
-  ${@} | cat 
+  echo
+  echo   "******************************************************************************************************"
+  echo   "                                        (EXPECTED FAILURE)"
+  printf "******************************************************************************************************"
+  if ! "${@}"; then
+    echo "******************************************************************************************************"
+    echo "                                        (EXPECTED FAILURE)"
+    echo "******************************************************************************************************"
+    echo
+  else
+    echo "******************************************************************************************************"
+    echo "                                  (THIS TEST PASSED UNEXPECTEDLY)"
+    echo "******************************************************************************************************"
+    exit 1
+  fi
 }
 
 function assert() {
@@ -22,7 +36,7 @@ function assert() {
     echo "      ${expected} DOES NOT EQUAL ${actual}" >&2
     echo "      EXPECTED |${expected}" >&2
     echo "      BUT GOT  |${actual}" >&2
-    exit 1
+    return 1
   fi
   echo "PASSED"
 }
@@ -37,7 +51,7 @@ function assert_match() {
     echo "      ${expected} DOES NOT EQUAL ${actual}" >&2
     echo "      EXPECTED |${expected}" >&2
     echo "      BUT GOT  |${actual}" >&2
-    exit 1
+    return 1
   fi
   echo "PASSED"
 }
@@ -52,7 +66,7 @@ function assert_neq() {
     echo "      ${expected} DOES EQUAL ${actual} (THEY SHOULD BE DISTINCT)" >&2
     echo "      EXPECTED                        |${expected}" >&2
     echo "      WHICH SHOULD BE DIFFERENT FROM  |${actual}" >&2
-    exit 2
+    return 2
   fi
 ``  echo "PASSED"
 }

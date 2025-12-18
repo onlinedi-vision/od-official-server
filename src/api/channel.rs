@@ -12,9 +12,11 @@ pub async fn get_channels(
     req: actix_web::web::Json<TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+    
     let sid = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+
     match db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
@@ -52,9 +54,11 @@ pub async fn create_channel(
 		return actix_web::HttpResponse::LengthRequired()
 			.body(format!("Failed to create channel: Channel name longer than {}", statics::MAX_CHANNEL_LENGTH));
 	}
-    let sid = param!(http, "sid");
+	
     let scylla_session = scylla_session!(session);
+    let sid = param!(http, "sid", &scylla_session);
     let cache = cache!(shared_cache);
+
     match db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
@@ -110,8 +114,12 @@ pub async fn delete_channel(
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+
+    let channel_name = param!(http, "channel_name");
     let scylla_session = scylla_session!(session);
+    let sid = param!(http, "sid", &scylla_session);
     let cache = cache!(shared_cache);
+    
     if db::prelude::check_token(
         &scylla_session,
         &cache,
@@ -123,9 +131,6 @@ pub async fn delete_channel(
     {
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
-
-    let sid = param!(http, "sid");
-    let channel_name = param!(http, "channel_name");
 
     if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await
         == Some(true)
