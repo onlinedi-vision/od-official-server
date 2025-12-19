@@ -131,15 +131,16 @@ pub async fn delete_message(
     datetime: scylla::value::CqlTimestamp,
     channel_name: String,
 ) -> Option<Result<(), Box<dyn std::error::Error>>> {
-    session
-        .query_unpaged(
+    if session.query_unpaged(
             db::statics::DELETE_SERVER_MESSAGES_MIGRATION,
-            (sid, channel_name, datetime),
-        )
+            (sid, channel_name, datetime))
         .await
-        .ok()?;
-
-    Some(Ok(()))
+        .is_ok()
+    {
+        return Some(Ok(()))
+    } else {
+        return None;
+    }
 }
 
 pub async fn verify_message_ownership(

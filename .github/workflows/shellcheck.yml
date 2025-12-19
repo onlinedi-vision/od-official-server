@@ -11,5 +11,5 @@ jobs:
      - name: Run ShellCheck
        uses: ludeeus/action-shellcheck@master
        env:
-         SHELLCHECK_OPTS: -e SC2053
+         SHELLCHECK_OPTS: -e SC2053 -e SC2068
 

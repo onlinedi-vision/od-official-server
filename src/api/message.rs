@@ -68,6 +68,8 @@ pub async fn get_channel_messages_migration(
     }
 }
 
+// TODO: what happens if channel/server doesn't exist:
+//     - it seems you can send messages to *things* that don't exist
 #[actix_web::post("/servers/{sid}/api/{channel_name}/send_message")]
 pub async fn send_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -124,6 +126,10 @@ pub async fn send_message(
     }
 }
 
+// TODO: what happens if invalid datetime tag is given?
+//     - currently a e2e test fails here... this will need to be investigated at some point
+//     - it seems that when the datetime is invalid the API doesn't fail with a proper message but instead says
+//       "Message deleted succesfully" without anything actually happening...
 #[actix_web::post("/servers/{sid}/api/{channel_name}/delete_message")]
 pub async fn delete_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,

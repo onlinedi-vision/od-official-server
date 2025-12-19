@@ -16,7 +16,6 @@ pub mod spell_caster;
 pub mod statics;
 pub mod structures;
 pub mod user;
-use chrono::prelude::*;
 
 #[actix_web::get("/api/version")]
 pub async fn get_api_version() -> impl actix_web::Responder {
