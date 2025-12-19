@@ -88,7 +88,6 @@ pub async fn send_message(
     let cache = cache!(shared_cache);
 
     match db::prelude::check_user_is_in_server(
-    
         &scylla_session,
         &cache,
         sid.clone(),
@@ -98,6 +97,9 @@ pub async fn send_message(
     .await
     {
         Some(_) => {
+            let ttl = db::users::get_ttl(&scylla_session, req.username.clone())
+                .await;
+        
             let (enc_message, enc_salt) =
                 security::messages::encrypt(&req.m_content, &security::salt());
             match db::server::send_message(
@@ -107,14 +109,15 @@ pub async fn send_message(
                 enc_message,
                 req.username.clone(),
                 enc_salt,
+                ttl,
             )
             .await
             {
-                Some(_) => {
-                    actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: Vec::new() })
+                Ok(_) => {
+                    actix_web::HttpResponse::Ok().body("Message sent.")
                 }
-                None => {
-                    println!("FAILED AT SEND MESSAGE");
+                Err(e) => {
+                    eprintln!("FAILED AT SEND MESSAGE:\n{:?}", e);
                     actix_web::HttpResponse::InternalServerError().body("Failed to send message")
                 }
             }
