@@ -56,6 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::user::token_login)
             .service(api::user::get_user_pfp)
             .service(api::user::set_user_pfp)
+            .service(api::user::patch_user_ttl)
  
             .service(api::server::create_server)                
             .service(api::server::join_server)                      // change token !!

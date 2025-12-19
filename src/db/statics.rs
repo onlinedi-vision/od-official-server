@@ -39,8 +39,19 @@ pub static UPDATE_USER_KEY: &str = r#"
         WHERE username = ?;
 "#;
 
+pub static UPDATE_USER_TTL: &str = r#"
+    UPDATE division_online.users SET ttl=?
+        WHERE username = ?;
+"#;
+
 pub static SELECT_USER_PASSWORD_HASH: &str = r#"
     SELECT password_hash, user_salt, password_salt FROM division_online.users
+        WHERE username = ?
+        ALLOW FILTERING;
+"#;
+
+pub static SELECT_USER_TTL: &str = r#"
+    SELECT ttl FROM division_online.users
         WHERE username = ?
         ALLOW FILTERING;
 "#;
@@ -48,6 +59,12 @@ pub static SELECT_USER_PASSWORD_HASH: &str = r#"
 pub static INSERT_SERVER_CHANNEL_MESSAGE: &str = r#"
     INSERT INTO division_online.o_server_messages_migration(mid,channel_name,datetime,m_content,sid,username,encrypted,salt) 
         VALUES(?,?,dateof(now()),?,?,?,?,?); 
+"#;
+
+pub static INSERT_SERVER_CHANNEL_MESSAGE_TTL: &str = r#"
+    INSERT INTO division_online.o_server_messages_migration(mid,channel_name,datetime,m_content,sid,username,encrypted,salt) 
+        VALUES(?,?,dateof(now()),?,?,?,?,?)
+        USING TTL ?; 
 "#;
 
 pub static SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION: &str = r#"
