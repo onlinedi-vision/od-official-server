@@ -1,5 +1,3 @@
-#![allow(unused_variables)]
-
 /* !TODO:
  *  -- check out passing secrets with GET requests (to replace weird POST request implementation)
  * */
