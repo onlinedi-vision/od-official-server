@@ -1,4 +1,7 @@
 use crate::db::{statics, structures};
+use crate::utils::logging;
+
+use ::function_name::named;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -78,6 +81,7 @@ pub async fn insert_new_user(
     }
 }
 
+#[named]
 pub async fn get_user_password_hash(
     session: &scylla::client::session::Session,
     user: structures::UserUsername,
@@ -102,7 +106,7 @@ pub async fn get_user_password_hash(
                 });
             }
             _ => {
-                println!("[get_user_password_hash] wasn't able to retrieve user info"); // TODO: FIX DEBUG LOGS FUCK ME
+                logging::log("wasn't able to retrieve user info", Some(function_name!()));
                 return None;
             }
         };
@@ -114,12 +118,13 @@ pub async fn get_user_password_hash(
     }
 }
 
+#[named]
 pub async fn delete_token(
     session: &scylla::client::session::Session,
     username: String,
     token: String,
 ) -> Option<Result<()>> {
-    println!("DELETE: {} {}", username, token);
+    logging::log(&format!("DELETE: {} {}", username, token), Some(function_name!()));
     Some(
         session
             .query_unpaged(statics::DELETE_TOKEN, (username, token))
