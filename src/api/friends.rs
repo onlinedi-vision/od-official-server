@@ -1,9 +1,6 @@
 use crate::api::structures;
 use crate::db;
 use crate::security;
-use crate::utils::logging;
-
-use ::function_name::named;
 
 #[actix_web::post("/api/fetch_friend_list")]
 pub async fn fetch_friend_list(
@@ -45,7 +42,6 @@ pub async fn fetch_friend_list(
     }
 }
 
-#[named]
 #[actix_web::post("/api/delete_friend")]
 pub async fn delete_friend(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -81,7 +77,7 @@ pub async fn delete_friend(
             })
         }
         (Some(Err(e)), _) | (_, Some(Err(e))) => {
-            logging::log(&format!("Error detecting friend: {}", e), Some(function_name!()));
+            eprintln!("Error detecting friend: {}", e);
             actix_web::HttpResponse::InternalServerError().body("Failed to delete friend.")
         }
         _ => actix_web::HttpResponse::InternalServerError().body("Failed to delete friend."),

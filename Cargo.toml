@@ -24,7 +24,6 @@ moka = { version = "0.12.11", features = ["future"] }
 # be depricated in a future version of Rust (checkout redis v0.24 crate).
 actix-web-ratelimit = { version = "0.1.1", default-features = false } 
 async-std = "1.13.2"
-function_name = "0.3.0"
 
 # Improves comp time ?
 [profile.dev]

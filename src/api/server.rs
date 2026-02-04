@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 #![allow(unused_imports)]
 use scylla::client::session::Session;
 
@@ -5,11 +7,8 @@ use crate::api::structures;
 use crate::api::statics;
 use crate::db;
 use crate::security;
-use crate::utils::logging;
 
-use ::function_name::named;
-
-#[named]
+// !TODO: create_server API
 #[actix_web::post("/api/create_server")]
 pub async fn create_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -81,20 +80,19 @@ pub async fn create_server(
             {
                 actix_web::HttpResponse::Ok().json(&server_created)
             } else {
-                logging::log("SERVERS FAIL: add_user_to_server", Some(function_name!()));
+                println!("SERVERS FAIL: add_user_to_server");
                 actix_web::HttpResponse::InternalServerError().body("Failed to add user to server")
             }
         } else {
-            logging::log("SERVERS FAIL: create_server", Some(function_name!()));
+            println!("SERVERS FAIL: create_server");
             actix_web::HttpResponse::InternalServerError().body("Failed to create server")
         }
     } else {
-        logging::log("SERVERS FAIL: invalid token in create_server", Some(function_name!()));
+        println!("SERVERS FAIL: invalid token in create_server");
         actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
-#[named]
 #[actix_web::post("/servers/{sid}/api/join")]
 pub async fn join_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -141,15 +139,16 @@ pub async fn join_server(
 
             actix_web::HttpResponse::Ok().json(&new_token_holder)
         } else {
-            logging::log("SERVERS FAIL: add_user_to_server", Some(function_name!()));
+            println!("SERVERS FAIL: add_user_to_server");
             actix_web::HttpResponse::InternalServerError().body("Failed to add user to server")
         }
     } else {
-        logging::log("SERVERS FAIL: invalid token in create_server", Some(function_name!()));
+        println!("SERVERS FAIL: invalid token in create_server");
         actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
+// !TODO: get_user_servers API
 #[actix_web::post("/servers/{sid}/api/get_server_users")]
 pub async fn get_server_users(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -197,7 +196,6 @@ pub async fn get_server_info(
     }
 }
 
-#[named]
 #[actix_web::post("/servers/{sid}/api/delete_server")]
 pub async fn delete_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -234,7 +232,7 @@ pub async fn delete_server(
             actix_web::HttpResponse::InternalServerError().body("Failed to delete server")
         }
     } else {
-        logging::log("Unauthorized: not server owner", Some(function_name!()));
+        println!("Unauthorized: not server owner");
         actix_web::HttpResponse::Unauthorized()
             .body("You don't have permission to delete this server")
     }

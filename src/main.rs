@@ -3,7 +3,6 @@ mod api;
 mod security;
 mod db;
 mod env;
-mod utils;
 
 use actix_web::{middleware::Logger};
 use actix_web_ratelimit::{config::RateLimitConfig, store::MemoryStore, RateLimit};

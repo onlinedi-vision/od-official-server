@@ -1,12 +1,8 @@
 use crate::db::statics;
-use crate::utils::logging;
-
-use ::function_name::named;
 use chrono::{DateTime, Utc};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[named]
 pub async fn add_friend(
     session: &scylla::client::session::Session,
     user: String,
@@ -19,7 +15,7 @@ pub async fn add_friend(
         .await
         .map(|_| ())
         .map_err(From::from);
-    logging::log(&format!("Add friend result for {} -> {}: {:?}", user, friend, res), Some(function_name!()));
+    println!("Add friend result for {} -> {}: {:?}", user, friend, res);
 
     Some(res)
 }

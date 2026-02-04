@@ -1,13 +1,15 @@
+#![allow(unused_imports)]
+use actix_web::guard;
+
 use crate::api::structures;
-use crate::api::structures::{LimitMessageTokenUser};
+use crate::api::structures::{LimitMessageTokenUser, TokenHolder, TokenLoginUser, TokenUser};
 use crate::api::statics;
 use crate::db;
+use crate::db::statics::SELECT_USERS_BY_ROLE;
 use crate::security;
-use crate::utils::logging;
+use std::clone;
+use std::io::Write;
 
-use ::function_name::named;
-
-#[named]
 #[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages_migration")]
 pub async fn get_channel_messages_migration(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -57,18 +59,17 @@ pub async fn get_channel_messages_migration(
         {
             actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: messages })
         } else {
-            logging::log("SERVERS FAIL: fetch_server_channel_messages", Some(function_name!()));
+            println!("SERVERS FAIL: fetch_server_channel_messages");
             actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
         }
     } else {
-        logging::log("SERVERS FAIL: invalid token in fetch_server_channel_messages", Some(function_name!()));
+        println!("SERVERS FAIL: invalid token in fetch_server_channel_messages");
         actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
     }
 }
 
 // TODO: what happens if channel/server doesn't exist:
 //     - it seems you can send messages to *things* that don't exist
-#[named]
 #[actix_web::post("/servers/{sid}/api/{channel_name}/send_message")]
 pub async fn send_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -113,13 +114,13 @@ pub async fn send_message(
                     actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: Vec::new() })
                 }
                 None => {
-                    logging::log("FAILED AT SEND MESSAGE", Some(function_name!()));
+                    println!("FAILED AT SEND MESSAGE");
                     actix_web::HttpResponse::InternalServerError().body("Failed to send message")
                 }
             }
         }
         None => {
-            logging::log("FAILED AT USER IN SERVER", Some(function_name!()));
+            println!("FAILED AT USER IN SERVER");
             actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
         }
     }
@@ -129,7 +130,6 @@ pub async fn send_message(
 //     - currently a e2e test fails here... this will need to be investigated at some point
 //     - it seems that when the datetime is invalid the API doesn't fail with a proper message but instead says
 //       "Message deleted succesfully" without anything actually happening...
-#[named]
 #[actix_web::post("/servers/{sid}/api/{channel_name}/delete_message")]
 pub async fn delete_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -191,7 +191,7 @@ pub async fn delete_message(
             actix_web::HttpResponse::InternalServerError().body("Failed to delete message")
         }
     } else {
-        logging::log("Unauthorized: not message owner or server owner", Some(function_name!()));
+        println!("Unauthorized: not message owner or server owner");
         actix_web::HttpResponse::Unauthorized()
             .body("You are not authorized to delete this message")
     }

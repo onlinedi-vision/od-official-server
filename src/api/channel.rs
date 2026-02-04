@@ -1,13 +1,10 @@
+#![allow(unused_imports)]
 use crate::api::structures;
-use crate::api::structures::{CreateChannel, TokenUser};
+use crate::api::structures::{CreateChannel, TokenHolder, TokenUser};
 use crate::api::statics;
 use crate::db;
 use crate::security;
-use crate::utils::logging;
 
-use ::function_name::named;
-
-#[named]
 #[actix_web::post("/servers/{sid}/api/get_channels")]
 pub async fn get_channels(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -32,19 +29,18 @@ pub async fn get_channels(
                 actix_web::HttpResponse::Ok().json(&structures::Channels { c_list: channels })
             }
             None => {
-                logging::log("SERVERS FAIL: fetch_server_channels", Some(function_name!()));
+                println!("SERVERS FAIL: fetch_server_channels");
                 actix_web::HttpResponse::InternalServerError()
                     .body("Failed to fetch server channels")
             }
         },
         None => {
-            logging::log("SERVERS FAIL: invalid token in fetch_server_channels", Some(function_name!()));
+            println!("SERVERS FAIL: invalid token in fetch_server_channels");
             actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
         }
     }
 }
 
-#[named]
 #[actix_web::post("/servers/{sid}/api/create_channel")]
 pub async fn create_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -95,19 +91,18 @@ pub async fn create_channel(
                     actix_web::HttpResponse::Ok().json(&new_token_holder)
                 }
                 None => {
-                    logging::log("SERVERS FAIL: create_channel", Some(function_name!()));
+                    println!("SERVERS FAIL: create_channel");
                     actix_web::HttpResponse::InternalServerError().body("Could not create channel")
                 }
             }
         }
         None => {
-            logging::log("SERVERS FAIL: invalid token in create_channel", Some(function_name!()));
+            println!("SERVERS FAIL: invalid token in create_channel");
             actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
         }
     }
 }
 
-#[named]
 #[actix_web::post("/servers/{sid}/api/{channel_name}/delete_channel")]
 pub async fn delete_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -141,7 +136,7 @@ pub async fn delete_channel(
             actix_web::HttpResponse::InternalServerError().body("Failed to delete channel")
         }
     } else {
-        logging::log("Unauthorized: not server owner", Some(function_name!()));
+        println!("Unauthorized: not server owner");
         actix_web::HttpResponse::Unauthorized()
             .body("You don't have permission to delete this channel")
     }

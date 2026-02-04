@@ -1,11 +1,10 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
 use crate::api::structures;
 use crate::db;
 use crate::security;
-use crate::utils::logging;
 
-use ::function_name::named;
-
-#[named]
 #[actix_web::post("/api/add_server_role")]
 pub async fn add_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -42,7 +41,7 @@ pub async fn add_server_role(
             return match result {
                 Ok(_) => actix_web::HttpResponse::Ok().body("Role added successfully"),
                 Err(err) => {
-                    logging::log(&format!("Error inserting role: {:?}", err), Some(function_name!()));
+                    println!("Error inserting role: {:?}", err);
                     actix_web::HttpResponse::InternalServerError().body("Failed to insert role")
                 }
             };
@@ -52,7 +51,6 @@ pub async fn add_server_role(
     actix_web::HttpResponse::Unauthorized().body("Invalid token")
 }
 
-#[named]
 #[actix_web::post("/api/delete_server_role")]
 pub async fn delete_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -100,7 +98,7 @@ pub async fn delete_server_role(
                                 actix_web::HttpResponse::Ok().body("Role deleted successfully")
                             }
                             Err(err) => {
-                                logging::log(&format!("Error deleting role: {:?}", err), Some(function_name!()));
+                                println!("Error deleting role: {:?}", err);
                                 actix_web::HttpResponse::InternalServerError()
                                     .body("Failed to delete role from server.")
                             }
@@ -108,7 +106,7 @@ pub async fn delete_server_role(
                     }
                 }
                 Err(err) => {
-                    logging::log(&format!("Error removing role from users: {:?}", err), Some(function_name!()));
+                    println!("Error removing role from users: {:?}", err);
                     return actix_web::HttpResponse::InternalServerError()
                         .body("Failed to remove role from users.");
                 }
@@ -119,7 +117,6 @@ pub async fn delete_server_role(
     actix_web::HttpResponse::Unauthorized().body("Invalid user token.")
 }
 
-#[named]
 #[actix_web::post("/api/assign_role_to_user")]
 pub async fn assign_role_to_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -159,7 +156,7 @@ pub async fn assign_role_to_user(
             return match result {
                 Ok(_) => actix_web::HttpResponse::BadRequest().body("Role assigned successfully"),
                 Err(err) => {
-                    logging::log(&format!("Error assigning role: {:?}", err), Some(function_name!()));
+                    println!("Error assigning role: {:?}", err);
                     actix_web::HttpResponse::InternalServerError().body("Failed to assign role")
                 }
             };
@@ -169,7 +166,6 @@ pub async fn assign_role_to_user(
     actix_web::HttpResponse::Unauthorized().body("Invalid token")
 }
 
-#[named]
 #[actix_web::post("/api/remove_role_from_user")]
 pub async fn remove_role_from_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -198,7 +194,7 @@ pub async fn remove_role_from_user(
             return match result {
                 Ok(_) => actix_web::HttpResponse::Ok().body("Role removed successfully"),
                 Err(err) => {
-                    logging::log(&format!("Error removing role: {:?}", err), Some(function_name!()));
+                    println!("Error removing role: {:?}", err);
                     actix_web::HttpResponse::InternalServerError().body("Failed to remove role")
                 }
             };
