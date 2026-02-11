@@ -1,6 +1,3 @@
-#![allow(unused_variables)]
-#![allow(dead_code)]
-
 pub static SELECT_USER_USERNAME: &str = r#"
     SELECT username FROM division_online.users
         WHERE username = ?;
@@ -79,11 +76,6 @@ pub static SELECT_SERVER_CHANNEL_MESSAGES: &str = r#"
     SELECT username, datetime, m_content FROM division_online.o_server_messages 
         WHERE sid=? AND channel_name=? 
         ALLOW FILTERING; 
-"#;
-
-pub static INSERT_SERVER: &str = r#"
-    INSERT INTO division_online.o_servers(sid, desc, name, owner) 
-        VALUES(?,?,?,?);
 "#;
 
 pub static SELECT_USER_SID_LIST: &str = r#"

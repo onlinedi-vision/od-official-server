@@ -25,7 +25,7 @@ pub async fn send_dm_invite(
         } else {
             (req.recipient.clone(), req.sender.clone())
         };
-        if let Some((invite_id, sender)) =
+        if let Some((invite_id, _)) =
             db::invites::fetch_dm_invite(&scylla_session, u1.clone(), u2.clone()).await
         {
             return actix_web::HttpResponse::Ok().json(structures::SendInviteResp {
@@ -153,7 +153,7 @@ pub async fn reject_dm_invite(
             (req.sender.clone(), req.recipient.clone())
         };
 
-        if let Some((invite_id, sender)) =
+        if let Some((invite_id, _)) =
             db::invites::fetch_dm_invite(&scylla_session, u1.clone(), u2.clone()).await
         {
             let _ = db::invites::delete_dm_invite(&scylla_session, u1.clone(), u2.clone()).await;

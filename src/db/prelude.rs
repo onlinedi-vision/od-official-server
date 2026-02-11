@@ -4,6 +4,9 @@ use crate::db;
 use crate::db::{statics, structures};
 use crate::env::get_env_var;
 use crate::security;
+use crate::utils::logging;
+
+use ::function_name::named;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -40,6 +43,7 @@ pub async fn new_moka_cache(cache_size: u64) -> Result<moka::future::Cache<Strin
     Ok(moka::future::Cache::<String,String>::new(cache_size))
 }
 
+#[named]
 pub async fn check_token(
     session: &scylla::client::session::Session,
     cache: &moka::future::Cache<String, String>,
@@ -53,8 +57,6 @@ pub async fn check_token(
     
 
     if let Some(username) = un.clone() {
-        println!("{}", crypted_token.clone());
-
         if let Some(cache_token) = cache.get(&username.clone()).await
             && cache_token == crypted_token.clone() {
                 return Some(());
@@ -74,7 +76,7 @@ pub async fn check_token(
             .into_rows_result()
             .ok()?;
     }
-    println!(" db/check_token {:?} {:?}", token, un);
+    logging::log(&format!(" db/check_token {:?} {:?}", token, un), Some(function_name!()));
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
@@ -105,13 +107,11 @@ pub async fn check_user_is_in_server(
         for row in query_rows.rows::<(Option<&str>,)>().ok()? {
             match row.ok()? {
                 (Some(user),) => {
-                    println!("SERVER");
                     ret_vec.push(structures::UserUsername {
                         username: Some(user.to_string()),
                     });
                 }
                 _ => {
-                    println!("NOT SERVER");
                     return None;
                 }
             }
