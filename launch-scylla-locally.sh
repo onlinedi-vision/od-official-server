@@ -24,6 +24,7 @@ CREATE TABLE division_online.users (
     password_hash text,
     password_salt text,
     pfp text,
+    ttl text,
     user_salt text,
     PRIMARY KEY (username)
 ) WITH bloom_filter_fp_chance = 0.01

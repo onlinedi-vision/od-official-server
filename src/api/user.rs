@@ -39,6 +39,45 @@ pub async fn new_user_login(
     }
 }
 
+#[actix_web::patch("/api/user/ttl")]
+pub async fn patch_user_ttl(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
+    req: actix_web::web::Json<structures::UpdateUserTTL>,
+) -> impl actix_web::Responder {
+
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+    
+    if ! db::prelude::check_token(
+        &scylla_session,
+        &cache,
+        req.token.clone(),
+        Some(req.username.clone()),
+    )
+    .await
+    .is_some()
+    {
+        return actix_web::HttpResponse::Unauthorized().body("Invalid token!");
+    }
+
+    if ! db::users::update_ttl(
+        &scylla_session,
+        req.username.clone(),
+        req.ttl.clone(),
+    )
+    .await
+    .is_ok()
+    {
+        return actix_web::HttpResponse::InternalServerError()
+            .body("Internal error: scylla session lock poisoned.");
+    }
+
+    return actix_web::HttpResponse::Ok()
+        .body("TTL Updated.");
+
+}
+
 #[named]
 #[actix_web::post("/api/try_login")]
 pub async fn try_login(

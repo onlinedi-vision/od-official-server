@@ -55,7 +55,6 @@ trap 'cleanup' SIGINT SIGTERM
 export SALT_ENCRYPTION_IV="ffA_1D6s^jf!6\$xx"
 export SALT_ENCRYPTION_KEY='#a1aA3!h4a@ah3a4'
 export SCYLLA_CASSANDRA_PASSWORD='cassandra'
-export SCYLLA_DB_USER='cassandra'
 export API_PORT=1313
 export NO_OF_WORKERS=32
 export EXECUTABLE_NAME="api"

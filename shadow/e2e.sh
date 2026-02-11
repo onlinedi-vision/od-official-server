@@ -69,6 +69,10 @@ function post() {
   curl --silent -X POST --header "Content-Type:application/json" -d "${1}" "${HOST}${2}"
 }
 
+function patch() {
+  curl --silent -X PATCH --header "Content-Type:application/json" -d "${1}" "${HOST}${2}"
+}
+
 eetest "/servers/{sid}/api/get_server_info" ""
 get_server_info=$(get "/servers/1313/api/get_server_info"  | jq '.name')
 assert '"division"' "${get_server_info}" "/servers/{sid}/api/get_server_info"
@@ -141,7 +145,7 @@ message_to_send_unsuccesfully=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 3001) |
 
 eetest "/servers/{sid}/api/{channel_name}/send_message" ""
 send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_succesfully}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
-assert_neq "null" "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
+assert "Message sent." "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
 
 eetest "/servers/{sid}/api/{channel_name}/send_message (part2) -- max_message_length" ""
 send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_unsuccesfully}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
@@ -166,6 +170,27 @@ eetest "/servers/{sid}/api/{channel_name}/get_messages_migration"
 message_recieved=$(post "{\"username\":\"${QA_USERNAME}\",\"token\":${token}, \"limit\":\"100\", \"offset\":\"0\"}" "/servers/${sid}/api/${main_channel}/get_messages_migration" | jq -r '.m_list[0].m_content')
 # TODO: why does this fail ?
 expected_failure assert_neq "${message_to_send_succesfully}" "${message_recieved}" "/servers/${sid}/api/${main_channel}/get_messages_migration"
+
+eetest "/api/user/ttl"
+payload=$(patch "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"ttl\":\"s\"}" "/api/user/ttl")
+assert "TTL Updated." "${payload}" "/api/user/ttl"
+
+message_with_short_ttl="This message will be deleted after 3 seconds."
+eetest "/servers/{sid}/api/{channel_name}/send_message -- TTL Expiration"
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_with_short_ttl}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
+assert "Message sent." "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
+
+eetest "/servers/{sid}/api/{channel_name}/get_messages_migration -- TTL Expiration"
+# sleeping for 3 seconds so that the last message's Time To Live
+# passes and the message gets deleted
+printf 'SLEEPING 3 SECONDS... '
+sleep 3
+message=$(post "{\"username\":\"${QA_USERNAME}\",\"token\":${token}, \"limit\":\"100\", \"offset\":\"0\"}" "/servers/${sid}/api/${main_channel}/get_messages_migration" | jq -r '.m_list[].m_content')
+assert "" "$(echo "$message" | grep "$message_with_short_ttl")" "/servers/{sid}/api/{channel_name}/get_messages_migration -- TTL Expiration"
+
+eetest "/api/user/ttl -- set TTL back to _N_ormal"
+payload=$(patch "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"ttl\":\"N\"}" "/api/user/ttl")
+assert "TTL Updated." "${payload}" "/api/user/ttl"
 
 eetest "/servers/{sid}/api/delete_server (${QA_USERNAME} is owner)" ""
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/api/delete_server"  )

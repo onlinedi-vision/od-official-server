@@ -110,6 +110,13 @@ pub struct SendMessage {
 }
 
 #[derive(serde::Deserialize)]
+pub struct UpdateUserTTL {
+    pub username: String,
+    pub token: String,
+    pub ttl: String,  
+}
+
+#[derive(serde::Deserialize)]
 pub struct CreateChannel {
     pub token: String,
     pub channel_name: String,
