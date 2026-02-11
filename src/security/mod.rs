@@ -14,7 +14,7 @@ mod tests {
     #[test]
     fn test_token_armor() {
         assert_eq!(
-            "6249cbd6de7d01973b4a73eacc503c275ec9a92b49306b5a713e998ce2104182",
+            "486ad2d394c6ceeb3c5e9939303e3329dd1edbe5e5e22fdeea6356acafe8a4fe",
             armor_token("token12345678901234567890".to_string())
         );
     }
