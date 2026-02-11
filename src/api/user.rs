@@ -40,7 +40,6 @@ pub async fn new_user_login(
     }
 }
 
-#[named]
 #[actix_web::patch("/api/user/ttl")]
 pub async fn patch_user_ttl(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -80,6 +79,7 @@ pub async fn patch_user_ttl(
 
 }
 
+#[named]
 #[actix_web::post("/api/try_login")]
 pub async fn try_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,

@@ -116,7 +116,7 @@ pub async fn send_message(
                     actix_web::HttpResponse::Ok().body("Message sent.")
                 }
                 Err(e) => {
-                    logging::log("FAILED AT SEND MESSAGE:\n{:?}", e);
+                    logging::log(&format!("FAILED AT SEND MESSAGE:\n{:?}", e), Some(function_name!()));
                     actix_web::HttpResponse::InternalServerError().body("Failed to send message")
                 }
             }

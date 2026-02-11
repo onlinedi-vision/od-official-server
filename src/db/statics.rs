@@ -31,11 +31,6 @@ pub static INSERT_NEW_TOKEN: &str = r#"
         VALUES (?,?,dateof(now()));
 "#;
 
-pub static UPDATE_USER_KEY: &str = r#"
-    UPDATE division_online.users SET key=?
-        WHERE username = ?;
-"#;
-
 pub static UPDATE_USER_TTL: &str = r#"
     UPDATE division_online.users SET ttl=?
         WHERE username = ?;
