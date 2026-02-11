@@ -16,17 +16,23 @@ pub async fn new_user_login(
 	}
     let user_salt = security::salt();
     let password_salt = security::salt();
-    let password_hash = security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
-        &format!("{}{}", user_salt.clone(), req.password.clone()),
-        &password_salt,
-    )));
+    let password_hash = security::argon(
+        security::aes::encrypt(
+            &security::aes::encrypt_with_key(
+                &format!("{}{}", user_salt.clone(), req.password.clone()),
+                &password_salt,
+            )
+        )
+    );
     let token_holder = structures::TokenHolder {
         token: security::token(),
     };
     let user_instance = db::structures::User::new(
         req.username.clone(),
         req.email.clone(),
-        password_hash.clone(),
+        password_hash.clone().expect(
+            "Argon2 failed to create a proper hash. Check src/security/mod.rs:argon()"
+        ),
         security::armor_token(token_holder.token.clone()),
         security::aes::encrypt(&user_salt),
         security::aes::encrypt(&password_salt),

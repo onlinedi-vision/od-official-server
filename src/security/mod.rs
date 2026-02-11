@@ -1,5 +1,6 @@
 use rand::prelude::*;
 use sha2::Digest;
+use password_hash::{PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng};
 
 pub mod aes;
 pub mod messages;
@@ -27,20 +28,32 @@ mod tests {
     }
 
     #[test]
-    fn test_hashers() {
-        let pre_hash_string: String = "pre_hash".to_string();
-        assert_ne!(sha256(pre_hash_string.clone()), sha512(pre_hash_string));
+    fn test_argon2() {
+        let plain_text_secret: String = "pre_hash".to_string();
+        let argon_hash: String = argon(plain_text_secret.clone()).expect(
+            "Argon2 failed to create a proper hash. Check src/security/mod.rs:argon()"
+        );
+
+        assert!(argon_check(plain_text_secret, argon_hash));
+    }
+}
+
+pub fn argon(secret: String) -> Option<String> {
+    let salt = SaltString::generate(&mut OsRng);
+    return Some(argon2::Argon2::default().hash_password(secret.as_bytes(), &salt).ok()?.to_string());
+}
+
+pub fn argon_check(plain_text: String, hash: String) -> bool {
+    match argon2::password_hash::PasswordHash::new(&hash) {
+        Ok(parsed_hash) => argon2::Argon2::default()
+            .verify_password(plain_text.as_bytes(), &parsed_hash)
+            .is_ok(),
+        Err(_) => false,
     }
 }
 
 pub fn sha256(secret: String) -> String {
     let mut hasher = sha2::Sha256::new();
-    hasher.update(secret.into_bytes());
-    format!("{:x}", hasher.finalize())
-}
-
-pub fn sha512(secret: String) -> String {
-    let mut hasher = sha2::Sha512::new();
     hasher.update(secret.into_bytes());
     format!("{:x}", hasher.finalize())
 }
