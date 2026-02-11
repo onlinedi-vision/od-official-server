@@ -62,35 +62,7 @@ pub async fn try_login(
     let cache = cache!(shared_cache);
     match db::users::get_user_password_hash(&scylla_session, username).await {
         Some(secrets) => {
-            let password_hash = secrets[0].password_hash.clone().unwrap();
-            let user_salt = secrets[0].user_salt.clone().unwrap();
-            let password_salt = secrets[0].password_salt.clone().unwrap();
-            let decrypted_user_salt = security::aes::decrypt(&user_salt);
-            let decrypted_password_salt = security::aes::decrypt(&password_salt);
-            let user_password_plain =
-                security::aes::encrypt(
-                    &security::aes::encrypt_with_key(
-                        &format!("{}{}", decrypted_user_salt.clone(), req.password.clone()),
-                        &decrypted_password_salt,
-                )
-            );
-            
-            if security::argon_check(user_password_plain, password_hash) {
-                let _ = db::prelude::insert_user_token(
-                    &scylla_session,
-                    &cache,
-                    db::structures::KeyUser {
-                        key: Some(security::armor_token(new_token_holder.token.clone())),
-                        username: Some(req.username.clone()),
-                    },
-                )
-                .await;
-
-                actix_web::HttpResponse::Ok().json(&new_token_holder)
-            } else {
-                println!("not matchy");
-                actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
-            }
+            prelude::check_user_password(secrets, &req.username, &req.password, scylla_session, cache, new_token_holder).await
         }
         _ => {
             logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));
@@ -128,40 +100,7 @@ pub async fn token_login(
     {
         match db::users::get_user_password_hash(&scylla_session, username).await {
             Some(secrets) => {
-                let password_hash = secrets[0].password_hash.clone().unwrap();
-                let user_salt = secrets[0].user_salt.clone().unwrap();
-                let password_salt = secrets[0].password_salt.clone().unwrap();
-                let decrypted_user_salt = security::aes::decrypt(&user_salt);
-                let decrypted_password_salt = security::aes::decrypt(&password_salt);
-                let user_password_plain = security::aes::encrypt(
-                    &security::aes::encrypt_with_key(
-                        &format!("{}{}", decrypted_user_salt.clone(), req.password.clone()),
-                        &decrypted_password_salt,
-                    )
-                );
-                if security::argon_check(user_password_plain, password_hash) {
-                    let _ = db::prelude::insert_user_token(
-                        &scylla_session,
-                        &cache,
-                        db::structures::KeyUser {
-                            key: Some(security::armor_token(new_token_holder.token.clone())),
-                            username: Some(req.username.clone()),
-                        },
-                    )
-                    .await;
-
-                    let _ = db::users::delete_token(
-                        &scylla_session,
-                        req.username.clone(),
-                        security::armor_token(req.token.clone()),
-                    )
-                    .await;
-
-                    actix_web::HttpResponse::Ok().json(&new_token_holder)
-                } else {
-                    println!("not matchy");
-                    actix_web::HttpResponse::Unauthorized().body("Invalid password")
-                }
+                prelude::check_user_password(secrets, &req.username, &req.password, scylla_session, cache, new_token_holder).await
             }
             _ => {
                 logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));

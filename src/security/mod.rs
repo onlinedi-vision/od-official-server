@@ -58,13 +58,6 @@ pub fn sha256(secret: String) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-pub fn sha512(secret: String) -> String {
-    let mut hasher = sha2::Sha512::new();
-
-    hasher.update(secret.into_bytes());
-    format!("{:x}", hasher.finalize())
-}
-
 pub fn token() -> String {
     let salt = uuid::Uuid::now_v7().to_string();
     let mut hasher = sha2::Sha256::new();

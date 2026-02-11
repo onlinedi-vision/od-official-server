@@ -378,6 +378,9 @@ dependencies = [
  "blake2",
  "cpufeatures",
  "password-hash",
+]
+
+[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
