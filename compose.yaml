@@ -8,7 +8,9 @@ services:
     ports: 
       - "127.0.0.1:1313:1313"
     environment:
+      - NO_OF_WORKERS=32
       - SALT_ENCRYPTION_KEY
       - SALT_ENCRYPTION_IV
       - SCYLLA_CASSANDRA_PASSWORD
+      - SCYLLA_DB_USER
       - API_PORT=1313

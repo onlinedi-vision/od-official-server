@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
 use scylla::client::session::Session;
 

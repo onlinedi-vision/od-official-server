@@ -1,0 +1,32 @@
+pipeline {
+  agent any
+  
+  environment {
+    API_PORT='1313'
+    WS_PORT='9002' 
+  }
+
+  stages {
+
+	  stage('Push Image to Docker Registry') {
+		  steps {
+				withCredentials([string(credentialsId:'vault-scylla-db-user',variable:'SCYLLA_DB_USER')]){
+					withCredentials([string(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
+						withCredentials([vaultString(credentialsId:'vault-aes-key',variable:'SALT_ENCRYPTION_KEY')]){
+							withCredentials([vaultString(credentialsId:'vault-aes-iv',variable:'SALT_ENCRYPTION_IV')]){
+								script {
+									withDockerRegistry(url: 'https://registry.onlinedi.vision:5000',  credentialsId:'docker-registry') {
+										sh 'docker build . -t od-official-server:v$(echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n)'
+										sh 'docker tag od-official-server:v$(echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n) registry.onlinedi.vision:5000/od-official-server:v$(echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n)'
+										sh 'docker push registry.onlinedi.vision:5000/od-official-server:v$(echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n)'
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+	  }
+
+  }
+}
