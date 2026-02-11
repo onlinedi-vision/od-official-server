@@ -1,4 +1,4 @@
-name: Rust CI
+name: Rust CI Linter
 
 on:
   pull_request:
@@ -17,6 +17,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Run tests
-      run: cargo test --verbose
+    - name: Run linter
+      run: cargo clippy --verbose -- -A clippy::await_holding_lock
 

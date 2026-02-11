@@ -53,6 +53,13 @@ pub struct TokenUser {
 }
 
 #[derive(serde::Deserialize)]
+pub struct TokenUserServer {
+    pub username: String,
+    pub token: String,
+    pub sid: String,
+}
+
+#[derive(serde::Deserialize)]
 pub struct LimitMessageTokenUser {
     pub username: String,
     pub token: String,
@@ -63,6 +70,12 @@ pub struct LimitMessageTokenUser {
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct TokenHolder {
     pub token: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct ServerCreatedResponse {
+    pub token: String,
+    pub sid: String
 }
 
 #[derive(serde::Serialize)]

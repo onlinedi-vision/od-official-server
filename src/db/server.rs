@@ -1,5 +1,5 @@
-use crate::db::{statics, structures, users, roles};
 use crate::api;
+use crate::db::{roles, statics, structures, users};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -51,25 +51,24 @@ pub async fn fetch_server_users(
     for row in query_rows.rows::<(Option<&str>,)>().ok()? {
         match row.ok()? {
             (Some(username),) => {
-                if let Some(user_info) = users::fetch_user_info(session, username.to_string()).await {
-                    if let Some(roles) = roles::fetch_user_roles(session, sid.clone(), username.to_string()).await { 
-                        users.push(
-                            api::structures::PublicInfoUser {
-                                username: username.to_string(),
-                                bio: user_info[0].bio.clone()?.to_string(),
-                                img_url: user_info[0].pfp.clone()?.to_string(),
-                                roles: roles,
-                            }
-                        );
+                if let Some(user_info) = users::fetch_user_info(session, username.to_string()).await
+                {
+                    if let Some(roles) =
+                        roles::fetch_user_roles(session, sid.clone(), username.to_string()).await
+                    {
+                        users.push(api::structures::PublicInfoUser {
+                            username: username.to_string(),
+                            bio: user_info[0].bio.clone()?.to_string(),
+                            img_url: user_info[0].pfp.clone()?.to_string(),
+                            roles,
+                        });
                     } else {
-                        users.push(
-                            api::structures::PublicInfoUser {
-                                username: username.to_string(),
-                                bio: user_info[0].bio.clone()?.to_string(),
-                                img_url: user_info[0].pfp.clone()?.to_string(),
-                                roles: Vec::new(),
-                            }
-                        );
+                        users.push(api::structures::PublicInfoUser {
+                            username: username.to_string(),
+                            bio: user_info[0].bio.clone()?.to_string(),
+                            img_url: user_info[0].pfp.clone()?.to_string(),
+                            roles: Vec::new(),
+                        });
                     }
                 }
             }
@@ -79,11 +78,7 @@ pub async fn fetch_server_users(
         }
     }
 
-    if users.len() > 0 {
-        Some(users)
-    } else {
-        None
-    }
+    if !users.is_empty() { Some(users) } else { None }
 }
 
 pub async fn fetch_server_info(
@@ -96,9 +91,9 @@ pub async fn fetch_server_info(
         .ok()?
         .into_rows_result()
         .ok()?;
-    for row in query_rows
+    if let Some(row) = (query_rows
         .rows::<(Option<&str>, Option<&str>, Option<&str>)>()
-        .ok()?
+        .ok()?).next()
     {
         match row.ok()? {
             (Some(name), Some(desc), Some(img_url)) => {
@@ -143,13 +138,14 @@ pub async fn send_message(
     channel_name: String,
     m_content: String,
     username: String,
+    salt: String,
 ) -> Option<Result<()>> {
     let mid = uuid::Uuid::new_v4().to_string();
     Some(
         session
             .query_unpaged(
                 statics::INSERT_SERVER_CHANNEL_MESSAGE,
-                (mid, channel_name, m_content, sid, username),
+                (mid, channel_name, m_content, sid, username, true, salt),
             )
             .await
             .map(|_| ())
@@ -193,11 +189,7 @@ pub async fn fetch_user_servers(
         }
     }
 
-    if sids.len() > 0 {
-        Some(sids)
-    } else {
-        None
-    }
+    if !sids.is_empty() { Some(sids) } else { None }
 }
 
 pub async fn fetch_server_channels(
@@ -225,30 +217,47 @@ pub async fn fetch_server_channels(
         }
     }
 
-    if channels.len() > 0 {
+    if !channels.is_empty() {
         Some(channels)
     } else {
         None
     }
 }
 
-
 pub async fn delete_server(
     session: &scylla::client::session::Session,
     sid: String,
 ) -> Option<Result<()>> {
-
-        
-    session.query_unpaged(statics::DELETE_SERVER_BY_SID, (sid.clone(),)).await.ok()?;
-    session.query_unpaged(statics::DELETE_SERVER_CHANNELS_BY_SID, (sid.clone(),)).await.ok()?;
-    session.query_unpaged(statics::DELETE_SERVER_USERS_BY_SID, (sid.clone(),)).await.ok()?;
-    session.query_unpaged(statics::DELETE_SERVER_MESSAGES_MIGRATION_BY_SID, (sid.clone(),)).await.ok()?;
-    session.query_unpaged(statics::DELETE_SERVER_ROLES_BY_SID, (sid.clone(),)).await.ok()?;
-    session.query_unpaged(statics::DELETE_USER_ROLES_BY_SID, (sid.clone(),)).await.ok()?;
+    session
+        .query_unpaged(statics::DELETE_SERVER_BY_SID, (sid.clone(),))
+        .await
+        .ok()?;
+    session
+        .query_unpaged(statics::DELETE_SERVER_CHANNELS_BY_SID, (sid.clone(),))
+        .await
+        .ok()?;
+    session
+        .query_unpaged(statics::DELETE_SERVER_USERS_BY_SID, (sid.clone(),))
+        .await
+        .ok()?;
+    session
+        .query_unpaged(
+            statics::DELETE_SERVER_MESSAGES_MIGRATION_BY_SID,
+            (sid.clone(),),
+        )
+        .await
+        .ok()?;
+    session
+        .query_unpaged(statics::DELETE_SERVER_ROLES_BY_SID, (sid.clone(),))
+        .await
+        .ok()?;
+    session
+        .query_unpaged(statics::DELETE_USER_ROLES_BY_SID, (sid.clone(),))
+        .await
+        .ok()?;
 
     Some(Ok(()))
 }
-
 
 pub async fn check_user_is_owner(
     session: &scylla::client::session::Session,
@@ -262,7 +271,7 @@ pub async fn check_user_is_owner(
         .into_rows_result()
         .ok()?;
 
-    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+    if let Some(row) = (query_rows.rows::<(Option<&str>,)>().ok()?).next() {
         match row.ok()? {
             (Some(owner),) => {
                 if owner == username {
@@ -272,22 +281,29 @@ pub async fn check_user_is_owner(
                 }
             }
             _ => {
-                return None; 
+                return None;
             }
         }
     }
-    None 
+    None
 }
-
 
 pub async fn delete_channel(
     session: &scylla::client::session::Session,
     sid: String,
     channel_name: String,
 ) -> Option<Result<()>> {
-
-    session.query_unpaged(statics::DELETE_CHANNEL, (sid.clone(), channel_name.clone())).await.ok()?;
-    session.query_unpaged(statics::DELETE_SERVER_MESSAGES_MIGRATIONS_BY_SID_AND_CHANNEL, (sid.clone(), channel_name.clone())).await.ok()?;
+    session
+        .query_unpaged(statics::DELETE_CHANNEL, (sid.clone(), channel_name.clone()))
+        .await
+        .ok()?;
+    session
+        .query_unpaged(
+            statics::DELETE_SERVER_MESSAGES_MIGRATIONS_BY_SID_AND_CHANNEL,
+            (sid.clone(), channel_name.clone()),
+        )
+        .await
+        .ok()?;
 
     Some(Ok(()))
 }

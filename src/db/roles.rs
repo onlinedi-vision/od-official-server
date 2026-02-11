@@ -1,4 +1,7 @@
 use crate::db::{statics, structures};
+use crate::utils::logging;
+
+use ::function_name::named;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -33,6 +36,7 @@ pub async fn delete_server_role(
     )
 }
 
+#[named]
 pub async fn remove_role_from_all_users(
     session: &scylla::client::session::Session,
     server_id: String,
@@ -55,10 +59,12 @@ pub async fn remove_role_from_all_users(
         }
     }
 
-    println!(
-        "Found {} users with role '{}' to remove.",
-        usernames.len(),
-        role_name
+    logging::log(
+        &format!(
+            "Found {} users with role '{}' to remove.",
+            usernames.len(),
+            role_name
+        ), Some(function_name!())
     );
 
     for username in usernames {
@@ -71,22 +77,28 @@ pub async fn remove_role_from_all_users(
         if let Some(result) = remove_role_from_user(session, user_role).await {
             match result {
                 Ok(_) => {
-                    println!(
-                        "Successfully removed role '{}' from user '{}'",
-                        role_name, username
+                    logging::log(
+                        &format!(
+                            "Successfully removed role '{}' from user '{}'",
+                            role_name, username
+                        ), Some(function_name!())
                     );
                 }
                 Err(err) => {
-                    println!(
-                        "Error removig role '{}' from user '{}': {:?}",
-                        role_name, username, err
+                    logging::log(
+                        &format!(
+                            "Error removig role '{}' from user '{}': {:?}",
+                            role_name, username, err
+                        ), Some(function_name!())
                     );
                 }
             }
         } else {
-            println!(
-                "Failed to remove role '{}' from user '{}'",
-                role_name, username
+            logging::log(
+                &format!(
+                    "Failed to remove role '{}' from user '{}'",
+                    role_name, username
+                ), Some(function_name!())
             );
         }
     }
@@ -155,7 +167,7 @@ pub async fn fetch_server_roles(
             });
         }
     }
-    if roles.len() > 0 {
+    if !roles.is_empty() {
         Some(roles)
     } else {
         None
@@ -180,7 +192,7 @@ pub async fn fetch_user_roles(
             role_names.push(role_name);
         }
     }
-    if role_names.len() > 0 {
+    if !role_names.is_empty() {
         Some(role_names)
     } else {
         None
@@ -200,10 +212,9 @@ pub async fn check_role_exists(
         .ok()?;
 
     Some(
-        !query_rows
+        query_rows
             .rows::<(Option<String>,)>()
             .ok()?
-            .next()
-            .is_none(),
+            .next().is_some(),
     )
 }

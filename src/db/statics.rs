@@ -1,6 +1,3 @@
-#![allow(unused_variables)]
-#![allow(dead_code)]
-
 pub static SELECT_USER_USERNAME: &str = r#"
     SELECT username FROM division_online.users
         WHERE username = ?;
@@ -34,11 +31,6 @@ pub static INSERT_NEW_TOKEN: &str = r#"
         VALUES (?,?,dateof(now()));
 "#;
 
-pub static UPDATE_USER_KEY: &str = r#"
-    UPDATE division_online.users SET key=?
-        WHERE username = ?;
-"#;
-
 pub static SELECT_USER_PASSWORD_HASH: &str = r#"
     SELECT password_hash, user_salt, password_salt FROM division_online.users
         WHERE username = ?
@@ -46,12 +38,12 @@ pub static SELECT_USER_PASSWORD_HASH: &str = r#"
 "#;
 
 pub static INSERT_SERVER_CHANNEL_MESSAGE: &str = r#"
-    INSERT INTO division_online.o_server_messages_migration(mid,channel_name,datetime,m_content,sid,username) 
-        VALUES(?,?,dateof(now()),?,?,?); 
+    INSERT INTO division_online.o_server_messages_migration(mid,channel_name,datetime,m_content,sid,username,encrypted,salt) 
+        VALUES(?,?,dateof(now()),?,?,?,?,?); 
 "#;
 
 pub static SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION: &str = r#"
-    SELECT username, datetime, m_content FROM division_online.o_server_messages_migration
+    SELECT username, datetime, m_content, encrypted, salt FROM division_online.o_server_messages_migration
         WHERE sid=? AND channel_name=?
         ORDER BY datetime DESC
         LIMIT ?
@@ -62,11 +54,6 @@ pub static SELECT_SERVER_CHANNEL_MESSAGES: &str = r#"
     SELECT username, datetime, m_content FROM division_online.o_server_messages 
         WHERE sid=? AND channel_name=? 
         ALLOW FILTERING; 
-"#;
-
-pub static INSERT_SERVER: &str = r#"
-    INSERT INTO division_online.o_servers(sid, desc, name, owner) 
-        VALUES(?,?,?,?);
 "#;
 
 pub static SELECT_USER_SID_LIST: &str = r#"

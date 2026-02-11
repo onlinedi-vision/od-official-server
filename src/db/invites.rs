@@ -69,15 +69,14 @@ pub async fn fetch_pending_dm_invites(
             .ok()?;
 
         for row in (query_rows.rows::<(Option<&str>, Option<&str>)>()).ok()? {
-            if let Ok((Some(invite_id), Some(sender))) = row {
-                if sender != username {
+            if let Ok((Some(invite_id), Some(sender))) = row
+                && sender != username {
                     invites.push((invite_id.to_string(), sender.to_string()));
                 }
-            }
         }
     }
 
-    if invites.len() > 0 {
+    if !invites.is_empty() {
         Some(invites)
     } else {
         None

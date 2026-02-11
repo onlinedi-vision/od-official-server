@@ -1,1 +1,5 @@
 /target/*
+.curl_stderr
+test_env*
+.env*
+.pids

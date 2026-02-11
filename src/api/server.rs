@@ -1,33 +1,38 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
 use scylla::client::session::Session;
 
 use crate::api::structures;
+use crate::api::statics;
 use crate::db;
 use crate::security;
+use crate::utils::logging;
 
-// !TODO: create_server API
+use ::function_name::named;
+
+#[named]
 #[actix_web::post("/api/create_server")]
 pub async fn create_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::CreateServer>,
 ) -> impl actix_web::Responder {
-    
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
-
-    if let Some(_) = db::prelude::check_token(
+	if req.name.len() > statics::MAX_SERVER_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to create server: Server name longer than {}", statics::MAX_SERVER_LENGTH));
+	}
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
     .await
+    .is_some()
     {
         let sid = security::sid();
-        if let Some(_) = db::server::create_server(
+        if db::server::create_server(
             &scylla_session,
             sid.clone(),
             &req.desc,
@@ -36,17 +41,19 @@ pub async fn create_server(
             req.username.clone(),
         )
         .await
+        .is_some()
         {
             let _ =
                 db::server::create_channel(&scylla_session, sid.clone(), "info".to_string()).await;
-            let new_token_holder = structures::TokenHolder {
+            let server_created = structures::ServerCreatedResponse {
                 token: security::token(),
+                sid: sid.clone(),
             };
             let _ = db::prelude::insert_user_token(
                 &scylla_session,
                 &cache,
                 db::structures::KeyUser {
-                    key: Some(security::armor_token(new_token_holder.token.clone())),
+                    key: Some(security::armor_token(server_created.token.clone())),
                     username: Some(req.username.clone()),
                 },
             )
@@ -59,56 +66,58 @@ pub async fn create_server(
                 permissions: std::collections::HashSet::<String>::new(),
             };
 
-            let _  = db::roles::insert_server_role(&scylla_session, sid.clone(), role).await;
-            
+            let _ = db::roles::insert_server_role(&scylla_session, sid.clone(), role).await;
+
             let user_role = db::structures::UserServerRole {
                 server_id: sid.clone(),
                 username: req.username.clone(),
                 role_name: "member".to_string(),
             };
-            let _ = db::roles::assign_role_to_user(&scylla_session, user_role).await;            
+            let _ = db::roles::assign_role_to_user(&scylla_session, user_role).await;
 
-            if let Some(_) =
-                db::server::add_user_to_server(&scylla_session, sid, req.username.clone()).await
+            if db::server::add_user_to_server(&scylla_session, sid, req.username.clone())
+                .await
+                .is_some()
             {
-                return actix_web::HttpResponse::Ok().json(&new_token_holder);
+                actix_web::HttpResponse::Ok().json(&server_created)
             } else {
-                println!("SERVERS FAIL: add_user_to_server");
-                return actix_web::HttpResponse::InternalServerError()
-                    .body("Failed to add user to server");
+                logging::log("SERVERS FAIL: add_user_to_server", Some(function_name!()));
+                actix_web::HttpResponse::InternalServerError().body("Failed to add user to server")
             }
         } else {
-            println!("SERVERS FAIL: create_server");
-            return actix_web::HttpResponse::InternalServerError().body("Failed to create server");
+            logging::log("SERVERS FAIL: create_server", Some(function_name!()));
+            actix_web::HttpResponse::InternalServerError().body("Failed to create server")
         }
     } else {
-        println!("SERVERS FAIL: invalid token in create_server");
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        logging::log("SERVERS FAIL: invalid token in create_server", Some(function_name!()));
+        actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
+#[named]
 #[actix_web::post("/servers/{sid}/api/join")]
 pub async fn join_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+    let sid: String = param!(http, "sid");
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
-
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
     .await
+    .is_some()
     {
-        if let Some(_) =
-            db::server::add_user_to_server(&scylla_session, sid, req.username.clone()).await
+        if db::server::add_user_to_server(&scylla_session, sid, req.username.clone())
+            .await
+            .is_some()
         {
             let new_token_holder = structures::TokenHolder {
                 token: security::token(),
@@ -130,32 +139,29 @@ pub async fn join_server(
             )
             .await;
 
-            return actix_web::HttpResponse::Ok().json(&new_token_holder);
+            actix_web::HttpResponse::Ok().json(&new_token_holder)
         } else {
-            println!("SERVERS FAIL: add_user_to_server");
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Failed to add user to server");
+            logging::log("SERVERS FAIL: add_user_to_server", Some(function_name!()));
+            actix_web::HttpResponse::InternalServerError().body("Failed to add user to server")
         }
     } else {
-        println!("SERVERS FAIL: invalid token in create_server");
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        logging::log("SERVERS FAIL: invalid token in create_server", Some(function_name!()));
+        actix_web::HttpResponse::Unauthorized().body("Invalid token")
     }
 }
 
-// !TODO: get_user_servers API
 #[actix_web::post("/servers/{sid}/api/get_server_users")]
 pub async fn get_server_users(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+    let sid: String = param!(http, "sid");
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
-    
-    if let Some(_) = db::prelude::check_user_is_in_server(
+    if db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
         sid.clone(),
@@ -163,15 +169,15 @@ pub async fn get_server_users(
         req.username.clone(),
     )
     .await
+    .is_some()
     {
         if let Some(users) = db::server::fetch_server_users(&scylla_session, sid.clone()).await {
-            return actix_web::HttpResponse::Ok().json(&structures::UsersList { u_list: users });
+            actix_web::HttpResponse::Ok().json(&structures::UsersList { u_list: users })
         } else {
-            return actix_web::HttpResponse::Ok()
-                .json(&structures::UsersList { u_list: Vec::new() });
+            actix_web::HttpResponse::Ok().json(&structures::UsersList { u_list: Vec::new() })
         }
     } else {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
+        actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
     }
 }
 
@@ -180,27 +186,27 @@ pub async fn get_server_info(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
-    let scylla_session = session.lock.lock().unwrap();
+    let sid: String = param!(http, "sid");
+    let scylla_session = scylla_session!(session);
     if let Some(server_info) = db::server::fetch_server_info(&scylla_session, sid.clone()).await {
-        return actix_web::HttpResponse::Ok().json(&server_info);
+        actix_web::HttpResponse::Ok().json(&server_info)
     } else {
-        return actix_web::HttpResponse::NotFound().json(&structures::Status {
+        actix_web::HttpResponse::NotFound().json(&structures::Status {
             status: "nok".to_string(),
-        });
+        })
     }
 }
 
+#[named]
 #[actix_web::post("/servers/{sid}/api/delete_server")]
 pub async fn delete_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -214,18 +220,47 @@ pub async fn delete_server(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    let sid: String = http.match_info().get("sid").unwrap().to_string();
+    let sid: String = param!(http, "sid");
 
-    if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await == Some(true) {
-        if let Some(_) = db::server::delete_server(&scylla_session, sid).await {
-            return actix_web::HttpResponse::Ok().body("Server deleted successfully");
-        } 
-        else {
-            return actix_web::HttpResponse::InternalServerError().body("Failed to delete server");
+    if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await
+        == Some(true)
+    {
+        if db::server::delete_server(&scylla_session, sid)
+            .await
+            .is_some()
+        {
+            actix_web::HttpResponse::Ok().body("Server deleted successfully")
+        } else {
+            actix_web::HttpResponse::InternalServerError().body("Failed to delete server")
         }
-    } 
-    else {
-        println!("Unauthorized: not server owner");
-        return actix_web::HttpResponse::Unauthorized().body("You don't have permission to delete this server");
+    } else {
+        logging::log("Unauthorized: not server owner", Some(function_name!()));
+        actix_web::HttpResponse::Unauthorized()
+            .body("You don't have permission to delete this server")
     }
+}
+
+#[actix_web::post("/api/am_i_in_server")]
+pub async fn am_i_in_server(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
+    req: actix_web::web::Json<structures::TokenUserServer>,
+) -> impl actix_web::Responder {
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+
+    if db::prelude::check_user_is_in_server(
+        &scylla_session,
+        &cache,
+        req.sid.clone(),
+        req.token.clone(),
+        req.username.clone(),
+    )
+    .await
+    .is_some()
+    {
+        return actix_web::HttpResponse::Ok().body("Yes you are part of the server.");
+    }
+
+    actix_web::HttpResponse::NotFound().body("You are not part of this server.")
 }

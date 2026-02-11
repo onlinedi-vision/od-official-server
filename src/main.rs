@@ -3,8 +3,13 @@ mod api;
 mod security;
 mod db;
 mod env;
+mod utils;
 
 use actix_web::{middleware::Logger};
+use actix_web_ratelimit::{config::RateLimitConfig, store::MemoryStore, RateLimit};
+
+static API_RATELIMIT_COUNT: usize = 2000;
+static API_RATELIMIT_WINDOW_SECONDS: u64 = 60;
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -18,9 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let no_of_workers = match env::get_option_env_var("NO_OF_WORKERS") {
         Some(s_workers_count) => {
-            if let Ok(workers_count) = s_workers_count.parse::<usize>() {
-                workers_count
-            } else {512}
+            s_workers_count.parse::<usize>().unwrap_or(512)
         },
         None => 512,
     };
@@ -35,9 +38,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         lock: std::sync::Mutex::new(db::prelude::new_moka_cache(1_000).await.expect("Failed to create moka cache."))
     });
 
+    let rl_config = RateLimitConfig::default().max_requests(API_RATELIMIT_COUNT).window_secs(API_RATELIMIT_WINDOW_SECONDS);
+    let rl_store = std::sync::Arc::new(MemoryStore::new());
+
     // setting up the API server
     let _ = actix_web::HttpServer::new(move || {
         actix_web::App::new()
+            .wrap(RateLimit::new(rl_config.clone(), rl_store.clone()))
             .wrap(Logger::new("%a %{User-Agent}i %U"))
             
             .app_data(session.clone())                                             // sharing scyllaDB session
@@ -56,6 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::server::get_server_users)                 
             .service(api::server::get_server_info)
             .service(api::server::delete_server)
+            .service(api::server::am_i_in_server)
             
             .service(api::invites::send_dm_invite)
             .service(api::invites::accept_dm_invite)
@@ -69,10 +77,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .service(api::channel::create_channel)
             .service(api::channel::delete_channel)
 
-            .service(api::message::get_channel_messages)
             .service(api::message::get_channel_messages_migration)
             .service(api::message::send_message)
-            .service(api::message::get_channel_messages)
             .service(api::message::delete_message)
 
             .service(api::roles::add_server_role)

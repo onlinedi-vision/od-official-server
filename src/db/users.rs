@@ -1,4 +1,7 @@
 use crate::db::{statics, structures};
+use crate::utils::logging;
+
+use ::function_name::named;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -15,7 +18,7 @@ pub async fn insert_new_user(
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
-                return None;
+                None
             } else {
                 let insert_user_result = session
                     .query_unpaged(
@@ -34,7 +37,7 @@ pub async fn insert_new_user(
                     .map(|_| ())
                     .map_err(From::from);
                 if insert_user_result.is_err() {
-                    return Some(insert_user_result);
+                    Some(insert_user_result)
                 } else {
                     return Some(
                         session
@@ -64,7 +67,7 @@ pub async fn insert_new_user(
                 .map(|_| ())
                 .map_err(From::from);
             if insert_user_result.is_err() {
-                return Some(insert_user_result);
+                Some(insert_user_result)
             } else {
                 return Some(
                     session
@@ -78,6 +81,7 @@ pub async fn insert_new_user(
     }
 }
 
+#[named]
 pub async fn get_user_password_hash(
     session: &scylla::client::session::Session,
     user: structures::UserUsername,
@@ -102,24 +106,25 @@ pub async fn get_user_password_hash(
                 });
             }
             _ => {
-                println!("[get_user_password_hash] wasn't able to retrieve user info"); // TODO: FIX DEBUG LOGS FUCK ME
+                logging::log("wasn't able to retrieve user info", Some(function_name!()));
                 return None;
             }
         };
     }
-    if secrets.len() > 0 {
+    if !secrets.is_empty() {
         Some(secrets)
     } else {
         None
     }
 }
 
+#[named]
 pub async fn delete_token(
     session: &scylla::client::session::Session,
     username: String,
     token: String,
 ) -> Option<Result<()>> {
-    println!("DELETE: {} {}", username, token);
+    logging::log(&format!("DELETE: {} {}", username, token), Some(function_name!()));
     Some(
         session
             .query_unpaged(statics::DELETE_TOKEN, (username, token))
@@ -153,7 +158,7 @@ pub async fn fetch_user_info(
             }
         };
     }
-    if user_info.len() > 0 {
+    if !user_info.is_empty() {
         Some(user_info)
     } else {
         None
@@ -170,7 +175,7 @@ pub async fn fetch_user_pfp(
         .ok()?
         .into_rows_result()
         .ok()?;
-    for row in query_rows.rows::<(Option<&str>,)>().ok()? {
+    if let Some(row) = (query_rows.rows::<(Option<&str>,)>().ok()?).next() {
         match row.ok()? {
             (Some(pfp),) => {
                 return Some(structures::UserPfp {

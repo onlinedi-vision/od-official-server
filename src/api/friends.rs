@@ -1,16 +1,19 @@
 use crate::api::structures;
 use crate::db;
 use crate::security;
+use crate::utils::logging;
+
+use ::function_name::named;
 
 #[actix_web::post("/api/fetch_friend_list")]
 pub async fn fetch_friend_list(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
 ) -> impl actix_web::Responder {
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
-    
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+
     if db::prelude::check_token(
         &scylla_session,
         &cache,
@@ -42,24 +45,24 @@ pub async fn fetch_friend_list(
     }
 }
 
+#[named]
 #[actix_web::post("/api/delete_friend")]
 pub async fn delete_friend(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>, 
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::FriendListReq>,
 ) -> impl actix_web::Responder {
-    
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
-        Some(req.user.clone())
+        Some(req.user.clone()),
     )
-        .await
-        .is_none()
+    .await
+    .is_none()
     {
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
@@ -78,7 +81,7 @@ pub async fn delete_friend(
             })
         }
         (Some(Err(e)), _) | (_, Some(Err(e))) => {
-            eprintln!("Error detecting friend: {}", e);
+            logging::log(&format!("Error detecting friend: {}", e), Some(function_name!()));
             actix_web::HttpResponse::InternalServerError().body("Failed to delete friend.")
         }
         _ => actix_web::HttpResponse::InternalServerError().body("Failed to delete friend."),

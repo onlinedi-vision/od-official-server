@@ -1,13 +1,19 @@
-use crate::api::structures;
+use crate::api::{structures,statics,prelude};
 use crate::db;
 use crate::security;
+use crate::utils::logging;
+
+use ::function_name::named;
 
 #[actix_web::post("/api/new_user")]
 pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<structures::NewUser>,
 ) -> impl actix_web::Responder {
-    println!("test");
+	if req.username.len() > statics::MAX_USERNAME_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to create user: Username longer than {}", statics::MAX_SERVER_LENGTH));
+	}
     let user_salt = security::salt();
     let password_salt = security::salt();
     let password_hash = security::argon(
@@ -32,18 +38,14 @@ pub async fn new_user_login(
         security::aes::encrypt(&password_salt),
     );
 
-    let scylla_session = session.lock.lock().unwrap();
+    let scylla_session = scylla_session!(session);
     match db::users::insert_new_user(&scylla_session, user_instance).await {
-        None => {
-            return actix_web::HttpResponse::Conflict()
-                .body("User already exists or insert failed");
-        }
-        Some(_) => {
-            return actix_web::HttpResponse::Ok().json(&token_holder);
-        }
+        None => actix_web::HttpResponse::Conflict().body("User already exists or insert failed"),
+        Some(_) => actix_web::HttpResponse::Ok().json(&token_holder),
     }
 }
 
+#[named]
 #[actix_web::post("/api/try_login")]
 pub async fn try_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -56,8 +58,8 @@ pub async fn try_login(
     let username = db::structures::UserUsername {
         username: Some(req.username.clone()),
     };
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
     match db::users::get_user_password_hash(&scylla_session, username).await {
         Some(secrets) => {
             let password_hash = secrets[0].password_hash.clone().unwrap();
@@ -91,12 +93,13 @@ pub async fn try_login(
             }
         }
         _ => {
-            println!("no hash");
+            logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));
             actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
         }
     }
 }
 
+#[named]
 #[actix_web::post("/api/token_login")]
 pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -111,16 +114,17 @@ pub async fn token_login(
         username: Some(req.username.clone()),
     };
 
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
 
-    if let Some(_) = db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
     .await
+    .is_some()
     {
         match db::users::get_user_password_hash(&scylla_session, username).await {
             Some(secrets) => {
@@ -160,17 +164,17 @@ pub async fn token_login(
                 }
             }
             _ => {
-                println!("no hash");
+                logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));
                 actix_web::HttpResponse::Unauthorized().body("Invalid password")
             }
         }
     } else {
-        println!("no token");
+        logging::log("Failed because user supplied token is incorrect.", Some(function_name!()));
         actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
     }
 }
 
-// !TODO: get_user_servers API
+#[named]
 #[actix_web::post("/api/get_user_servers")]
 pub async fn get_user_servers(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -180,18 +184,16 @@ pub async fn get_user_servers(
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
-    let username = db::structures::UserUsername {
-        username: Some(req.username.clone()),
-    };
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
-    if let Some(_) = db::prelude::check_token(
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
     .await
+    .is_some()
     {
         match db::server::fetch_user_servers(&scylla_session, req.username.clone()).await {
             Some(sids) => {
@@ -218,16 +220,17 @@ pub async fn get_user_servers(
                 })
             }
             None => {
-                println!("no hash");
+                logging::log("no hash", Some(function_name!()));
                 actix_web::HttpResponse::NotFound().body("No servers found for user")
             }
         }
     } else {
-        println!("no token");
+        logging::log("no token", Some(function_name!()));
         actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
     }
 }
 
+#[named]
 #[actix_web::post("/api/get_user_pfp")]
 pub async fn get_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -237,15 +240,16 @@ pub async fn get_user_pfp(
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
-    if let Some(_) = db::prelude::check_token(
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
     .await
+    .is_some()
     {
         match db::users::fetch_user_pfp(&scylla_session, &req.username).await {
             Some(pfp_row) => {
@@ -274,11 +278,12 @@ pub async fn get_user_pfp(
             None => actix_web::HttpResponse::NotFound().body("User not found."),
         }
     } else {
-        println!("no token");
+        logging::log("no token", Some(function_name!()));
         actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
     }
 }
 
+#[named]
 #[actix_web::post("/api/set_user_pfp")]
 pub async fn set_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -288,15 +293,16 @@ pub async fn set_user_pfp(
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
-    let scylla_session = session.lock.lock().unwrap();
-    let cache = shared_cache.lock.lock().unwrap();
-    if let Some(_) = db::prelude::check_token(
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
     .await
+    .is_some()
     {
         let img_opt = match req.img_url.as_deref() {
             // If "" -> None
@@ -333,7 +339,7 @@ pub async fn set_user_pfp(
                 .body("Failed to update profile picture."),
         }
     } else {
-        println!("no token");
+        logging::log("no token", Some(function_name!()));
         actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
     }
 }
