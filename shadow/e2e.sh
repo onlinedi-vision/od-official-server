@@ -2,14 +2,28 @@
 
 HOST=${1:-https://onlinedi.vision}
 printf "HOST: %s\n" "${HOST}"
-QA_USERNAME=qa_e2e_user-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13)
+QA_USERNAME=$(mktemp --dry-run qa_e2e_user-XXXXXXXXXXXX)
 
 printf "QA_USERNAME: %s\n" "${QA_USERNAME}"
 
 set -eo pipefail
 
 function expected_failure() {
-  ${@} | cat 
+  echo
+  echo   "******************************************************************************************************"
+  echo   "                                        (EXPECTED FAILURE)"
+  printf "******************************************************************************************************"
+  if ! "${@}"; then
+    echo "******************************************************************************************************"
+    echo "                                        (EXPECTED FAILURE)"
+    echo "******************************************************************************************************"
+    echo
+  else
+    echo "******************************************************************************************************"
+    echo "                                  (THIS TEST PASSED UNEXPECTEDLY)"
+    echo "******************************************************************************************************"
+    exit 1
+  fi
 }
 
 function assert() {
@@ -22,7 +36,7 @@ function assert() {
     echo "      ${expected} DOES NOT EQUAL ${actual}" >&2
     echo "      EXPECTED |${expected}" >&2
     echo "      BUT GOT  |${actual}" >&2
-    exit 1
+    return 1
   fi
   echo "PASSED"
 }
@@ -37,7 +51,7 @@ function assert_match() {
     echo "      ${expected} DOES NOT EQUAL ${actual}" >&2
     echo "      EXPECTED |${expected}" >&2
     echo "      BUT GOT  |${actual}" >&2
-    exit 1
+    return 1
   fi
   echo "PASSED"
 }
@@ -52,7 +66,7 @@ function assert_neq() {
     echo "      ${expected} DOES EQUAL ${actual} (THEY SHOULD BE DISTINCT)" >&2
     echo "      EXPECTED                        |${expected}" >&2
     echo "      WHICH SHOULD BE DIFFERENT FROM  |${actual}" >&2
-    exit 2
+    return 2
   fi
 ``  echo "PASSED"
 }
@@ -132,6 +146,10 @@ eetest "/servers/{sid}/api/create_channel" ""
 token=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"main\"}" "/servers/${sid}/api/create_channel"  | jq '.token' )
 assert_neq "null" "${token}" "/servers/${sid}/api/create_channel"
 
+eetest "/servers/{sid}/api/create_channel -- INEXISTENT SERVER" ""
+ftoken=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"main\"}" "/servers/a/api/create_channel")
+assert "Couldn't find that server. (a) :(" "${ftoken}" "/servers//api/create_channel -- INEXISTENT SERVER"
+
 eetest "/servers/{sid}/api/create_channel (part2) -- max_channel_length" ""
 nutoken=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"flajkaldjflhkcvjhxzoyuafhldasjhfiocuzxgvhadfhsojk\"}" "/servers/${sid}/api/create_channel" )
 assert_match "Failed to create channel: Channel name longer than "* "${nutoken}" "/servers/${sid}/api/create_channel"
@@ -146,6 +164,14 @@ message_to_send_unsuccesfully=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 3001) |
 eetest "/servers/{sid}/api/{channel_name}/send_message" ""
 send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_succesfully}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
 assert "Message sent." "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
+
+eetest "/servers/{sid}/api/{channel_name}/send_message -- INEXISTENT SERVER"
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_succesfully}\"}" "/servers/a/api/${main_channel}/send_message" )
+assert "Couldn't find that server. (a) :(" "${send_response}" "/servers/a/api/${main_channel}/send_message -- INEXISTENT SERVER"
+
+eetest "/servers/{sid}/api/{channel_name}/send_message -- INEXISTENT CHANNEL"
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_succesfully}\"}" "/servers/${sid}/api/a/send_message" )
+assert "Couldn't find that channel. (a) :(" "${send_response}" "/servers/${sid}/api/a/send_message -- INEXISTENT CHANNEL"
 
 eetest "/servers/{sid}/api/{channel_name}/send_message (part2) -- max_message_length" ""
 send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_unsuccesfully}\"}" "/servers/${sid}/api/${main_channel}/send_message" )

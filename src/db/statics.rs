@@ -21,6 +21,12 @@ pub static SELECT_SERVER_CHANNELS: &str = r#"
         ALLOW FILTERING;
 "#;
 
+pub static SELECT_SERVER_CHANNEL: &str = r#"
+    SELECT channel_name FROM division_online.o_server_channels
+        WHERE sid=? AND channel_name=?
+        ALLOW FILTERING;
+"#;
+
 pub static INSERT_NEW_USER: &str = r#"
     INSERT INTO division_online.users (username, password_hash, email, key, bio, user_salt, password_salt, pfp)
         VALUES (?,?,?,?,?,?,?,'');
@@ -64,6 +70,12 @@ pub static SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION: &str = r#"
         WHERE sid=? AND channel_name=?
         ORDER BY datetime DESC
         LIMIT ?
+        ALLOW FILTERING; 
+"#;
+
+pub static SELECT_SERVER_SID: &str = r#"
+  SELECT sid FROM division_online.o_servers
+        WHERE sid=?
         ALLOW FILTERING; 
 "#;
 
