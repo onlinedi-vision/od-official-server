@@ -1,6 +1,6 @@
+use crate::api::statics;
 use crate::api::structures;
 use crate::api::structures::{CreateChannel, TokenUser};
-use crate::api::statics;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
@@ -8,7 +8,7 @@ use crate::utils::logging;
 use ::function_name::named;
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/get_channels")]
+#[actix_web::post("/servers/{sid}/get_channels")]
 pub async fn get_channels(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -32,30 +32,38 @@ pub async fn get_channels(
                 actix_web::HttpResponse::Ok().json(&structures::Channels { c_list: channels })
             }
             None => {
-                logging::log("SERVERS FAIL: fetch_server_channels", Some(function_name!()));
+                logging::log(
+                    "SERVERS FAIL: fetch_server_channels",
+                    Some(function_name!()),
+                );
                 actix_web::HttpResponse::InternalServerError()
                     .body("Failed to fetch server channels")
             }
         },
         None => {
-            logging::log("SERVERS FAIL: invalid token in fetch_server_channels", Some(function_name!()));
+            logging::log(
+                "SERVERS FAIL: invalid token in fetch_server_channels",
+                Some(function_name!()),
+            );
             actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
         }
     }
 }
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/create_channel")]
+#[actix_web::post("/servers/{sid}/create_channel")]
 pub async fn create_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<CreateChannel>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-	if req.channel_name.len() > statics::MAX_CHANNEL_LENGTH {
-		return actix_web::HttpResponse::LengthRequired()
-			.body(format!("Failed to create channel: Channel name longer than {}", statics::MAX_CHANNEL_LENGTH));
-	}
+    if req.channel_name.len() > statics::MAX_CHANNEL_LENGTH {
+        return actix_web::HttpResponse::LengthRequired().body(format!(
+            "Failed to create channel: Channel name longer than {}",
+            statics::MAX_CHANNEL_LENGTH
+        ));
+    }
     let sid = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
@@ -101,14 +109,17 @@ pub async fn create_channel(
             }
         }
         None => {
-            logging::log("SERVERS FAIL: invalid token in create_channel", Some(function_name!()));
+            logging::log(
+                "SERVERS FAIL: invalid token in create_channel",
+                Some(function_name!()),
+            );
             actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
         }
     }
 }
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/delete_channel")]
+#[actix_web::post("/servers/{sid}/{channel_name}/delete_channel")]
 pub async fn delete_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,

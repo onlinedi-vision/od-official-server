@@ -1,6 +1,6 @@
-use crate::api::structures;
-use crate::api::structures::{LimitMessageTokenUser};
 use crate::api::statics;
+use crate::api::structures;
+use crate::api::structures::LimitMessageTokenUser;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
@@ -8,7 +8,7 @@ use crate::utils::logging;
 use ::function_name::named;
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages_migration")]
+#[actix_web::post("/servers/{sid}/{channel_name}/get_messages_migration")]
 pub async fn get_channel_messages_migration(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -57,11 +57,17 @@ pub async fn get_channel_messages_migration(
         {
             actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: messages })
         } else {
-            logging::log("SERVERS FAIL: fetch_server_channel_messages", Some(function_name!()));
+            logging::log(
+                "SERVERS FAIL: fetch_server_channel_messages",
+                Some(function_name!()),
+            );
             actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
         }
     } else {
-        logging::log("SERVERS FAIL: invalid token in fetch_server_channel_messages", Some(function_name!()));
+        logging::log(
+            "SERVERS FAIL: invalid token in fetch_server_channel_messages",
+            Some(function_name!()),
+        );
         actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
     }
 }
@@ -69,17 +75,19 @@ pub async fn get_channel_messages_migration(
 // TODO: what happens if channel/server doesn't exist:
 //     - it seems you can send messages to *things* that don't exist
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/send_message")]
+#[actix_web::post("/servers/{sid}/{channel_name}/send_message")]
 pub async fn send_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SendMessage>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-	if req.m_content.len() > statics::MAX_MESSAGE_LENGTH {
-		return actix_web::HttpResponse::LengthRequired()
-			.body(format!("Failed to send message: Message longer than {}", statics::MAX_MESSAGE_LENGTH));
-	}
+    if req.m_content.len() > statics::MAX_MESSAGE_LENGTH {
+        return actix_web::HttpResponse::LengthRequired().body(format!(
+            "Failed to send message: Message longer than {}",
+            statics::MAX_MESSAGE_LENGTH
+        ));
+    }
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
 
@@ -96,9 +104,8 @@ pub async fn send_message(
     .await
     {
         Some(_) => {
-            let ttl = db::users::get_ttl(&scylla_session, req.username.clone())
-                .await;
-        
+            let ttl = db::users::get_ttl(&scylla_session, req.username.clone()).await;
+
             let (enc_message, enc_salt) =
                 security::messages::encrypt(&req.m_content, &security::salt());
             match db::server::send_message(
@@ -112,11 +119,12 @@ pub async fn send_message(
             )
             .await
             {
-                Ok(_) => {
-                    actix_web::HttpResponse::Ok().body("Message sent.")
-                }
+                Ok(_) => actix_web::HttpResponse::Ok().body("Message sent."),
                 Err(e) => {
-                    logging::log(&format!("FAILED AT SEND MESSAGE:\n{:?}", e), Some(function_name!()));
+                    logging::log(
+                        &format!("FAILED AT SEND MESSAGE:\n{:?}", e),
+                        Some(function_name!()),
+                    );
                     actix_web::HttpResponse::InternalServerError().body("Failed to send message")
                 }
             }
@@ -133,7 +141,7 @@ pub async fn send_message(
 //     - it seems that when the datetime is invalid the API doesn't fail with a proper message but instead says
 //       "Message deleted succesfully" without anything actually happening...
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/delete_message")]
+#[actix_web::post("/servers/{sid}/{channel_name}/delete_message")]
 pub async fn delete_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -194,7 +202,10 @@ pub async fn delete_message(
             actix_web::HttpResponse::InternalServerError().body("Failed to delete message")
         }
     } else {
-        logging::log("Unauthorized: not message owner or server owner", Some(function_name!()));
+        logging::log(
+            "Unauthorized: not message owner or server owner",
+            Some(function_name!()),
+        );
         actix_web::HttpResponse::Unauthorized()
             .body("You are not authorized to delete this message")
     }

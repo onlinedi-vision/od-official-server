@@ -1,4 +1,4 @@
-use crate::api::{structures,statics,prelude};
+use crate::api::{prelude, statics, structures};
 use crate::db;
 use crate::security;
 use crate::utils::logging;
@@ -10,10 +10,12 @@ pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<structures::NewUser>,
 ) -> impl actix_web::Responder {
-	if req.username.len() > statics::MAX_USERNAME_LENGTH {
-		return actix_web::HttpResponse::LengthRequired()
-			.body(format!("Failed to create user: Username longer than {}", statics::MAX_SERVER_LENGTH));
-	}
+    if req.username.len() > statics::MAX_USERNAME_LENGTH {
+        return actix_web::HttpResponse::LengthRequired().body(format!(
+            "Failed to create user: Username longer than {}",
+            statics::MAX_SERVER_LENGTH
+        ));
+    }
     let user_salt = security::salt();
     let password_salt = security::salt();
     let password_hash = security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
@@ -39,17 +41,16 @@ pub async fn new_user_login(
     }
 }
 
-#[actix_web::patch("/api/user/ttl")]
+#[actix_web::patch("/user/ttl")]
 pub async fn patch_user_ttl(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::UpdateUserTTL>,
 ) -> impl actix_web::Responder {
-
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    
-    if ! db::prelude::check_token(
+
+    if !db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
@@ -61,25 +62,19 @@ pub async fn patch_user_ttl(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token!");
     }
 
-    if ! db::users::update_ttl(
-        &scylla_session,
-        req.username.clone(),
-        req.ttl.clone(),
-    )
-    .await
-    .is_ok()
+    if !db::users::update_ttl(&scylla_session, req.username.clone(), req.ttl.clone())
+        .await
+        .is_ok()
     {
         return actix_web::HttpResponse::InternalServerError()
             .body("Internal error: scylla session lock poisoned.");
     }
 
-    return actix_web::HttpResponse::Ok()
-        .body("TTL Updated.");
-
+    return actix_web::HttpResponse::Ok().body("TTL Updated.");
 }
 
 #[named]
-#[actix_web::post("/api/try_login")]
+#[actix_web::post("/try_login")]
 pub async fn try_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -95,17 +90,28 @@ pub async fn try_login(
     let cache = cache!(shared_cache);
     match db::users::get_user_password_hash(&scylla_session, username).await {
         Some(secrets) => {
-            prelude::check_user_password(secrets, &req.username, &req.password, scylla_session, cache, new_token_holder).await
+            prelude::check_user_password(
+                secrets,
+                &req.username,
+                &req.password,
+                scylla_session,
+                cache,
+                new_token_holder,
+            )
+            .await
         }
         _ => {
-            logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));
+            logging::log(
+                "Failed because user password hash cannot be retrieved from scylla.",
+                Some(function_name!()),
+            );
             actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
         }
     }
 }
 
 #[named]
-#[actix_web::post("/api/token_login")]
+#[actix_web::post("/token_login")]
 pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -133,21 +139,35 @@ pub async fn token_login(
     {
         match db::users::get_user_password_hash(&scylla_session, username).await {
             Some(secrets) => {
-                prelude::check_user_password(secrets, &req.username, &req.password, scylla_session, cache, new_token_holder).await
+                prelude::check_user_password(
+                    secrets,
+                    &req.username,
+                    &req.password,
+                    scylla_session,
+                    cache,
+                    new_token_holder,
+                )
+                .await
             }
             _ => {
-                logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));
+                logging::log(
+                    "Failed because user password hash cannot be retrieved from scylla.",
+                    Some(function_name!()),
+                );
                 actix_web::HttpResponse::Unauthorized().body("Invalid password")
             }
         }
     } else {
-        logging::log("Failed because user supplied token is incorrect.", Some(function_name!()));
+        logging::log(
+            "Failed because user supplied token is incorrect.",
+            Some(function_name!()),
+        );
         actix_web::HttpResponse::Unauthorized().body("Invalid or expired token")
     }
 }
 
 #[named]
-#[actix_web::post("/api/get_user_servers")]
+#[actix_web::post("/get_user_servers")]
 pub async fn get_user_servers(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -203,7 +223,7 @@ pub async fn get_user_servers(
 }
 
 #[named]
-#[actix_web::post("/api/get_user_pfp")]
+#[actix_web::post("/get_user_pfp")]
 pub async fn get_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -256,7 +276,7 @@ pub async fn get_user_pfp(
 }
 
 #[named]
-#[actix_web::post("/api/set_user_pfp")]
+#[actix_web::post("/set_user_pfp")]
 pub async fn set_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
