@@ -5,7 +5,7 @@ use crate::utils::logging;
 
 use ::function_name::named;
 
-#[actix_web::post("/api/new_user")]
+#[actix_web::post("/new_user")]
 pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<structures::NewUser>,

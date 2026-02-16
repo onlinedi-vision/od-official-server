@@ -6,7 +6,7 @@ use crate::utils::logging;
 use ::function_name::named;
 
 #[named]
-#[actix_web::post("/api/add_server_role")]
+#[actix_web::post("/add_server_role")]
 pub async fn add_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
