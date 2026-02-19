@@ -125,10 +125,10 @@ pub async fn delete_channel(
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
 
-    if ! db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await == Some(true) {
+    if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await != Some(true) {
         logging::log("Unauthorized: not server owner", Some(function_name!()));
-        actix_web::HttpResponse::Unauthorized()
-            .body("You don't have permission to delete this channel")
+        return actix_web::HttpResponse::Unauthorized()
+            .body("You don't have permission to delete this channel");
     }
     
     if (db::server::delete_channel(&scylla_session, sid, channel_name).await).is_some() {
