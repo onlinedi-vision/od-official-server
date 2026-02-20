@@ -227,7 +227,7 @@ pub async fn get_ttl(
         "H"     =>   12*60*60_i32, // every 12 _H_ours
         "d"     =>   24*60*60_i32, // every _d_ay
         "w"     => 7*24*60*60_i32, // every _w_eek
-        "N" | _ =>          0_i32, // _N_ever
+        _ =>          0_i32, // _N_ever
     }
 }
 
@@ -239,19 +239,16 @@ pub async fn get_ttl_symbol(
         .query_unpaged(statics::SELECT_USER_TTL, (username.clone(),))
         .await
     && let Ok(query_rows) = query_result.into_rows_result()
-    && let Ok(rows) = query_rows.rows::<(Option<&str>,)>() {
-        
-        for row_unwrapped in rows.flatten() {
-            match row_unwrapped {
-                (Some(str_ttl),) => {
-                    return Some(str_ttl.to_string());
-                },
-                _ => {
-                    return None;
-                }
+    && let Ok(rows) = query_rows.rows::<(Option<&str>,)>() 
+    && let Some(row_unwrapped) = rows.flatten().next() {
+        match row_unwrapped {
+            (Some(str_ttl),) => {
+                return Some(str_ttl.to_string());
+            },
+            _ => {
+                return None;
             }
         }
-        
     }
     None
 }
