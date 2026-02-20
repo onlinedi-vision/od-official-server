@@ -49,32 +49,30 @@ pub async fn patch_user_ttl(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
     
-    if ! db::prelude::check_token(
+    if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
     )
-    .await
-    .is_some()
+    .await.is_none()
     {
         return actix_web::HttpResponse::Unauthorized().body("Invalid token!");
     }
 
-    if ! db::users::update_ttl(
+    if db::users::update_ttl(
         &scylla_session,
         req.username.clone(),
         req.ttl.clone(),
     )
-    .await
-    .is_ok()
+    .await.is_err()
     {
         return actix_web::HttpResponse::InternalServerError()
             .body("Internal error: scylla session lock poisoned.");
     }
 
-    return actix_web::HttpResponse::Ok()
-        .body("TTL Updated.");
+    actix_web::HttpResponse::Ok()
+        .body("TTL Updated.")
 
 }
 
@@ -100,7 +98,7 @@ pub async fn try_login(
     }
     
     logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));
-    return actix_web::HttpResponse::Unauthorized().body("Invalid username or password");
+    actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
 #[named]
@@ -139,7 +137,7 @@ pub async fn token_login(
     }
     
     logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));
-    return actix_web::HttpResponse::Unauthorized().body("Invalid password");
+    actix_web::HttpResponse::Unauthorized().body("Invalid password")
 
 }
 
@@ -193,7 +191,7 @@ pub async fn get_user_servers(
     }
     
     logging::log("no hash", Some(function_name!()));
-    return actix_web::HttpResponse::NotFound().body("No servers found for user");
+    actix_web::HttpResponse::NotFound().body("No servers found for user")
 }
 
 #[named]
@@ -244,7 +242,7 @@ pub async fn get_user_pfp(
             img_url: pfp_row.pfp,
         });
     }
-    return actix_web::HttpResponse::NotFound().body("User not found.");
+    actix_web::HttpResponse::NotFound().body("User not found.")
 }
 
 #[named]
@@ -299,8 +297,8 @@ pub async fn set_user_pfp(
     )
     .await;
 
-    return actix_web::HttpResponse::Ok().json(&structures::GetUserPfpResp {
+    actix_web::HttpResponse::Ok().json(&structures::GetUserPfpResp {
         token: new_token_holder.token.clone(),
         img_url: req.img_url.clone(),
-    });
+    })
 }

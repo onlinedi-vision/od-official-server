@@ -41,13 +41,11 @@ pub async fn add_server_role(
 
     if let Some(result) =
         db::roles::insert_server_role(&scylla_session, req.server_id.clone(), role).await
-    {
-        if result.is_ok() {
+        && result.is_ok() {
             return actix_web::HttpResponse::Ok().body("Role added successfully");
         }
-    }
     logging::log(&format!("Error inserting role: {:?}", req.role_name.clone()), Some(function_name!()));
-    return actix_web::HttpResponse::InternalServerError().body("Failed to insert role");
+    actix_web::HttpResponse::InternalServerError().body("Failed to insert role")
 }
 
 #[named]
@@ -108,7 +106,7 @@ pub async fn delete_server_role(
             return actix_web::HttpResponse::Ok().body("Role deleted successfully");
         }
     }
-    return actix_web::HttpResponse::InternalServerError().body("Not able to delete role.");
+    actix_web::HttpResponse::InternalServerError().body("Not able to delete role.")
 }
 
 #[named]
@@ -155,7 +153,7 @@ pub async fn assign_role_to_user(
     }
 
     logging::log(&format!("Error assigning role: {:?}", req.role_name.clone()), Some(function_name!()));
-    return actix_web::HttpResponse::InternalServerError().body("Failed to assign role");
+    actix_web::HttpResponse::InternalServerError().body("Failed to assign role")
 }
 
 #[named]
@@ -191,7 +189,7 @@ pub async fn remove_role_from_user(
     }
     
     logging::log(&format!("Error removing role: {:?}", req.role_name.clone()), Some(function_name!()));
-    return actix_web::HttpResponse::InternalServerError().body("Failed to remove role");
+    actix_web::HttpResponse::InternalServerError().body("Failed to remove role")
 
 }
 
@@ -220,7 +218,7 @@ pub async fn fetch_server_roles(
     {
         return actix_web::HttpResponse::Ok().json(roles);
     }
-    return actix_web::HttpResponse::InternalServerError().body("Failed to fetch server roles");
+    actix_web::HttpResponse::InternalServerError().body("Failed to fetch server roles")
 
 }
 
@@ -254,6 +252,6 @@ pub async fn fetch_user_roles(
     {
         return actix_web::HttpResponse::Ok().json(roles);
     }
-    return actix_web::HttpResponse::InternalServerError().body("Failed to fetch user roles");
+    actix_web::HttpResponse::InternalServerError().body("Failed to fetch user roles")
 
 }

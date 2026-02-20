@@ -38,8 +38,8 @@ pub async fn get_channels(
     }
     
     logging::log("SERVERS FAIL: fetch_server_channels", Some(function_name!()));
-    return actix_web::HttpResponse::InternalServerError()
-        .body("Failed to fetch server channels");
+    actix_web::HttpResponse::InternalServerError()
+        .body("Failed to fetch server channels")
     
 }
 
@@ -98,7 +98,7 @@ pub async fn create_channel(
     )
     .await;
 
-    return actix_web::HttpResponse::Ok().json(&new_token_holder);
+    actix_web::HttpResponse::Ok().json(&new_token_holder)
 }
 
 #[named]
@@ -135,5 +135,5 @@ pub async fn delete_channel(
     if (db::server::delete_channel(&scylla_session, sid, channel_name).await).is_some() {
         return actix_web::HttpResponse::Ok().body("Channel deleted successfully");
     }
-    return actix_web::HttpResponse::InternalServerError().body("Failed to delete channel");
+    actix_web::HttpResponse::InternalServerError().body("Failed to delete channel")
 }

@@ -116,7 +116,7 @@ pub async fn check_user_is_in_server(
                 }
             }
         }
-        if ret_vec.len() > 0 {
+        if !ret_vec.is_empty() {
             return Some(ret_vec);
         }
     } 
