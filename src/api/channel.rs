@@ -18,14 +18,15 @@ pub async fn get_channels(
     let sid = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    if ! db::prelude::check_user_is_in_server(
+    if db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
     )
-    .await.is_some()
+    .await
+    .is_none()
     {
         logging::log("SERVERS FAIL: invalid token in fetch_server_channels", Some(function_name!()));
         return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
@@ -57,7 +58,7 @@ pub async fn create_channel(
     let sid = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    if ! db::prelude::check_user_is_in_server(
+    if db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
         sid.clone(),
@@ -65,13 +66,13 @@ pub async fn create_channel(
         req.username.clone(),
     )
     .await
-    .is_some()
+    .is_none()
     {
         logging::log("SERVERS FAIL: invalid token in create_channel", Some(function_name!()));
         return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
     }
     
-    if ! db::server::create_channel(&scylla_session, sid, req.channel_name.clone()).await.is_some() {
+    if db::server::create_channel(&scylla_session, sid, req.channel_name.clone()).await.is_none() {
         logging::log("SERVERS FAIL: create_channel", Some(function_name!()));
         return actix_web::HttpResponse::InternalServerError().body("Could not create channel");
     }
