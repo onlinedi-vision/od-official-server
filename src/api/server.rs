@@ -90,7 +90,7 @@ pub async fn create_server(
         return actix_web::HttpResponse::Ok().json(&server_created);
     }
     logging::log("SERVERS FAIL: add_user_to_server", Some(function_name!()));
-    return actix_web::HttpResponse::InternalServerError().body("Failed to add user to server");
+    actix_web::HttpResponse::InternalServerError().body("Failed to add user to server")
 }
 
 #[named]
