@@ -42,14 +42,12 @@ pub async fn add_server_role(
     if let Some(result) =
         db::roles::insert_server_role(&scylla_session, req.server_id.clone(), role).await
     {
-        return match result {
-            Ok(_) => actix_web::HttpResponse::Ok().body("Role added successfully"),
-            Err(err) => {
-                logging::log(&format!("Error inserting role: {:?}", err), Some(function_name!()));
-                actix_web::HttpResponse::InternalServerError().body("Failed to insert role")
-            }
-        };
+        if result.is_ok() {
+            return actix_web::HttpResponse::Ok().body("Role added successfully");
+        }
     }
+    logging::log(&format!("Error inserting role: {:?}", req.role_name.clone()), Some(function_name!()));
+    return actix_web::HttpResponse::InternalServerError().body("Failed to insert role");
 }
 
 #[named]
@@ -71,7 +69,7 @@ pub async fn delete_server_role(
     .await
     .is_none()
     {
-        actix_web::HttpResponse::Unauthorized().body("Invalid user token.")
+        return actix_web::HttpResponse::Unauthorized().body("Invalid user token.");
     }
     
     if let Some(role_exists) =
@@ -90,7 +88,7 @@ pub async fn delete_server_role(
     .await
     {
         if result.is_err() {
-            logging::log(&format!("Error removing role from users: {:?}", err), Some(function_name!()));
+            logging::log(&format!("Error removing role from users: {:?}/{:?}", req.role_name.clone(), req.username.clone()), Some(function_name!()));
             return actix_web::HttpResponse::InternalServerError()
                 .body("Failed to remove role from users.");
         }
@@ -103,7 +101,7 @@ pub async fn delete_server_role(
         .await
         {
             if result.is_err() {
-                logging::log(&format!("Error deleting role: {:?}", err), Some(function_name!()));
+                logging::log(&format!("Error deleting role: {:?}",req.role_name.clone()), Some(function_name!()));
                 return actix_web::HttpResponse::InternalServerError()
                     .body("Failed to delete role from server.");
             }
@@ -156,7 +154,7 @@ pub async fn assign_role_to_user(
         return actix_web::HttpResponse::BadRequest().body("Role assigned successfully");
     }
 
-    logging::log(&format!("Error assigning role: {:?}", err), Some(function_name!()));
+    logging::log(&format!("Error assigning role: {:?}", req.role_name.clone()), Some(function_name!()));
     return actix_web::HttpResponse::InternalServerError().body("Failed to assign role");
 }
 
@@ -192,7 +190,7 @@ pub async fn remove_role_from_user(
         return actix_web::HttpResponse::Ok().body("Role removed successfully");
     }
     
-    logging::log(&format!("Error removing role: {:?}", err), Some(function_name!()));
+    logging::log(&format!("Error removing role: {:?}", req.role_name.clone()), Some(function_name!()));
     return actix_web::HttpResponse::InternalServerError().body("Failed to remove role");
 
 }

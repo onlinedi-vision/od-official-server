@@ -194,14 +194,12 @@ pub async fn set_user_pfp(
     session: &scylla::client::session::Session,
     username: &str,
     img_url: Option<&str>,
-) -> Option<Result<()>> {
-    Some(
-        session
-            .query_unpaged(statics::UPDATE_USER_PFP, (img_url, username))
-            .await
-            .map(|_| ())
-            .map_err(From::from),
-    )
+) -> Result<()> {
+    session
+        .query_unpaged(statics::UPDATE_USER_PFP, (img_url, username))
+        .await
+        .map(|_| ())
+        .map_err(From::from)
 }
 
 pub async fn update_ttl(
