@@ -28,74 +28,79 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         None => 512,
     };
 
-    // connection to scylla-server
-    let session = actix_web::web::Data::new(security::structures::ScyllaSession {
-        lock: std::sync::Mutex::new(db::prelude::new_scylla_session(&format!("{}:9042", scylla_inet)).await.expect("Failed to create Scylla Connection."))
-    });
+    if let Ok(ssesh) = db::prelude::new_scylla_session(&format!("{}:9042", scylla_inet)).await 
+    && let Ok(mcache) = db::prelude::new_moka_cache(1_000).await {   
+        let session = actix_web::web::Data::new(security::structures::ScyllaSession {
+            lock: std::sync::Mutex::new(ssesh)
+        });
 
     
-    let cache = actix_web::web::Data::new(security::structures::MokaCache {
-        lock: std::sync::Mutex::new(db::prelude::new_moka_cache(1_000).await.expect("Failed to create moka cache."))
-    });
+        let cache = actix_web::web::Data::new(security::structures::MokaCache {
+            lock: std::sync::Mutex::new(mcache)
+        });
 
-    let rl_config = RateLimitConfig::default().max_requests(API_RATELIMIT_COUNT).window_secs(API_RATELIMIT_WINDOW_SECONDS);
-    let rl_store = std::sync::Arc::new(MemoryStore::new());
+        let rl_config = RateLimitConfig::default().max_requests(API_RATELIMIT_COUNT).window_secs(API_RATELIMIT_WINDOW_SECONDS);
+        let rl_store = std::sync::Arc::new(MemoryStore::new());
 
-    // setting up the API server
-    let _ = actix_web::HttpServer::new(move || {
-        actix_web::App::new()
-            .wrap(RateLimit::new(rl_config.clone(), rl_store.clone()))
-            .wrap(Logger::new("%a %{User-Agent}i %U"))
+        // setting up the API server
+        let _ = actix_web::HttpServer::new(move || {
+            actix_web::App::new()
+                .wrap(RateLimit::new(rl_config.clone(), rl_store.clone()))
+                .wrap(Logger::new("%a %{User-Agent}i %U"))
             
-            .app_data(session.clone())                                             // sharing scyllaDB session
-            .app_data(cache.clone())
+                .app_data(session.clone())                                             // sharing scyllaDB session
+                .app_data(cache.clone())
 
-            .service(api::get_api_version)
-            .service(api::user::new_user_login)                     // API route for signing up
-            .service(api::user::try_login)
-            .service(api::user::get_user_servers)
-            .service(api::user::token_login)
-            .service(api::user::get_user_pfp)
-            .service(api::user::set_user_pfp)
-            .service(api::user::patch_user_ttl)
+                .service(api::get_api_version)
+                .service(api::user::new_user_login)                     // API route for signing up
+                .service(api::user::try_login)
+                .service(api::user::get_user_servers)
+                .service(api::user::token_login)
+                .service(api::user::get_user_pfp)
+                .service(api::user::set_user_pfp)
+                .service(api::user::patch_user_ttl)
  
-            .service(api::server::create_server)                
-            .service(api::server::join_server)                      // change token !!
-            .service(api::server::get_server_users)                 
-            .service(api::server::get_server_info)
-            .service(api::server::delete_server)
-            .service(api::server::am_i_in_server)
+                .service(api::server::create_server)                
+                .service(api::server::join_server)                      // change token !!
+                .service(api::server::get_server_users)                 
+                .service(api::server::get_server_info)
+                .service(api::server::delete_server)
+                .service(api::server::am_i_in_server)
             
-            .service(api::invites::send_dm_invite)
-            .service(api::invites::accept_dm_invite)
-            .service(api::invites::reject_dm_invite)
-            .service(api::invites::fetch_pending_dm_invites)
+                .service(api::invites::send_dm_invite)
+                .service(api::invites::accept_dm_invite)
+                .service(api::invites::reject_dm_invite)
+                .service(api::invites::fetch_pending_dm_invites)
 
-            .service(api::friends::fetch_friend_list)
-            .service(api::friends::delete_friend)
+                .service(api::friends::fetch_friend_list)
+                .service(api::friends::delete_friend)
 
-            .service(api::channel::get_channels)
-            .service(api::channel::create_channel)
-            .service(api::channel::delete_channel)
+                .service(api::channel::get_channels)
+                .service(api::channel::create_channel)
+                .service(api::channel::delete_channel)
 
-            .service(api::message::get_channel_messages_migration)
-            .service(api::message::send_message)
-            .service(api::message::delete_message)
+                .service(api::message::get_channel_messages_migration)
+                .service(api::message::send_message)
+                .service(api::message::delete_message)
 
-            .service(api::roles::add_server_role)
-            .service(api::roles::assign_role_to_user)
-            .service(api::roles::remove_role_from_user)
-            .service(api::roles::fetch_server_roles)
-            .service(api::roles::fetch_user_roles)
-            .service(api::roles::delete_server_role)
+                .service(api::roles::add_server_role)
+                .service(api::roles::assign_role_to_user)
+                .service(api::roles::remove_role_from_user)
+                .service(api::roles::fetch_server_roles)
+                .service(api::roles::fetch_user_roles)
+                .service(api::roles::delete_server_role)
 
-            .service(api::spell_caster::spell_cast)
-            .service(api::spell_caster::spell_check)
-    })
-    .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
-    .workers(no_of_workers)
-    .run()
-    .await;
+                .service(api::spell_caster::spell_cast)
+                .service(api::spell_caster::spell_check)
+        })
+        .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
+        .workers(no_of_workers)
+        .run()
+        .await;
+
+    } else {
+        std::process::exit(1);
+    }
     Ok(())
 }
     
