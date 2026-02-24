@@ -137,9 +137,9 @@ pub async fn delete_message(
         .await
         .is_ok()
     {
-        return Some(Ok(()))
+        Some(Ok(()))
     } else {
-        return None;
+        None
     }
 }
 

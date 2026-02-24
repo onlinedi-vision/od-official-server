@@ -35,14 +35,13 @@ pub async fn fetch_friend_list(
             })
             .collect();
 
-        actix_web::HttpResponse::Ok().json(structures::FriendListResp {
+        return actix_web::HttpResponse::Ok().json(structures::FriendListResp {
             friends: friend_info,
-        })
-    } else {
-        actix_web::HttpResponse::Ok().json(structures::FriendListResp {
-            friends: Vec::new(),
-        })
+        });
     }
+    actix_web::HttpResponse::Ok().json(structures::FriendListResp {
+        friends: Vec::new(),
+    })
 }
 
 #[named]

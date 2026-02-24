@@ -18,5 +18,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run linter
-      run: cargo clippy --verbose -- -A clippy::await_holding_lock
+      run: cargo clippy --verbose -- -D warnings -A clippy::await_holding_lock
 
