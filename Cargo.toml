@@ -25,6 +25,7 @@ moka = { version = "0.12.11", features = ["future"] }
 actix-web-ratelimit = { version = "0.1.1", default-features = false } 
 async-std = "1.13.2"
 function_name = "0.3.0"
+once_cell = "1.21.3"
 
 # Improves comp time ?
 [profile.dev]

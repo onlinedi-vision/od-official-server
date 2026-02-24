@@ -1,3 +1,12 @@
+use once_cell::sync::Lazy;
+use std::env;
+
+pub static TOKEN_TTL: Lazy<i32> = Lazy::new(|| {
+    env::var("TOKEN_TTL").unwrap_or_else(|_| "604800".to_string())
+        .parse::<i32>()
+        .unwrap_or(604800)
+});
+
 pub static SELECT_USER_USERNAME: &str = r#"
     SELECT username FROM division_online.users
         WHERE username = ?;
@@ -28,7 +37,8 @@ pub static INSERT_NEW_USER: &str = r#"
 
 pub static INSERT_NEW_TOKEN: &str = r#"
     INSERT INTO division_online.o_user_tokens (username, key, datetime)
-        VALUES (?,?,dateof(now()));
+        VALUES (?,?,dateof(now()))
+        USING TTL ?;
 "#;
 
 pub static UPDATE_USER_TTL: &str = r#"

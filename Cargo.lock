@@ -352,6 +352,7 @@ dependencies = [
  "function_name",
  "hex",
  "moka",
+ "once_cell",
  "rand",
  "scylla",
  "serde",

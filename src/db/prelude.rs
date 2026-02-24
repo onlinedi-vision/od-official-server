@@ -23,7 +23,7 @@ pub async fn insert_user_token(
        
     Some(
         session
-            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key))
+            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key, *statics::TOKEN_TTL))
             .await
             .map(|_| ())
             .map_err(From::from),
@@ -40,7 +40,12 @@ pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Se
 }
 
 pub async fn new_moka_cache(cache_size: u64) -> Result<moka::future::Cache<String, String>> {
-    Ok(moka::future::Cache::<String,String>::new(cache_size))
+    Ok(
+        moka::future::Cache::builder()
+            .max_capacity(cache_size)
+            .time_to_live(std::time::Duration::from_secs(*statics::TOKEN_TTL as u64))
+            .build()
+    )
 }
 
 #[named]
@@ -58,9 +63,9 @@ pub async fn check_token(
 
     if let Some(username) = un.clone() {
         if let Some(cache_token) = cache.get(&username.clone()).await
-            && cache_token == crypted_token.clone() {
-                return Some(());
-            }
+        && cache_token == crypted_token.clone() {
+            return Some(());
+        }
 
         query_rows = session
             .query_unpaged(statics::CHECK_TOKEN_USER, (crypted_token.clone(), username))

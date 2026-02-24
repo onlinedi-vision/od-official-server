@@ -58,22 +58,25 @@ export SCYLLA_CASSANDRA_PASSWORD='cassandra'
 export API_PORT=1313
 export NO_OF_WORKERS=32
 export EXECUTABLE_NAME="api"
+export TOKEN_TTL=2
 
 c_flag=''
 s_flag=''
 S_flag=''
 u_flag=''
+L_flag=''
 cargo_args=''
 scylla_wait_time=''
 api_wait_time=''
-while getopts 't:T:a:vchsCSup:' flag; do
+while getopts 't:T:a:vchsLCSup:' flag; do
   case "${flag}" in
     c) c_flag='true' ;;
     C) cleanup && exit 0 || exit 1;;
     s) s_flag='true' ;;
+    L) L_flag='true' ;;
     t) scylla_wait_time="${OPTARG:-5}" ;;
     T) api_wait_time="${OPTARG:-1}" ;;
-    v) cargo_args="--verbose";;
+    v) cargo_args="${cargo_args} --verbose";;
     a) export EXECUTABLE_NAME="${OPTARG:-api}";;
     S) S_flag='true' ;;
     u) u_flag='true' ;;
@@ -131,3 +134,7 @@ if [[ "${c_flag}" == "true" ]]; then
   cleanup
 fi
 
+if [[ "${L_flag}" == "true" ]]; then
+  echo "================== LAUNCHING API LINTERS ===================="
+  cargo clippy --release $cargo_args -- -D warnings -A clippy::await_holding_lock
+fi
