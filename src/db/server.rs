@@ -139,18 +139,28 @@ pub async fn send_message(
     m_content: String,
     username: String,
     salt: String,
-) -> Option<Result<()>> {
+    ttl: i32
+) -> Result<()> {
     let mid = uuid::Uuid::new_v4().to_string();
-    Some(
-        session
-            .query_unpaged(
-                statics::INSERT_SERVER_CHANNEL_MESSAGE,
-                (mid, channel_name, m_content, sid, username, true, salt),
-            )
-            .await
-            .map(|_| ())
-            .map_err(From::from),
-    )
+    if ttl == 0 {
+        return session
+                .query_unpaged(
+                    statics::INSERT_SERVER_CHANNEL_MESSAGE,
+                    (mid, channel_name, m_content, sid, username, true, salt),
+                )
+                .await
+                .map(|_| ())
+                .map_err(From::from);
+    }
+    
+    session
+        .query_unpaged(
+            statics::INSERT_SERVER_CHANNEL_MESSAGE_TTL,
+            (mid, channel_name, m_content, sid, username, true, salt, ttl),
+        )
+        .await
+        .map(|_| ())
+        .map_err(From::from)
 }
 
 pub async fn create_channel(

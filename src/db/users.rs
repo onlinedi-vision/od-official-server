@@ -194,12 +194,61 @@ pub async fn set_user_pfp(
     session: &scylla::client::session::Session,
     username: &str,
     img_url: Option<&str>,
-) -> Option<Result<()>> {
-    Some(
-        session
-            .query_unpaged(statics::UPDATE_USER_PFP, (img_url, username))
-            .await
-            .map(|_| ())
-            .map_err(From::from),
-    )
+) -> Result<()> {
+    session
+        .query_unpaged(statics::UPDATE_USER_PFP, (img_url, username))
+        .await
+        .map(|_| ())
+        .map_err(From::from)
+}
+
+pub async fn update_ttl(
+    session: &scylla::client::session::Session,
+    username: String,
+    ttl: String,
+) -> Result<()> {
+    
+    session
+        .query_unpaged(statics::UPDATE_USER_TTL, (ttl, username))
+        .await
+        .map(|_| ())
+        .map_err(From::from)
+    
+}
+
+pub async fn get_ttl(
+    session: &scylla::client::session::Session,
+    username: String
+) -> i32 {
+    match get_ttl_symbol(session, username).await.unwrap_or("N".to_string()).as_str() {
+        "s"     =>          3_i32, // every 3 _s_econd   (only for test cases)
+        "S"     =>         10_i32, // every 10 _S_econds (only for test cases)
+        "h"     =>      60*60_i32, // every _h_our
+        "H"     =>   12*60*60_i32, // every 12 _H_ours
+        "d"     =>   24*60*60_i32, // every _d_ay
+        "w"     => 7*24*60*60_i32, // every _w_eek
+        _ =>          0_i32, // _N_ever
+    }
+}
+
+pub async fn get_ttl_symbol(
+    session: &scylla::client::session::Session,
+    username: String
+) -> Option<String> {
+    if let Ok(query_result) = session
+        .query_unpaged(statics::SELECT_USER_TTL, (username.clone(),))
+        .await
+    && let Ok(query_rows) = query_result.into_rows_result()
+    && let Ok(rows) = query_rows.rows::<(Option<&str>,)>() 
+    && let Some(row_unwrapped) = rows.flatten().next() {
+        match row_unwrapped {
+            (Some(str_ttl),) => {
+                return Some(str_ttl.to_string());
+            },
+            _ => {
+                return None;
+            }
+        }
+    }
+    None
 }
