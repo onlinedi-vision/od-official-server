@@ -44,32 +44,26 @@ pub async fn get_channel_messages_migration(
         req.username.clone(),
     )
     .await
-    .is_some()
+    .is_none()
     {
-        if let Some(messages) = db::messages::fetch_server_channel_messages(
-            &scylla_session,
-            sid.clone(),
-            channel_name,
-            Some(limit),
-            Some(offset),
-        )
-        .await
-        {
-            actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: messages })
-        } else {
-            logging::log(
-                "SERVERS FAIL: fetch_server_channel_messages",
-                Some(function_name!()),
-            );
-            actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
-        }
-    } else {
-        logging::log(
-            "SERVERS FAIL: invalid token in fetch_server_channel_messages",
-            Some(function_name!()),
-        );
-        actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
+        logging::log("SERVERS FAIL: invalid token in fetch_server_channel_messages", Some(function_name!()));
+        return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
     }
+    
+    if let Some(messages) = db::messages::fetch_server_channel_messages(
+        &scylla_session,
+        sid.clone(),
+        channel_name,
+        Some(limit),
+        Some(offset),
+    )
+    .await
+    {
+        return actix_web::HttpResponse::Ok().json(&structures::Messages { m_list: messages });
+    }
+    
+    logging::log("SERVERS FAIL: fetch_server_channel_messages", Some(function_name!()));
+    actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
 }
 
 // TODO: what happens if channel/server doesn't exist:
@@ -94,7 +88,7 @@ pub async fn send_message(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
 
-    match db::prelude::check_user_is_in_server(
+    if db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
         sid.clone(),
@@ -102,38 +96,34 @@ pub async fn send_message(
         req.username.clone(),
     )
     .await
+    .is_none()
     {
-        Some(_) => {
-            let ttl = db::users::get_ttl(&scylla_session, req.username.clone()).await;
-
-            let (enc_message, enc_salt) =
-                security::messages::encrypt(&req.m_content, &security::salt());
-            match db::server::send_message(
-                &scylla_session,
-                sid.clone(),
-                channel_name.clone(),
-                enc_message,
-                req.username.clone(),
-                enc_salt,
-                ttl,
-            )
-            .await
-            {
-                Ok(_) => actix_web::HttpResponse::Ok().body("Message sent."),
-                Err(e) => {
-                    logging::log(
-                        &format!("FAILED AT SEND MESSAGE:\n{:?}", e),
-                        Some(function_name!()),
-                    );
-                    actix_web::HttpResponse::InternalServerError().body("Failed to send message")
-                }
-            }
-        }
-        None => {
-            logging::log("FAILED AT USER IN SERVER", Some(function_name!()));
-            actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server")
-        }
+        logging::log("FAILED AT USER IN SERVER", Some(function_name!()));
+        return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
     }
+    
+    let ttl = db::users::get_ttl(&scylla_session, req.username.clone())
+        .await;
+
+    let (enc_message, enc_salt) =
+        security::messages::encrypt(&req.m_content, &security::salt());
+    
+    if db::server::send_message(
+        &scylla_session,
+        sid.clone(),
+        channel_name.clone(),
+        enc_message,
+        req.username.clone(),
+        enc_salt,
+        ttl,
+    )
+    .await
+    .is_err()
+    {
+        logging::log("FAILED AT SEND MESSAGE", Some(function_name!()));
+        return actix_web::HttpResponse::InternalServerError().body("Failed to send message");
+    }
+    actix_web::HttpResponse::Ok().body("Message sent.")
 }
 
 // TODO: what happens if invalid datetime tag is given?
@@ -197,16 +187,11 @@ pub async fn delete_message(
         .await
         .is_some()
         {
-            actix_web::HttpResponse::Ok().body("Message deleted successfully")
-        } else {
-            actix_web::HttpResponse::InternalServerError().body("Failed to delete message")
+            return actix_web::HttpResponse::Ok().body("Message deleted successfully");
         }
-    } else {
-        logging::log(
-            "Unauthorized: not message owner or server owner",
-            Some(function_name!()),
-        );
-        actix_web::HttpResponse::Unauthorized()
-            .body("You are not authorized to delete this message")
+        return actix_web::HttpResponse::InternalServerError().body("Failed to delete message");
     }
+    logging::log("Unauthorized: not message owner or server owner", Some(function_name!()));
+    actix_web::HttpResponse::Unauthorized()
+        .body("You are not authorized to delete this message")
 }

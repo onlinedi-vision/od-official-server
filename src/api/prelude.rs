@@ -15,33 +15,35 @@ pub async fn check_user_password(
     new_token_holder: structures::TokenHolder
 ) -> actix_web::HttpResponse {
     
-    let password_hash = secrets[0].password_hash.clone().unwrap();
-    let user_salt = secrets[0].user_salt.clone().unwrap();
-    let password_salt = secrets[0].password_salt.clone().unwrap();
-    let decrypted_user_salt = security::aes::decrypt(&user_salt);
-    let decrypted_password_salt = security::aes::decrypt(&password_salt);
-    let user_password_hash =
-        security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
-            &format!("{}{}", decrypted_user_salt.clone(), password),
-            &decrypted_password_salt,
-        )));
-    
-    if user_password_hash == password_hash {
-        let _ = db::prelude::insert_user_token(
-            &scylla_session,
-            &cache,
-            db::structures::KeyUser {
-                key: Some(security::armor_token(new_token_holder.token.clone())),
-                username: Some(username.to_string()),
-            },
-        )
-        .await;
+    if let Some(password_hash) = secrets[0].password_hash.clone()
+    && let Some(user_salt) = secrets[0].user_salt.clone()
+    && let Some(password_salt) = secrets[0].password_salt.clone() {
 
-        actix_web::HttpResponse::Ok().json(&new_token_holder)
-    } else {
-        logging::log("Failed because user supplied password is incorrect.", Some(function_name!()));
-        actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
+        let decrypted_user_salt = security::aes::decrypt(&user_salt);
+        let decrypted_password_salt = security::aes::decrypt(&password_salt);
+        let user_password_hash =
+            security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
+                &format!("{}{}", decrypted_user_salt.clone(), password),
+                &decrypted_password_salt,
+            )));
+    
+        if user_password_hash == password_hash {
+            let _ = db::prelude::insert_user_token(
+                &scylla_session,
+                &cache,
+                db::structures::KeyUser {
+                    key: Some(security::armor_token(new_token_holder.token.clone())),
+                    username: Some(username.to_string()),
+                },
+            )
+            .await;
+
+            return actix_web::HttpResponse::Ok().json(&new_token_holder);
+        }
+        
     }
+    logging::log("Failed because user supplied password is incorrect.", Some(function_name!()));
+    actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
 macro_rules! scylla_session {

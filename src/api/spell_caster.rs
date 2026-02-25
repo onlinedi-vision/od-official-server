@@ -24,13 +24,14 @@ pub async fn spell_cast(
     .await
     .is_some()
     {
-        actix_web::HttpResponse::Ok().json(&db::structures::Spell {
+        return actix_web::HttpResponse::Ok().json(&db::structures::Spell {
             key: Some(new_key),
             spell: Some(new_spell),
-        })
-    } else {
-        actix_web::HttpResponse::InternalServerError().body("Spell couldn't be cast.")
+        });
     }
+    
+    actix_web::HttpResponse::InternalServerError().body("Spell couldn't be cast.")
+
 }
 
 #[actix_web::post("/spell/check")]
@@ -57,11 +58,11 @@ pub async fn spell_check(
         {
             let _ = db::spell_caster::spell_repel(&scylla_session, req.key.clone()).await;
 
-            actix_web::HttpResponse::Ok().body(spell)
-        } else {
-            actix_web::HttpResponse::InternalServerError().body("Could not find Spell...")
+            return actix_web::HttpResponse::Ok().body(spell);
         }
-    } else {
-        actix_web::HttpResponse::Unauthorized().body("Invalid token")
+        return actix_web::HttpResponse::InternalServerError().body("Could not find Spell...");
     }
+    
+    actix_web::HttpResponse::Unauthorized().body("Invalid token")
+
 }
