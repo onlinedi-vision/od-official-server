@@ -1,6 +1,6 @@
 # Division Online Official Server
 ## Description
-This is the "RESTful" API server of the Online Division project. In the near future this will also be the API server used by "self-hoster".
+This is the "RESTful" API server of the Online Division project. In the near future this will also be the API server used by "self-hosters".
 ## Usage
 Obviously, to be able to use the source code of the project you will have to first clone it:
 ```sh
