@@ -1,28 +1,38 @@
 # Division Online Official Server
 ## Description
-This is the server that will host the global user data (such as the login data), official server data (encrypted messages, users, etc.) and DM's between users. The data stored on the server isn't necessarly decryptable on server side, since server owners can set flags to encrypt data symmetrically and on the client side.
-## Installation
-Installing the server is as easy as cloning the repo. There are some dependencies you have to keep in mind and install on your own.
-```sh
-$ git clone 'https://github.com/onlinedi-vision/od-official-server.git'
-```
-This server is written with the intention to be ran as root and installed at '/root/od-official-server'. With a logs directory and a cdn directory as described below.
-Also the admin of this server must set certain Environment Variables before running the ```build.sh``` script.
-A more complete installation would look like this:
-```sh
-$ mkdir /root/od-logs /root/cdn /root/od-official-server
-$ cd /root/od-official-server
-$ git clone 'https://github.com/onlinedi-vision/od-official-server.git'
-```
-The server's database is ScyllaDB as such this must also be installed and setup. More info about the installation can be found within ScyllaDB's [official docs](https://opensource.docs.scylladb.com/stable/getting-started/install-scylla/index.html).
-## Environment Variables
-Make sure to set the following environment variables before running the '''build.sh''' script.
-```sh
- $ export SCYLLA_CASSANDRA_PASSWORD="the password of the 'cassandra' superuser of the scylladb instance"
-```
+This is the "RESTful" API server of the Online Division project. In the near future this will also be the API server used by "self-hoster".
 ## Usage
-After installing the server and setting up the env vars and ScyllaDB, running it should be easy, from within the cloned directory:
+Obviously, to be able to use the source code of the project you will have to first clone it:
+```sh
+$ git clone 'https://github.com/onlinedi-vision/od-official-server.git'
 ```
-$ build.sh
+For the API server to properly run you also need a [scyllaDB](https://www.scylladb.com/) instance to which the server should connect to and use it as (well obviously) its data base.
+
+You can do this manually, but more easily you can run the following command:
+```sh
+./launch-test-env.sh -sS
 ```
-This will build and run the server.
+This command will run a docker container containing a scylla instance, and will compile the source code of od-official-server and run it connecting the two.
+
+For more in depth analysis of what it does please either check out the code of `launch-test-env` or see the help message of the command:
+```sh
+./launch-test-env.sh -h
+```
+
+## Environment Variables
+
+The "Test Env" sets up some random credentials (such as keys for encryption, and so on...). To have better control of what the keys are you can edit `launch-test-env.sh`, specifically these lines:
+```sh
+export SALT_ENCRYPTION_IV="ffA_1D6s^jf!6\$xx"
+export SALT_ENCRYPTION_KEY='#a1aA3!h4a@ah3a4'
+export SCYLLA_CASSANDRA_PASSWORD='cassandra'
+export API_PORT=1313
+export NO_OF_WORKERS=32
+export EXECUTABLE_NAME="api"
+```
+These being the lines that set up the necessary environment variables for `od-official-server` to run successfuly.
+
+## Contributing
+
+Please checkout [CONTRIBUTING.md](./CONTRIBUTING.md) and [TESTING.md](./TESTING.md).
+
