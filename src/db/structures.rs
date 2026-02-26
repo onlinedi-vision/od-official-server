@@ -1,3 +1,5 @@
+use bitflags::bitflags;
+
 #[derive(Debug, scylla::SerializeValue, scylla::DeserializeValue)]
 pub struct User {
     pub username: Option<String>,
@@ -84,17 +86,20 @@ pub struct ServerInfo {
     pub img_url: String,
 }
 
+
+bitflags! {
+    #[derive(serde::Serialize)]
+    struct Permisions: u32 {
+        const Read = 0b1000;
+    }
+}
+
+
 #[derive(Debug, scylla::SerializeValue, serde::Serialize)]
 pub struct ServerRole {
     pub role_name: String,
     pub server_id: String,
-    pub color: Option<String>,
-    pub permissions: std::collections::HashSet<String>,
+    pub color: Option<String>, //hex string rgba color
+    pub permissions: u32,
 }
 
-#[derive(Debug, Clone, scylla::SerializeValue, serde::Serialize, serde::Deserialize)]
-pub struct UserServerRole {
-    pub server_id: String,
-    pub username: String,
-    pub role_name: String,
-}
