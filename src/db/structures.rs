@@ -88,9 +88,26 @@ pub struct ServerInfo {
 
 
 bitflags! {
-#[derive(Debug,serde::Serialize)]
+    #[derive(Debug, Clone, Copy, serde::Serialize,serde::Deserialize)]
     pub struct Permissions: u32 {
         const Read = 0b1000;
+    }
+}
+
+impl scylla::serialize::value::SerializeValue for Permissions {
+    fn serialize<'b>(
+        &self,
+        typ: &scylla::_macro_internal::ColumnType,
+        writer: scylla::_macro_internal::CellWriter<'b>,
+    ) -> Result<
+        scylla::_macro_internal::WrittenCellProof<'b>,
+        scylla::_macro_internal::SerializationError,
+    > {
+        <i32 as scylla::serialize::value::SerializeValue>::serialize(
+            &(self.bits() as i32),
+            typ,
+            writer,
+        )
     }
 }
 
