@@ -88,8 +88,8 @@ pub struct ServerInfo {
 
 
 bitflags! {
-    #[derive(serde::Serialize)]
-    struct Permisions: u32 {
+#[derive(Debug,serde::Serialize)]
+    pub struct Permissions: u32 {
         const Read = 0b1000;
     }
 }
@@ -100,6 +100,6 @@ pub struct ServerRole {
     pub role_name: String,
     pub server_id: String,
     pub color: Option<String>, //hex string rgba color
-    pub permissions: u32,
+    pub permissions: Permissions,
 }
 
