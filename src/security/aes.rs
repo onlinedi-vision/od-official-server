@@ -1,3 +1,7 @@
+// TODO: pffff we'll figure this out one day. But removing unwraps/excepts from here
+//       is going to be hard. For now we allow them here.
+#![allow(clippy::disallowed_methods)]
+
 use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit, block_padding::Pkcs7};
 use hex;
 
