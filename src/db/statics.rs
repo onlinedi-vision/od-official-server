@@ -142,7 +142,7 @@ pub static SELECT_USER_ROLES: &str = r#"
 "#;
 
 pub static INSERT_SERVER_ROLE: &str = r#"
-   INSERT INTO division_online.o_server_roles (server_id, role_name, color, permissions)
+   INSERT INTO division_online.o_server_roles (server_id,id, role_name, color, permissions)
        VALUES(?, ?, ?, ?); 
 "#;
 

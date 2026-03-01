@@ -87,36 +87,13 @@ pub struct ServerInfo {
 }
 
 
-bitflags! {
-    #[derive(Debug, Clone, Copy, serde::Serialize,serde::Deserialize)]
-    pub struct Permissions: u32 {
-        const Read = 0b1000;
-    }
-}
 
-impl scylla::serialize::value::SerializeValue for Permissions {
-    fn serialize<'b>(
-        &self,
-        typ: &scylla::_macro_internal::ColumnType,
-        writer: scylla::_macro_internal::CellWriter<'b>,
-    ) -> Result<
-        scylla::_macro_internal::WrittenCellProof<'b>,
-        scylla::_macro_internal::SerializationError,
-    > {
-        <i32 as scylla::serialize::value::SerializeValue>::serialize(
-            &(self.bits() as i32),
-            typ,
-            writer,
-        )
-    }
-}
-
-
-#[derive(Debug, scylla::SerializeValue, serde::Serialize)]
+#[derive(Debug,scylla::SerializeValue,serde::Serialize)]
 pub struct ServerRole {
-    pub role_name: String,
-    pub server_id: String,
-    pub color: Option<String>, //hex string rgba color
-    pub permissions: Permissions,
-}
+    pub server_id:String,
+    pub id:String,
+    pub name:String,
+    pub color:String,
+    pub permissions:i64,
 
+}

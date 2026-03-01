@@ -84,11 +84,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 .service(api::message::delete_message)
 
                 .service(api::roles::add_server_role)
-                .service(api::roles::assign_role_to_user)
-                .service(api::roles::remove_role_from_user)
-                .service(api::roles::fetch_server_roles)
-                .service(api::roles::fetch_user_roles)
-                .service(api::roles::delete_server_role)
 
                 .service(api::spell_caster::spell_cast)
                 .service(api::spell_caster::spell_check)
