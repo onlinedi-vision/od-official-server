@@ -33,7 +33,9 @@ function cleanup() {
   docker compose -f "${COMPOSE_FILE}" down -v
 
   echo " * cleaning up mounted directories * "
-  [ -d test-env-compose/grafana ] && sudo rm -rf test-env-compose/{grafana/,prometheus_data/,prometheus/}
+  if [ -d test-env-compose/grafana ] ; then
+    sudo rm -rf test-env-compose/{grafana/,prometheus_data/,prometheus/}
+  fi
 }
 
 function print_usage() {
@@ -64,10 +66,9 @@ u_flag=''
 G_flag=''
 e_flag=''
 k_flag=''
-cargo_args=''
 scylla_wait_time=''
 api_wait_time=''
-while getopts 't:T:a:vchsCSuGp:ek' flag; do
+while getopts 't:T:a:chsCSuGp:ek' flag; do
   case "${flag}" in
     k) k_flag='true' ;;
     e) e_flag='true' ;;
@@ -76,7 +77,6 @@ while getopts 't:T:a:vchsCSuGp:ek' flag; do
     s) s_flag='true' ;;
     t) scylla_wait_time="${OPTARG:-5}" ;;
     T) api_wait_time="${OPTARG:-1}" ;;
-    v) cargo_args="--verbose";;
     a) export EXECUTABLE_NAME="${OPTARG:-api}";;
     S) S_flag='true' ;;
     u) u_flag='true' ;;
