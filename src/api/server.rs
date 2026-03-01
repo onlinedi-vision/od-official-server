@@ -67,21 +67,8 @@ pub async fn create_server(
     )
     .await;
 
-    let role = db::structures::ServerRole {
-        role_name: "member".to_string(),
-        server_id: sid.clone(),
-        color: Some("#807675".to_string()),
-        permissions: std::collections::HashSet::<String>::new(),
-    };
+   
 
-    let _ = db::roles::insert_server_role(&scylla_session, sid.clone(), role).await;
-
-    let user_role = db::structures::UserServerRole {
-        server_id: sid.clone(),
-        username: req.username.clone(),
-        role_name: "member".to_string(),
-    };
-    let _ = db::roles::assign_role_to_user(&scylla_session, user_role).await;
 
     if db::server::add_user_to_server(&scylla_session, sid, req.username.clone())
         .await
