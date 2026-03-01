@@ -11,7 +11,6 @@ pub struct MetricsCollector {
     request_counter: IntCounterVec,
     response_time_histogram: HistogramVec,
     request_size: IntCounterVec,
-    response_size: IntCounterVec,
 }
 
 impl MetricsCollector {
@@ -31,21 +30,14 @@ impl MetricsCollector {
             &["method", "endpoint"]
         )?;
         
-        let response_size = IntCounterVec::new(
-            Opts::new("http_response_size_bytes", "HTTP response size in bytes"),
-            &["method", "endpoint"]
-        )?;
-
         registry.register(Box::new(request_counter.clone()))?;
         registry.register(Box::new(response_time_histogram.clone()))?;
         registry.register(Box::new(request_size.clone()))?;
-        registry.register(Box::new(response_size.clone()))?;
 
         Ok(MetricsCollector {
             request_counter,
             response_time_histogram,
             request_size,
-            response_size,
         })
     }
 
@@ -138,10 +130,10 @@ where
         
         if let Some(content_length) = req.headers().get("content-length")
         && let Ok(size_str) = content_length.to_str()
-        && let Ok(size) = size_str.parse::<i64>() {
+        && let Ok(size) = size_str.parse::<u64>() {
             collector.request_size
                 .with_label_values(&[&method, &endpoint])
-                .inc_by(size as u64);
+                .inc_by(size);
         }
 
         // Here is where EVERYTHING happens. We simply call
@@ -182,15 +174,7 @@ where
                     collector.request_counter
                         .with_label_values(&[&method, &endpoint, &status])
                         .inc();
-                    
-                    if let Some(size) = res.response().headers().get("content-length")
-                    && let Ok(size_str) = size.to_str()
-                    && let Ok(size) = size_str.parse::<i64>() {
-                        collector.response_size
-                            .with_label_values(&[&method, &endpoint])
-                            .inc_by(size as u64);
-                    }
-                    
+
                     Ok(res)
                 },
                 Err(e) => {
