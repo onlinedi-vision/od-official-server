@@ -123,10 +123,6 @@ fi
 echo "======================= LAUNCHING API ========================="
 echo " * api is lauching on 127.0.0.1:${API_PORT} * "
 
-if ! stat test-env-compose/target/ > /dev/null 2> /dev/null ; then
-  mkdir test-env-compose/target
-fi
-
 if ! [[ "${u_flag}" == "true" ]]; then
   if ! [[ "${s_flag}" == "true" ]]; then
     export RUN_UT="true"
