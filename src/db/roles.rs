@@ -24,10 +24,21 @@ pub async fn fetch_user_roles(
     session: &scylla::client::session::Session,
     server_id: String,
     username: String,
-) -> Option<Result<()>>{
-    let res: std::result::Result<scylla::response::query_result::QueryResult, _ > = session
-    .query_unpaged(
-     statics::GET_USER_ROLES,
-     (server_id,username),   
-    ).await;
+) -> Option<Result<Vec<String>>>{
+
+    let res = session
+    .query_unpaged(statics::SELECT_USER_ROLES, (server_id,username))
+    .await;
+
+    let rows = res.expect("REASON").into_rows_result();
+
+    let mut roles = Vec::new();
+
+    for row in res.rows {
+        let (role,): (String,) = row.get("role_name");
+        roles.push(role);
+    }
+
+    Some(Ok(roles))
+
 }
