@@ -136,7 +136,9 @@ sleep "${api_wait_time:-1}"
 
 if ! [[ "${k_flag}" == "true" ]]; then
   echo "====================== CACHING COMPILATION ========================="
-  [ -d ./taget ] && rm -rf ./target
+  if [ -d ./target ] ; then
+     rm -rf ./target
+  fi
 
   mkdir -p ./target/release
   mkdir -p ./target/debug

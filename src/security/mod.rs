@@ -5,11 +5,9 @@ pub mod aes;
 pub mod messages;
 pub mod structures;
 
+#[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
-    // TODO: figure out WTF this is about
-    // This is for `use super::*;` -- for some reason it doesn't like it without allowing unused imports
-    use super::*;
+    use super::{armor_token, sha256, sha512};
 
     #[test]
     fn test_token_armor() {

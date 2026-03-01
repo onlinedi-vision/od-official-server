@@ -33,10 +33,6 @@ services:
     depends_on:
       - prometheus
 
-networks:
-  grafana_network:
-    driver: bridge
-
 volumes:
   grafana_data:
     driver: local

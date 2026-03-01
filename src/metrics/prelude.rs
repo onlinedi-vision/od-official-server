@@ -141,7 +141,7 @@ where
         && let Ok(size) = size_str.parse::<i64>() {
             collector.request_size
                 .with_label_values(&[&method, &endpoint])
-                .inc_by((size as u32).into());
+                .inc_by(size as u64);
         }
 
         // Here is where EVERYTHING happens. We simply call
@@ -188,7 +188,7 @@ where
                     && let Ok(size) = size_str.parse::<i64>() {
                         collector.response_size
                             .with_label_values(&[&method, &endpoint])
-                            .inc_by((size as u32).into());
+                            .inc_by(size as u64);
                     }
                     
                     Ok(res)
