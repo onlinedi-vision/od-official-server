@@ -14,6 +14,7 @@ pub mod spell_caster;
 pub mod statics;
 pub mod structures;
 pub mod user;
+pub mod metrics;
 
 #[actix_web::get("/api/version")]
 pub async fn get_api_version() -> impl actix_web::Responder {

@@ -1,0 +1,7 @@
+services:
+  scylla:
+    image: scylladb/scylla
+    container_name: scylla
+    network_mode: host
+
+

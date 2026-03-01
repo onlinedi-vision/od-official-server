@@ -3,3 +3,5 @@
 test_env*
 .env*
 .pids
+/test-env-compose/grafana/*
+/test-env-compose/prometheus/*

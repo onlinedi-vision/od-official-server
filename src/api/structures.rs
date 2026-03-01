@@ -1,5 +1,13 @@
 #![allow(dead_code)]
 
+use crate::metrics;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub metrics_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    pub registry: prometheus::Registry,
+}
+
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct TestParamsStruct {
     pub param1: String,

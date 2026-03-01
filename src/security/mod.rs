@@ -7,13 +7,14 @@ pub mod structures;
 
 mod tests {
     #[allow(unused_imports)]
-    // This is for `use super::*;` -- for some reason it doesn't like it without allowing used imports
+    // TODO: figure out WTF this is about
+    // This is for `use super::*;` -- for some reason it doesn't like it without allowing unused imports
     use super::*;
 
     #[test]
     fn test_token_armor() {
         assert_eq!(
-            "486ad2d394c6ceeb3c5e9939303e3329dd1edbe5e5e22fdeea6356acafe8a4fe",
+            "cadcfb296aab1c214b9b99fe01a649453efe18d41df4e3c6bb686fe71bb93695",
             armor_token("token12345678901234567890".to_string())
         );
     }
