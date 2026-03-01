@@ -18,3 +18,16 @@ pub async fn insert_server_role(
         Some(res.map(|_| ()).map_err(From::from))
        
 }
+
+
+pub async fn fetch_user_roles(
+    session: &scylla::client::session::Session,
+    server_id: String,
+    username: String,
+) -> Option<Result<()>>{
+    let res: std::result::Result<scylla::response::query_result::QueryResult, _ > = session
+    .query_unpaged(
+     statics::GET_USER_ROLES,
+     (server_id,username),   
+    ).await;
+}
