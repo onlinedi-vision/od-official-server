@@ -23,5 +23,3 @@ services:
       - API_PORT=1313
       - SCYLLA_INET
       - NO_OF_WORKERS              
-    depends_on:
-      - scylla

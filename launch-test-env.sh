@@ -33,7 +33,7 @@ function cleanup() {
   docker compose -f "${COMPOSE_FILE}" down -v
 
   echo " * cleaning up mounted directories * "
-  sudo rm -rf test-env-compose/{grafana/,prometheus_data/,prometheus/}
+  [ -d test-env-compose/grafana ] && sudo rm -rf test-env-compose/{grafana/,prometheus_data/,prometheus/}
 }
 
 function print_usage() {
@@ -51,6 +51,8 @@ function print_usage() {
   echo "   -t <SECS>   how many seconds to wait for scylla container to settle (experimental)"
   echo "   -T <SECS>   how many seconds to wait for API program to settle (experimental)"
   echo "   -G          launch Grafana (and prometheus)"
+  echo "   -e          skip end2end tests"
+  echo "   -k          skip cargo target (k)aching"
 }
 
 trap 'cleanup' SIGINT SIGTERM
@@ -60,11 +62,15 @@ s_flag=''
 S_flag=''
 u_flag=''
 G_flag=''
+e_flag=''
+k_flag=''
 cargo_args=''
 scylla_wait_time=''
 api_wait_time=''
-while getopts 't:T:a:vchsCSuGp:' flag; do
+while getopts 't:T:a:vchsCSuGp:ek' flag; do
   case "${flag}" in
+    k) k_flag='true' ;;
+    e) e_flag='true' ;;
     c) c_flag='true' ;;
     C) cleanup && exit 0 || exit 1;;
     s) s_flag='true' ;;
@@ -131,21 +137,26 @@ docker compose -f "${COMPOSE_FILE}" build od-official-server
 docker compose -f "${COMPOSE_FILE}" up -d od-official-server
 sleep "${api_wait_time:-1}"
 
-echo "====================== CACHING COMPILATION ========================="
-[ -d ./taget ] && rm -rf ./target
 
-mkdir -p ./target/release
-mkdir -p ./target/debug
+if ! [[ "${k_flag}" == "true" ]]; then
+  echo "====================== CACHING COMPILATION ========================="
+  [ -d ./taget ] && rm -rf ./target
 
-docker cp od-official-server:/build/target/release ./target
-docker cp od-official-server:/build/target/debug ./target || true
+  mkdir -p ./target/release
+  mkdir -p ./target/debug
 
+  docker cp od-official-server:/build/target/release ./target
+  docker cp od-official-server:/build/target/debug ./target || true
+fi
 
 echo "======================= LAUNCHING GRAFANA ======================="
 launch_grafana
 
-if [[ "${s_flag}" == "true" ]]; then
-  echo "====================== SKIPPING TESTS ========================="
+if [[ "${s_flag}" == "true" ]] || [[ "${e_flag}" == "true" ]]; then
+  echo "====================== SKIPPING E2E TESTS ========================="
+  if [[ "${c_flag}" == "true" ]]; then
+    cleanup
+  fi
   exit 0
 fi
 
