@@ -122,3 +122,21 @@ pub async fn check_user_is_in_server(
     } 
     None
 }
+
+/// Check that a user is in the server AND has the required permission bits.
+pub async fn check_permission(
+    session: &scylla::client::session::Session,
+    cache: &moka::future::Cache<String, String>,
+    sid: String,
+    token: String,
+    username: String,
+    required: i64,
+) -> Option<()> {
+    check_user_is_in_server(session, cache, sid.clone(), token, username.clone()).await?;
+    let perms = db::roles::fetch_user_permissions(session, sid, username).await;
+    if (perms & required) == required {
+        Some(())
+    } else {
+        None
+    }
+}
