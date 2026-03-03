@@ -86,18 +86,19 @@ pub async fn send_message(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
 
-    if db::prelude::check_user_is_in_server(
+    if db::prelude::check_permission(
         &scylla_session,
         &cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        db::structures::Permissions::SEND_MESSAGES.bits(),
     )
     .await
     .is_none()
     {
-        logging::log("FAILED AT USER IN SERVER", Some(function_name!()));
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
+        logging::log("FAILED PERMISSION CHECK", Some(function_name!()));
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to send messages");
     }
     
     let ttl = db::users::get_ttl(&scylla_session, req.username.clone())

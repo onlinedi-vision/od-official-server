@@ -70,10 +70,25 @@ pub async fn create_server(
    
 
 
-    if db::server::add_user_to_server(&scylla_session, sid, req.username.clone())
+    if db::server::add_user_to_server(&scylla_session, sid.clone(), req.username.clone())
         .await
         .is_some()
     {
+        // here the basic "member" role that can send messages is created
+        let member_role = db::structures::ServerRole {
+            server_id: sid.clone(),
+            name: "member".to_string(),
+            color: String::new(),
+            permissions: db::structures::Permissions::SEND_MESSAGES.bits(),
+        };
+        let _ = db::roles::insert_server_role(&scylla_session, sid.clone(), member_role).await;
+        // make the one that made the server a member
+        let _ = scylla_session
+            .query_unpaged(
+                db::statics::ASSIGN_ROLE_TO_USER,
+                (sid.clone(), req.username.clone(), "member".to_string()),
+            )
+            .await;
         return actix_web::HttpResponse::Ok().json(&server_created);
     }
     logging::log("SERVERS FAIL: add_user_to_server", Some(function_name!()));
@@ -105,13 +120,21 @@ pub async fn join_server(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
     
-    if db::server::add_user_to_server(&scylla_session, sid, req.username.clone())
+    if db::server::add_user_to_server(&scylla_session, sid.clone(), req.username.clone())
         .await
         .is_none()
     {
         logging::log("SERVERS FAIL: add_user_to_server", Some(function_name!()));
         return actix_web::HttpResponse::InternalServerError().body("Failed to add user to server");
     }
+
+    // give the member role to anyone that joins the server
+    let _ = scylla_session
+        .query_unpaged(
+            db::statics::ASSIGN_ROLE_TO_USER,
+            (sid, req.username.clone(), "member".to_string()),
+        )
+        .await;
 
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
