@@ -1,5 +1,13 @@
 use bitflags::bitflags;
 
+//this is a zero cost abstraction(it stays 8bytes) that adds a ton of usefull methods 
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+    pub struct Permissions: i64 {
+        const SEND_MESSAGES = 0x01;
+    }
+}
+
 #[derive(Debug, scylla::SerializeValue, scylla::DeserializeValue)]
 pub struct User {
     pub username: Option<String>,
@@ -91,7 +99,6 @@ pub struct ServerInfo {
 #[derive(Debug,scylla::SerializeValue,serde::Serialize)]
 pub struct ServerRole {
     pub server_id:String,
-    pub id:String,
     pub name:String,
     pub color:String,
     pub permissions:i64,
