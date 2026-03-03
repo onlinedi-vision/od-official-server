@@ -148,7 +148,6 @@ pub struct ServerRoleRequest {
     pub token: String,
     pub username: String,
     pub server_id: String,
-    pub id: String,
     pub name: String,
     pub color: Option<String>,
     pub permissions: i64,
@@ -181,6 +180,7 @@ pub struct UserServerRoleRequest {
     pub token: String,
     pub username: String,
     pub server_id: String,
+    pub target_user: String,
     pub role_name: String,
 }
 

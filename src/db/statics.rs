@@ -142,7 +142,7 @@ pub static SELECT_USER_ROLES: &str = r#"
 "#;
 
 pub static INSERT_SERVER_ROLE: &str = r#"
-   INSERT INTO division_online.o_server_roles (server_id,id, role_name, color, permissions)
+   INSERT INTO division_online.o_server_roles (server_id, role_name, color, permissions)
        VALUES(?, ?, ?, ?); 
 "#;
 
@@ -165,6 +165,11 @@ pub static SELECT_USERS_BY_ROLE: &str = r#"
     SELECT username FROM division_online.o_user_server_roles
         WHERE server_id = ? AND role_name = ?
         ALLOW FILTERING;
+"#;
+
+pub static SELECT_ROLE_PERMISSIONS: &str = r#"
+    SELECT permissions FROM division_online.o_server_roles
+        WHERE server_id = ? AND role_name = ?;
 "#;
 
 pub static SELECT_SERVER_ROLE_BY_NAME: &str = r#"
