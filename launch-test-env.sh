@@ -67,7 +67,7 @@ L_flag=''
 G_flag=''
 e_flag=''
 k_flag=''
-
+scylla_wait_time=''
 while getopts 't:T:a:chsCLSuGp:ek' flag; do
   case "${flag}" in
     k) k_flag='true' ;;
@@ -124,9 +124,13 @@ fi
 echo "======================= LAUNCHING API ========================="
 echo " * api is lauching on 127.0.0.1:${API_PORT} * "
 
-if ! [[ "${u_flag}" == "true" ]]; then
-  if ! [[ "${s_flag}" == "true" ]]; then
+if ! [[ "${s_flag}" == "true" ]]; then
+  if ! [[ "${u_flag}" == "true" ]]; then
     export RUN_UT="true"
+  fi
+
+  if [[ "${L_flag}" == "true" ]]; then
+    export RUN_LINT="true"
   fi
 fi
 
@@ -164,9 +168,4 @@ echo "================== LAUNCHING API E2E TESTS ===================="
 
 if [[ "${c_flag}" == "true" ]]; then
   cleanup
-fi
-
-if [[ "${L_flag}" == "true" ]]; then
-  echo "================== LAUNCHING API LINTERS ===================="
-  cargo clippy --release $cargo_args -- -D warnings -A clippy::await_holding_lock
 fi
