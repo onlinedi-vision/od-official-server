@@ -360,6 +360,7 @@ dependencies = [
  "futures",
  "hex",
  "moka",
+ "once_cell",
  "prometheus",
  "rand",
  "scylla",

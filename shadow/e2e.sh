@@ -175,16 +175,16 @@ eetest "/api/user/ttl"
 payload=$(patch "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"ttl\":\"s\"}" "/api/user/ttl")
 assert "TTL Updated." "${payload}" "/api/user/ttl"
 
-message_with_short_ttl="This message will be deleted after 3 seconds."
+message_with_short_ttl="This message will be deleted after 1 seconds."
 eetest "/servers/{sid}/api/{channel_name}/send_message -- TTL Expiration"
 send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_with_short_ttl}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
 assert "Message sent." "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
 
 eetest "/servers/{sid}/api/{channel_name}/get_messages_migration -- TTL Expiration"
-# sleeping for 3 seconds so that the last message's Time To Live
+# sleeping for 1 seconds so that the last message's Time To Live
 # passes and the message gets deleted
-printf 'SLEEPING 3 SECONDS... '
-sleep 3
+printf 'SLEEPING 1 SECONDS... '
+sleep 1
 message=$(post "{\"username\":\"${QA_USERNAME}\",\"token\":${token}, \"limit\":\"100\", \"offset\":\"0\"}" "/servers/${sid}/api/${main_channel}/get_messages_migration" | jq -r '.m_list[].m_content')
 assert "" "$(echo "$message" | grep "$message_with_short_ttl")" "/servers/{sid}/api/{channel_name}/get_messages_migration -- TTL Expiration"
 
@@ -207,3 +207,12 @@ spell1=$(echo "$payload" | jq -r '.spell')
 
 spell2=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"key\":\"${key}\"}" "/api/spell/check")
 assert "$spell1" "$spell2" "/api/spell/cast && /api/spell/check"
+
+eetest "/api/create_server -- should fail due to TOKEN TTL"
+# Sleeping so that we can trigger the TOKEN_TTL (set in launch-test-env)
+# the test-env TOKEN_TTL=2s (we slept for 1 second before, and we sleep
+# for an additional 1 second here).
+printf 'SLEEPING 1 SECONDS... '
+sleep 1
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER\", \"img_url\":\"L\"}" "/api/create_server")
+assert "Invalid token" "${payload}" "/api/create_server"
