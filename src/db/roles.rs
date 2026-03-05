@@ -2,6 +2,8 @@ use crate::db::{statics, structures};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+
+
 pub async fn insert_server_role(
     session: &scylla::client::session::Session,
     server_id: String,
@@ -14,6 +16,47 @@ pub async fn insert_server_role(
         )
         .await;
     Some(res.map(|_| ()).map_err(From::from))
+}
+
+pub async fn assign_role(
+session: &scylla::client::session::Session,
+server_id:String,
+target_user:String,
+role_name:String,
+) -> Result<()>{
+
+    let res: std::result::Result<scylla::response::query_result::QueryResult, _> = session
+    .query_unpaged(
+        statics::ASSIGN_ROLE_TO_USER,
+        (server_id,target_user,role_name),
+
+    ).await;
+    res.map(|_| ()).map_err(From::from)
+}
+
+pub async fn delete_role(
+    session: &scylla::client::session::Session,
+    server_id:String,
+    role_name:String,
+) -> Result<()>{
+    let res: std::result::Result<scylla::response::query_result::QueryResult, _ > = session.query_unpaged(
+        statics::DELETE_SERVER_ROLE,
+        (server_id,role_name),
+    ).await;
+    res.map(|_| ()).map_err(From::from)
+}
+
+pub async fn remove_role(
+    session: &scylla::client::session::Session,
+    server_id:String,
+    target_user:String,
+    role_name:String,
+) -> Result<()>{
+    let res: std::result::Result<scylla::response::query_result::QueryResult, _>= session.query_unpaged(
+        statics::REMOVE_ROLE_FROM_USER,
+        (server_id,target_user,role_name),
+    ).await;
+    res.map(|_| ()).map_err(From::from)
 }
 
 /// Returns the list of role names a user has in a server (for display in PublicInfoUser).

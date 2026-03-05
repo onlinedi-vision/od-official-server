@@ -65,12 +65,12 @@ pub async fn assign_role(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    match scylla_session
-        .query_unpaged(
-            db::statics::ASSIGN_ROLE_TO_USER,
-            (req.server_id.clone(), req.target_user.clone(), req.role_name.clone()),
-        )
-        .await
+    match db::roles::assign_role(
+        &scylla_session,
+        req.server_id.clone(),
+        req.target_user.clone(),
+        req.role_name.clone(),
+    ).await
     {
         Ok(_) => actix_web::HttpResponse::Ok().body("Role assigned"),
         Err(e) => {
@@ -102,12 +102,12 @@ pub async fn remove_role(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    match scylla_session
-        .query_unpaged(
-            db::statics::REMOVE_ROLE_FROM_USER,
-            (req.server_id.clone(), req.target_user.clone(), req.role_name.clone()),
-        )
-        .await
+    match db::roles::remove_role(
+        &scylla_session,
+        req.server_id.clone(), 
+        req.target_user.clone(),
+        req.role_name.clone(),
+        ).await
     {
         Ok(_) => actix_web::HttpResponse::Ok().body("Role removed successfully"),
         Err(e) => {
@@ -139,11 +139,9 @@ pub async fn delete_server_role(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    match scylla_session
-        .query_unpaged(
-            db::statics::DELETE_SERVER_ROLE,
-            (req.server_id.clone(), req.role_name.clone()),
-        )
+    match db::roles::delete_role(&scylla_session, 
+        req.server_id.clone(),
+        req.role_name.clone())
         .await
     {
         Ok(_) => actix_web::HttpResponse::Ok().body("Role deleted successfully"),
