@@ -40,7 +40,7 @@ pub async fn insert_new_user(
             } else {
                 return Some(
                     session
-                        .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key))
+                        .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key, *statics::TOKEN_TTL))
                         .await
                         .map(|_| ())
                         .map_err(From::from),
@@ -215,7 +215,7 @@ pub async fn get_ttl(
     username: String
 ) -> i32 {
     match get_ttl_symbol(session, username).await.unwrap_or("N".to_string()).as_str() {
-        "s"     =>          3_i32, // every 3 _s_econd   (only for test cases)
+        "s"     =>          1_i32, // every _s_econd   (only for test cases)
         "S"     =>         10_i32, // every 10 _S_econds (only for test cases)
         "h"     =>      60*60_i32, // every _h_our
         "H"     =>   12*60*60_i32, // every 12 _H_ours

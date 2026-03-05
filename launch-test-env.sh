@@ -55,6 +55,7 @@ function print_usage() {
   echo "   -G          launch Grafana (and prometheus)"
   echo "   -e          skip end2end tests"
   echo "   -k          skip cargo target (k)aching"
+  echo "   -L          run linter"
 }
 
 trap 'cleanup' SIGINT SIGTERM
@@ -63,18 +64,19 @@ c_flag=''
 s_flag=''
 S_flag=''
 u_flag=''
+L_flag=''
 G_flag=''
 e_flag=''
 k_flag=''
 scylla_wait_time=''
-api_wait_time=''
-while getopts 't:T:a:chsCSuGp:ek' flag; do
+while getopts 't:T:a:chsCLSuGp:ek' flag; do
   case "${flag}" in
     k) k_flag='true' ;;
     e) e_flag='true' ;;
     c) c_flag='true' ;;
     C) cleanup && exit 0 || exit 1;;
     s) s_flag='true' ;;
+    L) L_flag='true' ;;
     t) scylla_wait_time="${OPTARG:-5}" ;;
     T) api_wait_time="${OPTARG:-1}" ;;
     a) export EXECUTABLE_NAME="${OPTARG:-api}";;
@@ -123,9 +125,13 @@ fi
 echo "======================= LAUNCHING API ========================="
 echo " * api is lauching on 127.0.0.1:${API_PORT} * "
 
-if ! [[ "${u_flag}" == "true" ]]; then
-  if ! [[ "${s_flag}" == "true" ]]; then
+if ! [[ "${s_flag}" == "true" ]]; then
+  if ! [[ "${u_flag}" == "true" ]]; then
     export RUN_UT="true"
+  fi
+
+  if [[ "${L_flag}" == "true" ]]; then
+    export RUN_LINT="true"
   fi
 fi
 
@@ -164,4 +170,3 @@ echo "================== LAUNCHING API E2E TESTS ===================="
 if [[ "${c_flag}" == "true" ]]; then
   cleanup
 fi
-

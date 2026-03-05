@@ -23,7 +23,7 @@ pub async fn insert_user_token(
        
     Some(
         session
-            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key))
+            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key, *statics::TOKEN_TTL))
             .await
             .map(|_| ())
             .map_err(From::from),
@@ -55,9 +55,9 @@ pub async fn check_token(
 
     if let Some(username) = un.clone() {
         if let Some(cache_token) = cache.get(&username.clone()).await
-            && cache_token == crypted_token.clone() {
-                return Some(());
-            }
+        && cache_token == crypted_token.clone() {
+            return Some(());
+        }
 
         query_rows = session
             .query_unpaged(statics::CHECK_TOKEN_USER, (crypted_token.clone(), username))
