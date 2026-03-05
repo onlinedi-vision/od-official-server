@@ -13,10 +13,11 @@ pipeline {
 				script {
 				
 					withDockerRegistry(url: 'https://registry.onlinedi.vision:5000',  credentialsId:'docker-registry') {
-						version=sh(script:'echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n', returnStdout: true)
-						sh "docker build . -t od-official-server:v${version}"
-						sh "docker tag od-official-server:v${version} registry.onlinedi.vision:5000/od-official-server:v${version}"
-						sh "docker push registry.onlinedi.vision:5000/od-official-server:v${version}"
+						version="v" + sh(script:'echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n', returnStdout: true)
+						echo "VERSION TO BE DEPLOYED: $version"
+						sh "docker build . -t od-official-server:${version}"
+						sh "docker tag od-official-server:${version} registry.onlinedi.vision:5000/od-official-server:${version}"
+						sh "docker push registry.onlinedi.vision:5000/od-official-server:${version}"
 					}
 				}
 			}
