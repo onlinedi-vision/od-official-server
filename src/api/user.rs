@@ -278,7 +278,7 @@ pub async fn set_user_pfp(
     if db::users::set_user_pfp(&scylla_session, &req.username, img_opt).await.is_err() {
         return actix_web::HttpResponse::InternalServerError()
             .body("Failed to update profile picture.");
-    };
+    }
 
     let _ = db::prelude::insert_user_token(
         &scylla_session,

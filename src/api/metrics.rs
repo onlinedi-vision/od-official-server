@@ -10,7 +10,7 @@ async fn metrics(data: actix_web::web::Data<structures::AppState>) -> impl actix
     
     let mut buffer = Vec::new();
     if let Err(e) = encoder.encode(&metric_families, &mut buffer) {
-        eprintln!("Error encoding metrics: {}", e);
+        eprintln!("Error encoding metrics: {e}");
         return actix_web::HttpResponse::InternalServerError().body("Error encoding metrics");
     }
     
@@ -19,7 +19,7 @@ async fn metrics(data: actix_web::web::Data<structures::AppState>) -> impl actix
             .content_type("text/plain; version=0.0.4")
             .body(content),
         Err(e) => {
-            eprintln!("Error converting metrics to string: {}", e);
+            eprintln!("Error converting metrics to string: {e}");
             actix_web::HttpResponse::InternalServerError().body("Error encoding metrics")
         }
     }

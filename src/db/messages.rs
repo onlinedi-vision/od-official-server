@@ -38,10 +38,10 @@ pub async fn fetch_server_channel_messages_unlimited(
         }
     }
 
-    if !messages.is_empty() {
-        Some(messages)
-    } else {
+    if messages.is_empty() {
         None
+    } else {
+        Some(messages)
     }
 }
 
@@ -96,10 +96,10 @@ pub async fn fetch_server_channel_messages_limited(
         }
     }
 
-    if !messages.is_empty() {
-        Some(messages)
-    } else {
+    if messages.is_empty() {
         None
+    } else {
+        Some(messages)
     }
 }
 
@@ -165,9 +165,8 @@ pub async fn verify_message_ownership(
             (Some(un),) => {
                 if un == username {
                     return Some(true);
-                } else {
-                    return Some(false);
                 }
+                return Some(false);
             }
             _ => {
                 return None;

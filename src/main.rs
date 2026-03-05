@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         None => 512,
     };
 
-    if let Ok(ssesh) = db::prelude::new_scylla_session(&format!("{}:9042", scylla_inet)).await 
+    if let Ok(ssesh) = db::prelude::new_scylla_session(&format!("{scylla_inet}:9042")).await 
     && let Ok(mcache) = db::prelude::new_moka_cache(1_000).await {   
         let session = actix_web::web::Data::new(security::structures::ScyllaSession {
             lock: std::sync::Mutex::new(ssesh)
@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let metrics_collector = match metrics::prelude::MetricsCollector::new(&registry) {
             Ok(collector) => actix_web::web::Data::new(collector),
             Err(e) => {
-                eprintln!("Failed to create metrics collector: {}", e);
+                eprintln!("Failed to create metrics collector: {e}");
                 std::process::exit(1);
             }
         };

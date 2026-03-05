@@ -18,7 +18,7 @@ pub async fn insert_user_token(
 
     if let Some(username) = user.username.clone()
         && let Some(key) = user.key.clone() {
-            let _ = cache.insert(username.clone(), key.clone()).await;
+            let () = cache.insert(username.clone(), key.clone()).await;
         }
        
     Some(
@@ -76,7 +76,7 @@ pub async fn check_token(
             .into_rows_result()
             .ok()?;
     }
-    logging::log(&format!(" db/check_token {:?} {:?}", token, un), Some(function_name!()));
+    logging::log(&format!(" db/check_token {token:?} {un:?}"), Some(function_name!()));
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {

@@ -25,7 +25,7 @@ impl User {
             key: Some(key),
             user_salt: Some(user_salt),
             password_salt: Some(password_salt),
-            bio: Some("".to_string()),
+            bio: Some(String::new()),
         }
     }
 }
