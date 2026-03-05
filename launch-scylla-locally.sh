@@ -61,7 +61,25 @@ CREATE TABLE division_online.o_user_tokens (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-
+CREATE TABLE division_online.o_user_server_roles (
+    server_id text,
+    username text,
+    role_name text,
+    PRIMARY KEY (server_id, username, role_name)
+) WITH CLUSTERING ORDER BY (username ASC, role_name ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'ALL'}
+    AND comment = ''
+    AND compaction = {'class': 'SizeTieredCompactionStrategy'}
+    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND speculative_retry = '99.0PERCENTILE'
+    AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
 CREATE TABLE division_online.o_user_friends (
     username text,
@@ -109,7 +127,6 @@ INSERT INTO division_online.o_servers(sid, name) VALUES ('1313', 'division');
 
 CREATE TABLE division_online.o_server_users (
     sid text,
-    rid text,
     username text,
     PRIMARY KEY (sid, username)
 ) WITH CLUSTERING ORDER BY (username ASC)
@@ -131,29 +148,9 @@ CREATE TABLE division_online.o_server_roles (
     server_id text,
     role_name text,
     color text,
-    permissions bigint,
+    permissions set<text>,
     PRIMARY KEY (server_id, role_name)
 ) WITH CLUSTERING ORDER BY (role_name ASC)
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'ALL'}
-    AND comment = ''
-    AND compaction = {'class': 'SizeTieredCompactionStrategy'}
-    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND speculative_retry = '99.0PERCENTILE'
-    AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
-
-CREATE TABLE division_online.o_user_server_roles (
-    server_id text,
-    username text,
-    role_name text,
-    PRIMARY KEY (server_id, username, role_name)
-) WITH CLUSTERING ORDER BY (username ASC, role_name ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'ALL'}
     AND comment = ''
@@ -282,7 +279,7 @@ echo " * Removing old scylla containers."
 docker rm scylla-division-online
 
 echo " * Running scylladb/scylla image."
-docker run -p 9042:9042 -p 7199:7199  --name scylla-division-online -d scylladb/scylla --reactor-backend=epoll 
+docker run --name scylla-division-online -d scylladb/scylla --reactor-backend=epoll 
 
 echo " * Waiting for docker container to settle."
 sleep "${wait_for_settle_time}"
