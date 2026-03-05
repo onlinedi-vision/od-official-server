@@ -27,7 +27,7 @@ pub async fn new_user_login(
         req.username.clone(),
         req.email.clone(),
         password_hash.clone(),
-        security::armor_token(token_holder.token.clone()),
+        security::armor_token(&token_holder.token),
         security::aes::encrypt(&user_salt),
         security::aes::encrypt(&password_salt),
     );
@@ -171,7 +171,7 @@ pub async fn get_user_servers(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
-                key: Some(security::armor_token(new_token_holder.token.clone())),
+                key: Some(security::armor_token(&new_token_holder.token)),
                 username: Some(req.username.clone()),
             },
         )
@@ -180,7 +180,7 @@ pub async fn get_user_servers(
         let _ = db::users::delete_token(
             &scylla_session,
             req.username.clone(),
-            security::armor_token(req.token.clone()),
+            security::armor_token(&req.token),
         )
         .await;
 
@@ -224,7 +224,7 @@ pub async fn get_user_pfp(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
-                key: Some(security::armor_token(new_token_holder.token.clone())),
+                key: Some(security::armor_token(&new_token_holder.token)),
                 username: Some(req.username.clone()),
             },
         )
@@ -233,7 +233,7 @@ pub async fn get_user_pfp(
         let _ = db::users::delete_token(
             &scylla_session,
             req.username.clone(),
-            security::armor_token(req.token.clone()),
+            security::armor_token(&req.token),
         )
         .await;
 
@@ -284,7 +284,7 @@ pub async fn set_user_pfp(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(new_token_holder.token.clone())),
+            key: Some(security::armor_token(&new_token_holder.token)),
             username: Some(req.username.clone()),
         },
     )
@@ -293,7 +293,7 @@ pub async fn set_user_pfp(
     let _ = db::users::delete_token(
         &scylla_session,
         req.username.clone(),
-        security::armor_token(req.token.clone()),
+        security::armor_token(&req.token),
     )
     .await;
 

@@ -165,17 +165,17 @@ where
             let duration = start_time.elapsed().as_secs_f64();
             
             match result {
-                Ok(res) => {
+                Ok(response) => {
                     collector.response_time_histogram
                         .with_label_values(&[&method, &endpoint])
                         .observe(duration);
                     
-                    let status = res.status().as_u16().to_string();
+                    let status = response.status().as_u16().to_string();
                     collector.request_counter
                         .with_label_values(&[&method, &endpoint, &status])
                         .inc();
 
-                    Ok(res)
+                    Ok(response)
                 },
                 Err(e) => {
                     collector.response_time_histogram

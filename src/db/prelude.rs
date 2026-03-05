@@ -39,8 +39,8 @@ pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Se
         .map_err(From::from)
 }
 
-pub async fn new_moka_cache(cache_size: u64) -> Result<moka::future::Cache<String, String>> {
-    Ok(moka::future::Cache::<String,String>::new(cache_size))
+pub fn new_moka_cache(cache_size: u64) -> moka::future::Cache<String, String> {
+    moka::future::Cache::<String,String>::new(cache_size)
 }
 
 #[named]
@@ -51,10 +51,7 @@ pub async fn check_token(
     un: Option<String>,
 ) -> Option<()> {
     let query_rows: scylla::response::query_result::QueryRowsResult;
-    let plain_token = token.clone();
-    let crypted_token = security::armor_token(plain_token);
-
-    
+    let crypted_token = security::armor_token(&token);
 
     if let Some(username) = un.clone() {
         if let Some(cache_token) = cache.get(&username.clone()).await

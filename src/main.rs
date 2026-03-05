@@ -29,8 +29,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         None => 512,
     };
 
-    if let Ok(ssesh) = db::prelude::new_scylla_session(&format!("{scylla_inet}:9042")).await 
-    && let Ok(mcache) = db::prelude::new_moka_cache(1_000).await {   
+    if let Ok(ssesh) = Box::pin(db::prelude::new_scylla_session(&format!("{scylla_inet}:9042"))).await {
+        let mcache = db::prelude::new_moka_cache(1_000);   
         let session = actix_web::web::Data::new(security::structures::ScyllaSession {
             lock: std::sync::Mutex::new(ssesh)
         });

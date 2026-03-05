@@ -55,7 +55,7 @@ pub async fn fetch_server_channel_messages_limited(
     let query_rows = session
         .query_unpaged(
             db::statics::SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION,
-            (sid, channel_name, limit as i32),
+            (sid, channel_name, i32::try_from(limit).unwrap_or(db::statics::DEFAULT_MESSAGE_LIMIT)),
         )
         .await
         .ok()?

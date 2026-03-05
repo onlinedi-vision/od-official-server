@@ -1,3 +1,5 @@
+pub static DEFAULT_MESSAGE_LIMIT: i32 = 100;
+
 pub static SELECT_USER_USERNAME: &str = r"
     SELECT username FROM division_online.users
         WHERE username = ?;
