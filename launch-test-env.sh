@@ -55,6 +55,7 @@ function print_usage() {
   echo "   -G          launch Grafana (and prometheus)"
   echo "   -e          skip end2end tests"
   echo "   -k          skip cargo target (k)aching"
+  echo "   -L          run linter"
 }
 
 trap 'cleanup' SIGINT SIGTERM
