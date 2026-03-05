@@ -1,4 +1,4 @@
-name: E2E CI
+name: Unit Tests
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    - name: Run E2E tests
+    - name: Run Unit Tests
       run: |
-        COMPOSE_BAKE=true ./launch-test-env.sh -cuk -t 10 -T 10
+        COMPOSE_BAKE=true ./launch-test-env.sh -cekS
 
