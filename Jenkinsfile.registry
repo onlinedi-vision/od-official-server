@@ -22,7 +22,9 @@ pipeline {
 			}
 		}
 		stage ('Deploying to K8S') {
+			steps {
 		    build job: 'PROD/K8S-INFRA/DEPLOY', parameters: [[$class: 'StringParameterValue', name: 'DEPLOYMENT', value: 'od-official-server'], [$class: 'StringParameterValue', name: 'NEW_VERSION', value: version]]
+			}
 		}	
   }
 }
