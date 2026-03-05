@@ -10,6 +10,11 @@ FROM base AS requirements
 RUN if [ "$RUN_LINT" = "true" ]; then \
     rustup component add clippy ; \
 fi
+WORKDIR trashcan
+COPY Cargo.toml Cargo.toml
+RUN mkdir src
+RUN echo "fn main(){}" > src/main.rs
+RUN cargo build --release
 
 FROM requirements AS workspace
 WORKDIR /build
