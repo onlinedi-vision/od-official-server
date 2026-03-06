@@ -60,6 +60,10 @@ pub async fn check_token(
     token: String,
     un: Option<String>,
 ) -> Option<()> {
+    if token.len() < 16 {
+        return None;
+    }
+
     let query_rows: scylla::response::query_result::QueryRowsResult;
     let crypted_token = security::armor_token(&token);
 
@@ -84,7 +88,7 @@ pub async fn check_token(
             .into_rows_result()
             .ok()?;
     }
-    logging::log(&format!(" db/check_token {token:?} {un:?}"), Some(function_name!()));
+
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
