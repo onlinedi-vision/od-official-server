@@ -102,6 +102,10 @@ function patch() {
   curl --silent -X PATCH --header "Content-Type:application/json" -d "${1}" "${HOST}${2}"
 }
 
+eetest "/api/get_user_servers -- with NULL token (testing that the API does not panic...)"
+err_message=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":\"\"}" "/api/get_user_servers")
+assert "Invalid or expired token" "${err_message}"
+
 eetest "/servers/{sid}/api/get_server_info" ""
 get_server_info=$(get "/servers/1313/api/get_server_info"  | jq '.name')
 assert '"division"' "${get_server_info}" "/servers/{sid}/api/get_server_info"
