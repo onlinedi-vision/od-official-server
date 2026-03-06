@@ -48,7 +48,7 @@ impl MetricsCollector {
 }
 
 /// Honest reaction:
-/// https://upload.wikimedia.org/wiktionary/en/f/f1/Soyjak.jpg
+/// <https://upload.wikimedia.org/wiktionary/en/f/f1/Soyjak.jpg>
 ///
 /// This is the wrapper that we use... gets called for all the
 /// endpoints. WITHOUT NEEDING TO CHANGE ANY OF THE ENDPOINT
@@ -66,9 +66,9 @@ impl MetricsMiddleware {
 /// This is the actual interface that actix web uses to autonatically
 /// run our "metrics code" during the lifecycle of our services (endpoints).
 ///
-/// Docs: https://docs.rs/actix-web/latest/actix_web/dev/trait.Transform.html
+/// Docs: <https://docs.rs/actix-web/latest/actix_web/dev/trait.Transform.html>
 ///
-/// The point here is to make a callback to our "MetricsMiddlewareService" so
+/// The point here is to make a callback to our "`MetricsMiddlewareService`" so
 /// that IT can register metrics of our "service".
 ///
 /// So here we simply want to capture and send service information further
@@ -101,9 +101,9 @@ pub struct MetricsMiddlewareService<S> {
 
 
 /// To actually be able to interact with services asynchronously
-/// we need to implement this actix_web trait:
+/// we need to implement this `actix_web` trait:
 ///
-/// Docs: https://docs.rs/actix-web/latest/actix_web/dev/trait.Service.html
+/// Docs: <https://docs.rs/actix-web/latest/actix_web/dev/trait.Service.html>
 ///
 /// This is here to allow us to interface with the actix web scheduler (or
 /// whatever they would call it) running somewhere beneath our code.
@@ -126,7 +126,7 @@ where
         let collector = self.collector.clone();
         
         let method: String = req.method().to_string();
-        let endpoint = MetricsCollector::get_endpoint_pattern(&req).to_string();
+        let endpoint = MetricsCollector::get_endpoint_pattern(&req).clone();
         
         if let Some(content_length) = req.headers().get("content-length")
         && let Ok(size_str) = content_length.to_str()
@@ -165,17 +165,17 @@ where
             let duration = start_time.elapsed().as_secs_f64();
             
             match result {
-                Ok(res) => {
+                Ok(response) => {
                     collector.response_time_histogram
                         .with_label_values(&[&method, &endpoint])
                         .observe(duration);
                     
-                    let status = res.status().as_u16().to_string();
+                    let status = response.status().as_u16().to_string();
                     collector.request_counter
                         .with_label_values(&[&method, &endpoint, &status])
                         .inc();
 
-                    Ok(res)
+                    Ok(response)
                 },
                 Err(e) => {
                     collector.response_time_histogram

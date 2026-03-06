@@ -13,7 +13,7 @@ mod tests {
     fn test_token_armor() {
         assert_eq!(
             "cadcfb296aab1c214b9b99fe01a649453efe18d41df4e3c6bb686fe71bb93695",
-            armor_token("token12345678901234567890".to_string())
+            armor_token("token12345678901234567890")
         );
     }
 
@@ -48,14 +48,14 @@ pub fn token() -> String {
     let salt = uuid::Uuid::now_v7().to_string();
     let mut hasher = sha2::Sha256::new();
 
-    hasher.update(salt.to_string().to_string().into_bytes());
+    hasher.update(salt.clone().into_bytes());
 
     format!("{:x}", hasher.finalize())
 }
 
-pub fn armor_token(plain_token: String) -> String {
+pub fn armor_token(plain_token: &str) -> String {
     sha256(aes::encrypt(&aes::encrypt_with_key(
-        &plain_token,
+        plain_token,
         &plain_token[..16],
     )))
 }

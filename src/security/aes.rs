@@ -10,7 +10,6 @@ type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
 
 use crate::env;
 
-#[inline(always)]
 pub fn encrypt_with_key(plaintext: &str, key: &str) -> String {
     let iv_bytes = env::get_env_var(env::statics::OD_AES_IV);
     let cipher = Aes128CbcEnc::new_from_slices(key.as_bytes(), iv_bytes.as_bytes());
@@ -26,12 +25,10 @@ pub fn encrypt_with_key(plaintext: &str, key: &str) -> String {
     hex::encode(ciphertext)
 }
 
-#[inline(always)]
 pub fn encrypt(plaintext: &str) -> String {
     encrypt_with_key(plaintext, &env::get_env_var(env::statics::OD_AES_KEY))
 }
 
-#[inline(always)]
 pub fn decrypt_with_key(ciphertext: &str, key: &str) -> String {
     let key_bytes = key.to_string();
     let iv_bytes = env::get_env_var(env::statics::OD_AES_IV);
@@ -44,7 +41,6 @@ pub fn decrypt_with_key(ciphertext: &str, key: &str) -> String {
     String::from_utf8(plaintext.to_vec()).expect("Failed to obtain string from plaintext in decrypt_with_key")
 }
 
-#[inline(always)]
 pub fn decrypt(ciphertext: &str) -> String {
     decrypt_with_key(ciphertext, &env::get_env_var(env::statics::OD_AES_KEY))
 }

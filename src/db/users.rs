@@ -15,41 +15,10 @@ pub async fn insert_new_user(
         .ok()?
         .into_rows_result()
         .ok()?;
-    match query_rows.rows::<(Option<&str>,)>() {
-        Ok(row) => {
-            if row.rows_remaining() > 0 {
-                None
-            } else {
-                let insert_user_result = session
-                    .query_unpaged(
-                        statics::INSERT_NEW_USER,
-                        (
-                            user.username.clone(),
-                            user.password_hash,
-                            user.email,
-                            user.key.clone(),
-                            user.bio,
-                            user.user_salt,
-                            user.password_salt,
-                        ),
-                    )
-                    .await
-                    .map(|_| ())
-                    .map_err(From::from);
-                if insert_user_result.is_err() {
-                    Some(insert_user_result)
-                } else {
-                    return Some(
-                        session
-                            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key, *statics::TOKEN_TTL))
-                            .await
-                            .map(|_| ())
-                            .map_err(From::from),
-                    );
-                }
-            }
-        }
-        _ => {
+    if let Ok(row) = query_rows.rows::<(Option<&str>,)>() {
+        if row.rows_remaining() > 0 {
+            None
+        } else {
             let insert_user_result = session
                 .query_unpaged(
                     statics::INSERT_NEW_USER,
@@ -78,6 +47,34 @@ pub async fn insert_new_user(
                 );
             }
         }
+    } else {
+        let insert_user_result = session
+            .query_unpaged(
+                statics::INSERT_NEW_USER,
+                (
+                    user.username.clone(),
+                    user.password_hash,
+                    user.email,
+                    user.key.clone(),
+                    user.bio,
+                    user.user_salt,
+                    user.password_salt,
+                ),
+            )
+            .await
+            .map(|_| ())
+            .map_err(From::from);
+        if insert_user_result.is_err() {
+            Some(insert_user_result)
+        } else {
+            return Some(
+                session
+                    .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key))
+                    .await
+                    .map(|_| ())
+                    .map_err(From::from),
+            );
+        }
     }
 }
 
@@ -97,24 +94,21 @@ pub async fn get_user_password_hash(
         .rows::<(Option<&str>, Option<&str>, Option<&str>)>()
         .ok()?
     {
-        match row.ok()? {
-            (Some(password_hash), Some(user_salt), Some(password_salt)) => {
-                secrets.push(structures::UserSecrets {
-                    password_hash: Some(password_hash.to_string()),
-                    user_salt: Some(user_salt.to_string()),
-                    password_salt: Some(password_salt.to_string()),
-                });
-            }
-            _ => {
-                logging::log("wasn't able to retrieve user info", Some(function_name!()));
-                return None;
-            }
-        };
+        if let (Some(password_hash), Some(user_salt), Some(password_salt)) = row.ok()? {
+            secrets.push(structures::UserSecrets {
+                password_hash: Some(password_hash.to_string()),
+                user_salt: Some(user_salt.to_string()),
+                password_salt: Some(password_salt.to_string()),
+            });
+        } else {
+            logging::log("wasn't able to retrieve user info", Some(function_name!()));
+            return None;
+        }
     }
-    if !secrets.is_empty() {
-        Some(secrets)
-    } else {
+    if secrets.is_empty() {
         None
+    } else {
+        Some(secrets)
     }
 }
 
@@ -124,7 +118,7 @@ pub async fn delete_token(
     username: String,
     token: String,
 ) -> Option<Result<()>> {
-    logging::log(&format!("DELETE: {} {}", username, token), Some(function_name!()));
+    logging::log(&format!("DELETE: {username} {token}"), Some(function_name!()));
     Some(
         session
             .query_unpaged(statics::DELETE_TOKEN, (username, token))
@@ -156,12 +150,12 @@ pub async fn fetch_user_info(
             _ => {
                 return None;
             }
-        };
+        }
     }
-    if !user_info.is_empty() {
-        Some(user_info)
-    } else {
+    if user_info.is_empty() {
         None
+    } else {
+        Some(user_info)
     }
 }
 

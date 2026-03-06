@@ -18,7 +18,7 @@ pub async fn insert_user_token(
 
     if let Some(username) = user.username.clone()
         && let Some(key) = user.key.clone() {
-            let _ = cache.insert(username.clone(), key.clone()).await;
+            let () = cache.insert(username.clone(), key.clone()).await;
         }
        
     Some(
@@ -39,13 +39,18 @@ pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Se
         .map_err(From::from)
 }
 
-pub async fn new_moka_cache(cache_size: u64) -> Result<moka::future::Cache<String, String>> {
-    Ok(
-        moka::future::Cache::builder()
-            .max_capacity(cache_size)
-            .time_to_live(std::time::Duration::from_secs(*statics::TOKEN_TTL as u64))
-            .build()
-    )
+pub fn new_moka_cache(cache_size: u64) -> moka::future::Cache<String, String> {
+    moka::future::Cache
+        ::<String,String>
+        ::builder()
+        .max_capacity(cache_size)
+        .time_to_live(
+            std::time::Duration::from_secs(
+                u64::try_from(*db::statics::TOKEN_TTL)
+                    .unwrap_or(db::statics::DEFAULT_TOKEN_TTL)
+            )
+        )
+        .build()
 }
 
 #[named]
@@ -56,14 +61,12 @@ pub async fn check_token(
     un: Option<String>,
 ) -> Option<()> {
     let query_rows: scylla::response::query_result::QueryRowsResult;
-    let plain_token = token.clone();
-    let crypted_token = security::armor_token(plain_token);
-
-    
+    let crypted_token = security::armor_token(&token);
 
     if let Some(username) = un.clone() {
         if let Some(cache_token) = cache.get(&username.clone()).await
         && cache_token == crypted_token.clone() {
+            logging::log("Cache hit...", Some(function_name!()));
             return Some(());
         }
 
@@ -81,7 +84,7 @@ pub async fn check_token(
             .into_rows_result()
             .ok()?;
     }
-    logging::log(&format!(" db/check_token {:?} {:?}", token, un), Some(function_name!()));
+    logging::log(&format!(" db/check_token {token:?} {un:?}"), Some(function_name!()));
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {

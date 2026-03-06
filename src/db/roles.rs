@@ -76,19 +76,17 @@ pub async fn remove_role_from_all_users(
 
         if let Some(result) = remove_role_from_user(session, user_role).await {
             match result {
-                Ok(_) => {
+                Ok(()) => {
                     logging::log(
                         &format!(
-                            "Successfully removed role '{}' from user '{}'",
-                            role_name, username
+                            "Successfully removed role '{role_name}' from user '{username}'"
                         ), Some(function_name!())
                     );
                 }
                 Err(err) => {
                     logging::log(
                         &format!(
-                            "Error removig role '{}' from user '{}': {:?}",
-                            role_name, username, err
+                            "Error removig role '{role_name}' from user '{username}': {err:?}"
                         ), Some(function_name!())
                     );
                 }
@@ -96,8 +94,7 @@ pub async fn remove_role_from_all_users(
         } else {
             logging::log(
                 &format!(
-                    "Failed to remove role '{}' from user '{}'",
-                    role_name, username
+                    "Failed to remove role '{role_name}' from user '{username}'"
                 ), Some(function_name!())
             );
         }
@@ -167,10 +164,10 @@ pub async fn fetch_server_roles(
             });
         }
     }
-    if !roles.is_empty() {
-        Some(roles)
-    } else {
+    if roles.is_empty() {
         None
+    } else {
+        Some(roles)
     }
 }
 
@@ -192,10 +189,10 @@ pub async fn fetch_user_roles(
             role_names.push(role_name);
         }
     }
-    if !role_names.is_empty() {
-        Some(role_names)
-    } else {
+    if role_names.is_empty() {
         None
+    } else {
+        Some(role_names)
     }
 }
 

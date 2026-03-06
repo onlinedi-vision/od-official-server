@@ -85,7 +85,7 @@ pub async fn create_channel(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(new_token_holder.token.clone())),
+            key: Some(security::armor_token(&new_token_holder.token)),
             username: Some(req.username.clone()),
         },
     )
@@ -94,7 +94,7 @@ pub async fn create_channel(
     let _ = db::users::delete_token(
         &scylla_session,
         req.username.clone(),
-        security::armor_token(req.token.clone()),
+        security::armor_token(&req.token),
     )
     .await;
 
