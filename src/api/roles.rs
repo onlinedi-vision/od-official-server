@@ -1,3 +1,4 @@
+use crate::api::statics;
 use crate::api::structures;
 use crate::db;
 use crate::security;
@@ -15,18 +16,31 @@ pub async fn add_server_role(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
 
-    if db::prelude::check_token(
+    if req.name.len() > statics::MAX_ROLE_NAME_LENGTH {
+        return actix_web::HttpResponse::BadRequest()
+            .body(format!("Role name exceeds maximum length of {}", statics::MAX_ROLE_NAME_LENGTH));
+    }
+
+    if db::prelude::check_permission(
         &scylla_session,
         &cache,
+        req.server_id.clone(),
         req.token.clone(),
-        Some(req.username.clone()),
+        req.username.clone(),
+        db::structures::Permissions::ADD_ROLE.bits(),
     )
     .await
     .is_none()
     {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to manage roles");
     }
     
+    //gotta watch out for injection attacks
+    if (req.permissions & !db::structures::Permissions::all().bits()) != 0{
+        return actix_web::HttpResponse::Forbidden().body("Invalid permission request!")
+    }
+
+
     let role = db::structures::ServerRole {
         name: req.name.clone(),
         server_id: req.server_id.clone(),
@@ -34,13 +48,13 @@ pub async fn add_server_role(
         permissions: req.permissions.clone(),
     };
 
-    if let Some(result) =
-        db::roles::insert_server_role(&scylla_session, req.server_id.clone(), role).await
-        && result.is_ok() {
-            return actix_web::HttpResponse::Ok().body("Role added successfully");
+    match db::roles::insert_server_role(&scylla_session, req.server_id.clone(), role).await {
+        Ok(()) => actix_web::HttpResponse::Ok().body("Role added successfully"),
+        Err(e) => {
+            logging::log(&format!("Error inserting role '{}': {:?}", req.name, e), Some(function_name!()));
+            actix_web::HttpResponse::InternalServerError().body("Failed to insert role")
         }
-    logging::log(&format!("Error inserting role: {:?}", req.name.clone()), Some(function_name!()));
-    actix_web::HttpResponse::InternalServerError().body("Failed to insert role")
+    }
 }
 
 #[named]
@@ -53,16 +67,33 @@ pub async fn assign_role(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
 
-    if db::prelude::check_token(
+    if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
+        return actix_web::HttpResponse::BadRequest()
+            .body(format!("Role name exceeds maximum length of {}", statics::MAX_ROLE_NAME_LENGTH));
+    }
+
+    if db::prelude::check_permission(
         &scylla_session,
         &cache,
+        req.server_id.clone(),
         req.token.clone(),
-        Some(req.username.clone()),
+        req.username.clone(),
+        db::structures::Permissions::ADD_ROLE.bits(),
     )
     .await
     .is_none()
     {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to manage roles");
+    }
+
+    if !db::prelude::is_member_of_server(
+        &scylla_session,
+        req.server_id.clone(),
+        req.target_user.clone(),
+    )
+    .await
+    {
+        return actix_web::HttpResponse::BadRequest().body("Target user is not in the server");
     }
 
     match db::roles::assign_role(
@@ -90,16 +121,33 @@ pub async fn remove_role(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
 
-    if db::prelude::check_token(
+    if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
+        return actix_web::HttpResponse::BadRequest()
+            .body(format!("Role name exceeds maximum length of {}", statics::MAX_ROLE_NAME_LENGTH));
+    }
+
+    if db::prelude::check_permission(
         &scylla_session,
         &cache,
+        req.server_id.clone(),
         req.token.clone(),
-        Some(req.username.clone()),
+        req.username.clone(),
+        db::structures::Permissions::ADD_ROLE.bits(),
     )
     .await
     .is_none()
     {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to manage roles");
+    }
+
+    if !db::prelude::is_member_of_server(
+        &scylla_session,
+        req.server_id.clone(),
+        req.target_user.clone(),
+    )
+    .await
+    {
+        return actix_web::HttpResponse::BadRequest().body("Target user is not in the server");
     }
 
     match db::roles::remove_role(
@@ -127,16 +175,31 @@ pub async fn delete_server_role(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
 
-    if db::prelude::check_token(
+    if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
+        return actix_web::HttpResponse::BadRequest()
+            .body(format!("Role name exceeds maximum length of {}", statics::MAX_ROLE_NAME_LENGTH));
+    }
+
+    if db::prelude::check_permission(
         &scylla_session,
         &cache,
+        req.server_id.clone(),
         req.token.clone(),
-        Some(req.username.clone()),
+        req.username.clone(),
+        db::structures::Permissions::ADD_ROLE.bits(),
     )
     .await
     .is_none()
     {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to manage roles");
+    }
+
+    if let Err(e) = db::roles::remove_role_from_all_users(
+        &scylla_session,
+        req.server_id.clone(),
+        req.role_name.clone(),
+    ).await {
+        logging::log(&format!("Error cleaning up role assignments: {:?}", e), Some(function_name!()));
     }
 
     match db::roles::delete_role(&scylla_session, 
