@@ -20,6 +20,9 @@ cbc = "0.1.2"
 hex = "0.4.3"
 chrono = {version="0.4", features=["serde"]}
 moka = { version = "0.12.11", features = ["future"] }
+argon2 = "0.5.3"
+rand_core = { version = "0.9.3", features = ["std"] }
+password-hash = { version = "0.5.0", features = ["std"] }
 # We disable default features here because it introduces a default dependency that will
 # be depricated in a future version of Rust (checkout redis v0.24 crate).
 actix-web-ratelimit = { version = "0.1.1", default-features = false } 

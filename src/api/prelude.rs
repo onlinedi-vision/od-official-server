@@ -14,20 +14,22 @@ pub async fn check_user_password(
     cache: std::sync::MutexGuard<'_, Cache<std::string::String, std::string::String>>,
     new_token_holder: structures::TokenHolder
 ) -> actix_web::HttpResponse {
-    
+
     if let Some(password_hash) = secrets[0].password_hash.clone()
     && let Some(user_salt) = secrets[0].user_salt.clone()
     && let Some(password_salt) = secrets[0].password_salt.clone() {
-
         let decrypted_user_salt = security::aes::decrypt(&user_salt);
         let decrypted_password_salt = security::aes::decrypt(&password_salt);
-        let user_password_hash =
-            security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
-                &format!("{}{}", decrypted_user_salt.clone(), password),
-                &decrypted_password_salt,
-            )));
-    
-        if user_password_hash == password_hash {
+        let user_password_plain =
+            security::aes::encrypt(
+                &security::aes::encrypt_with_key(
+                    &format!("{}{}", decrypted_user_salt.clone(), password),
+                    &decrypted_password_salt,
+            )
+        );
+
+        if security::argon_check(&user_password_plain, &password_hash) {
+            // TODO: should be checked.
             let _ = db::prelude::insert_user_token(
                 &scylla_session,
                 &cache,
@@ -39,10 +41,15 @@ pub async fn check_user_password(
             .await;
 
             return actix_web::HttpResponse::Ok().json(&new_token_holder);
+
         }
         
+        logging::log("Failed because user supplied password is incorrect.", Some(function_name!()));
+        return actix_web::HttpResponse::Unauthorized().body("Invalid username or password");
+
     }
-    logging::log("Failed because user supplied password is incorrect.", Some(function_name!()));
+    
+    logging::log("Failed because user supplied data is incorrect.", Some(function_name!()));
     actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
