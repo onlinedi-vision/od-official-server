@@ -100,8 +100,8 @@ pub async fn accept_dm_invite(
             &scylla_session,
             sid.clone(),
             &"Direct Message".to_string(),
-            &"".to_string(),
-            &format!("DM: {} & {}", u1, u2),
+            &String::new(),
+            &format!("DM: {u1} & {u2}"),
             u1.clone(),
         )
         .await

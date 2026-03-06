@@ -34,7 +34,7 @@ pub async fn check_user_password(
                 &scylla_session,
                 &cache,
                 db::structures::KeyUser {
-                    key: Some(security::armor_token(new_token_holder.token.clone())),
+                    key: Some(security::armor_token(&new_token_holder.token)),
                     username: Some(username.to_string()),
                 },
             )
@@ -81,6 +81,36 @@ macro_rules! param {
     ($http:expr, $name:expr) => {
         match $http.match_info().get($name) {
             Some(param) => param.to_string(),
+            None => {
+                return actix_web::HttpResponse::BadRequest()
+                    .body(format!("missing `{}` parameter", $name));
+            }
+        }
+    };
+
+    ($http:expr, $name:expr, $scylla_session:expr) => {
+        match $http.match_info().get($name) {
+            Some(param) => {
+                if ! db::prelude::check_sid($scylla_session, param.to_string().clone()).await {
+                    return actix_web::HttpResponse::NotFound().body(format!("Couldn't find that server. ({}) :(", param.to_string().clone()));
+                }
+                param.to_string()
+            },
+            None => {
+                return actix_web::HttpResponse::BadRequest()
+                    .body(format!("missing `{}` parameter", $name));
+            }
+        }
+    };
+
+    ($http:expr, $name:expr, $scylla_session:expr, $sid:expr) => {
+        match $http.match_info().get($name) {
+            Some(param) => {
+                if ! db::prelude::check_channel_name($scylla_session, $sid.clone(), param.to_string().clone()).await {
+                    return actix_web::HttpResponse::NotFound().body(format!("Couldn't find that channel. ({}) :(", param.to_string().clone()));
+                }
+                param.to_string()
+            },
             None => {
                 return actix_web::HttpResponse::BadRequest()
                     .body(format!("missing `{}` parameter", $name));

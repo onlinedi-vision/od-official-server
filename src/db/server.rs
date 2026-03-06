@@ -58,15 +58,15 @@ pub async fn fetch_server_users(
                     {
                         users.push(api::structures::PublicInfoUser {
                             username: username.to_string(),
-                            bio: user_info[0].bio.clone()?.to_string(),
-                            img_url: user_info[0].pfp.clone()?.to_string(),
+                            bio: user_info[0].bio.clone()?.clone(),
+                            img_url: user_info[0].pfp.clone()?.clone(),
                             roles,
                         });
                     } else {
                         users.push(api::structures::PublicInfoUser {
                             username: username.to_string(),
-                            bio: user_info[0].bio.clone()?.to_string(),
-                            img_url: user_info[0].pfp.clone()?.to_string(),
+                            bio: user_info[0].bio.clone()?.clone(),
+                            img_url: user_info[0].pfp.clone()?.clone(),
                             roles: Vec::new(),
                         });
                     }
@@ -78,7 +78,7 @@ pub async fn fetch_server_users(
         }
     }
 
-    if !users.is_empty() { Some(users) } else { None }
+    if users.is_empty() { None } else { Some(users) }
 }
 
 pub async fn fetch_server_info(
@@ -107,20 +107,20 @@ pub async fn fetch_server_info(
                 return Some(structures::ServerInfo {
                     name: name.to_string(),
                     desc: desc.to_string(),
-                    img_url: "".to_string(),
+                    img_url: String::new(),
                 });
             }
             (Some(name), None, None) => {
                 return Some(structures::ServerInfo {
                     name: name.to_string(),
-                    desc: "".to_string(),
-                    img_url: "".to_string(),
+                    desc: String::new(),
+                    img_url: String::new(),
                 });
             }
             (Some(name), None, Some(img_url)) => {
                 return Some(structures::ServerInfo {
                     name: name.to_string(),
-                    desc: "".to_string(),
+                    desc: String::new(),
                     img_url: img_url.to_string(),
                 });
             }
@@ -199,7 +199,7 @@ pub async fn fetch_user_servers(
         }
     }
 
-    if !sids.is_empty() { Some(sids) } else { None }
+    if sids.is_empty() { None } else { Some(sids) }
 }
 
 pub async fn fetch_server_channels(
@@ -227,10 +227,10 @@ pub async fn fetch_server_channels(
         }
     }
 
-    if !channels.is_empty() {
-        Some(channels)
-    } else {
+    if channels.is_empty() {
         None
+    } else {
+        Some(channels)
     }
 }
 
@@ -286,9 +286,8 @@ pub async fn check_user_is_owner(
             (Some(owner),) => {
                 if owner == username {
                     return Some(true);
-                } else {
-                    return Some(false);
                 }
+                return Some(false);
             }
             _ => {
                 return None;

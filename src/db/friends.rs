@@ -19,7 +19,7 @@ pub async fn add_friend(
         .await
         .map(|_| ())
         .map_err(From::from);
-    logging::log(&format!("Add friend result for {} -> {}: {:?}", user, friend, res), Some(function_name!()));
+    logging::log(&format!("Add friend result for {user} -> {friend}: {res:?}"), Some(function_name!()));
 
     Some(res)
 }
@@ -43,10 +43,10 @@ pub async fn fetch_friends(
         }
     }
 
-    if !friends.is_empty() {
-        Some(friends)
-    } else {
+    if friends.is_empty() {
         None
+    } else {
+        Some(friends)
     }
 }
 

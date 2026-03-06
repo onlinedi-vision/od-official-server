@@ -1,15 +1,43 @@
 #!/usr/bin/env bash
 
+test_count=0
 HOST=${1:-https://onlinedi.vision}
 printf "HOST: %s\n" "${HOST}"
-QA_USERNAME=qa_e2e_user-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13)
+QA_USERNAME=$(mktemp --dry-run qa_e2e_user-XXXXXXXXXXXX)
 
 printf "QA_USERNAME: %s\n" "${QA_USERNAME}"
 
 set -eo pipefail
 
+function results() {
+  if [[ $? != 0 ]]; then
+    echo
+    echo "E2E TESTING *FAILED*"
+    exit 1
+  fi
+
+  echo
+  echo " ** SUCCESS ** all ${test_count} tests PASSED !"
+}
+
+trap results EXIT
+
 function expected_failure() {
-  ${@} | cat 
+  echo
+  echo   "******************************************************************************************************"
+  echo   "                                        (EXPECTED FAILURE)"
+  printf "******************************************************************************************************"
+  if ! "${@}"; then
+    echo "******************************************************************************************************"
+    echo "                                        (EXPECTED FAILURE)"
+    echo "******************************************************************************************************"
+    echo
+  else
+    echo "******************************************************************************************************"
+    echo "                                  (THIS TEST PASSED UNEXPECTEDLY)"
+    echo "******************************************************************************************************"
+    exit 1
+  fi
 }
 
 function assert() {
@@ -22,7 +50,7 @@ function assert() {
     echo "      ${expected} DOES NOT EQUAL ${actual}" >&2
     echo "      EXPECTED |${expected}" >&2
     echo "      BUT GOT  |${actual}" >&2
-    exit 1
+    return 1
   fi
   echo "PASSED"
 }
@@ -37,7 +65,7 @@ function assert_match() {
     echo "      ${expected} DOES NOT EQUAL ${actual}" >&2
     echo "      EXPECTED |${expected}" >&2
     echo "      BUT GOT  |${actual}" >&2
-    exit 1
+    return 1
   fi
   echo "PASSED"
 }
@@ -52,12 +80,13 @@ function assert_neq() {
     echo "      ${expected} DOES EQUAL ${actual} (THEY SHOULD BE DISTINCT)" >&2
     echo "      EXPECTED                        |${expected}" >&2
     echo "      WHICH SHOULD BE DIFFERENT FROM  |${actual}" >&2
-    exit 2
+    return 2
   fi
 ``  echo "PASSED"
 }
 
 function eetest() {
+  test_count=$((test_count+1))
   printf " Testing %s... " "${1}"
 }
 
@@ -132,6 +161,10 @@ eetest "/servers/{sid}/api/create_channel" ""
 token=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"main\"}" "/servers/${sid}/api/create_channel"  | jq '.token' )
 assert_neq "null" "${token}" "/servers/${sid}/api/create_channel"
 
+eetest "/servers/{sid}/api/create_channel -- INEXISTENT SERVER" ""
+ftoken=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"main\"}" "/servers/a/api/create_channel")
+assert "Couldn't find that server. (a) :(" "${ftoken}" "/servers//api/create_channel -- INEXISTENT SERVER"
+
 eetest "/servers/{sid}/api/create_channel (part2) -- max_channel_length" ""
 nutoken=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"channel_name\":\"flajkaldjflhkcvjhxzoyuafhldasjhfiocuzxgvhadfhsojk\"}" "/servers/${sid}/api/create_channel" )
 assert_match "Failed to create channel: Channel name longer than "* "${nutoken}" "/servers/${sid}/api/create_channel"
@@ -146,6 +179,14 @@ message_to_send_unsuccesfully=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 3001) |
 eetest "/servers/{sid}/api/{channel_name}/send_message" ""
 send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_succesfully}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
 assert "Message sent." "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
+
+eetest "/servers/{sid}/api/{channel_name}/send_message -- INEXISTENT SERVER"
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_succesfully}\"}" "/servers/a/api/${main_channel}/send_message" )
+assert "Couldn't find that server. (a) :(" "${send_response}" "/servers/a/api/${main_channel}/send_message -- INEXISTENT SERVER"
+
+eetest "/servers/{sid}/api/{channel_name}/send_message -- INEXISTENT CHANNEL"
+send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_succesfully}\"}" "/servers/${sid}/api/a/send_message" )
+assert "Couldn't find that channel. (a) :(" "${send_response}" "/servers/${sid}/api/a/send_message -- INEXISTENT CHANNEL"
 
 eetest "/servers/{sid}/api/{channel_name}/send_message (part2) -- max_message_length" ""
 send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_to_send_unsuccesfully}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
@@ -175,16 +216,16 @@ eetest "/api/user/ttl"
 payload=$(patch "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"ttl\":\"s\"}" "/api/user/ttl")
 assert "TTL Updated." "${payload}" "/api/user/ttl"
 
-message_with_short_ttl="This message will be deleted after 3 seconds."
+message_with_short_ttl="This message will be deleted after 1 seconds."
 eetest "/servers/{sid}/api/{channel_name}/send_message -- TTL Expiration"
 send_response=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"m_content\":\"${message_with_short_ttl}\"}" "/servers/${sid}/api/${main_channel}/send_message" )
 assert "Message sent." "${send_response}" "/servers/${sid}/api/${main_channel}/send_message"
 
 eetest "/servers/{sid}/api/{channel_name}/get_messages_migration -- TTL Expiration"
-# sleeping for 3 seconds so that the last message's Time To Live
+# sleeping for 1 seconds so that the last message's Time To Live
 # passes and the message gets deleted
-printf 'SLEEPING 3 SECONDS... '
-sleep 3
+printf 'SLEEPING 1 SECONDS... '
+sleep 1
 message=$(post "{\"username\":\"${QA_USERNAME}\",\"token\":${token}, \"limit\":\"100\", \"offset\":\"0\"}" "/servers/${sid}/api/${main_channel}/get_messages_migration" | jq -r '.m_list[].m_content')
 assert "" "$(echo "$message" | grep "$message_with_short_ttl")" "/servers/{sid}/api/{channel_name}/get_messages_migration -- TTL Expiration"
 
@@ -207,3 +248,12 @@ spell1=$(echo "$payload" | jq -r '.spell')
 
 spell2=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"key\":\"${key}\"}" "/api/spell/check")
 assert "$spell1" "$spell2" "/api/spell/cast && /api/spell/check"
+
+eetest "/api/create_server -- should fail due to TOKEN TTL"
+# Sleeping so that we can trigger the TOKEN_TTL (set in launch-test-env)
+# the test-env TOKEN_TTL=2s (we slept for 1 second before, and we sleep
+# for an additional 1 second here).
+printf 'SLEEPING 1 SECONDS... '
+sleep 1
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"desc\":\"L\", \"name\":\"QA_TEST_SERVER\", \"img_url\":\"L\"}" "/api/create_server")
+assert "Invalid token" "${payload}" "/api/create_server"

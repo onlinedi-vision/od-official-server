@@ -1,0 +1,33 @@
+FROM rust:1.93 AS base
+LABEL maintainer=kickhead13<ana.alexandru.gabriel@proton.me>
+ARG RUN_LINT
+ARG SALT_ENCRYPTION_KEY
+ARG SALT_ENCRYPTION_IV
+ARG SCYLLA_CASSANDRA_PASSWORD
+ARG RUN_UT
+
+FROM base AS requirements
+RUN if [ "$RUN_LINT" = "true" ]; then \
+    rustup component add clippy ; \
+fi
+WORKDIR trashcan
+COPY Cargo.toml Cargo.toml
+RUN mkdir src
+RUN echo "fn main(){}" > src/main.rs
+RUN cargo build --release
+
+FROM requirements AS workspace
+WORKDIR /build
+COPY . .
+
+FROM workspace AS linter
+RUN if [ "$RUN_LINT" = "true" ]; then \
+    cargo clippy --release -- -D warnings -A clippy::await_holding_lock ;  \
+fi
+
+FROM linter AS builder
+RUN if [ "$RUN_UT" = "true" ]; then \
+    cargo test ; \
+fi
+RUN cargo build --release
+ENTRYPOINT ["./target/release/api"]

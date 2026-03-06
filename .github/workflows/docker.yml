@@ -1,5 +1,4 @@
-name: Linting
-
+name: Check Docker image builds
 on:
   pull_request:
     branches: [ "main" ]
@@ -20,7 +19,6 @@ jobs:
     - uses: actions/checkout@v4
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    - name: Run Test Env Linter
+    - name: Build Docker Image
       run: |
-        COMPOSE_BAKE=true ./launch-test-env.sh -cuekSL
-
+        docker build . -t trash

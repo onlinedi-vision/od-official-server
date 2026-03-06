@@ -18,12 +18,12 @@ pub async fn insert_user_token(
 
     if let Some(username) = user.username.clone()
         && let Some(key) = user.key.clone() {
-            let _ = cache.insert(username.clone(), key.clone()).await;
+            let () = cache.insert(username.clone(), key.clone()).await;
         }
        
     Some(
         session
-            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key))
+            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key, *statics::TOKEN_TTL))
             .await
             .map(|_| ())
             .map_err(From::from),
@@ -39,8 +39,18 @@ pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Se
         .map_err(From::from)
 }
 
-pub async fn new_moka_cache(cache_size: u64) -> Result<moka::future::Cache<String, String>> {
-    Ok(moka::future::Cache::<String,String>::new(cache_size))
+pub fn new_moka_cache(cache_size: u64) -> moka::future::Cache<String, String> {
+    moka::future::Cache
+        ::<String,String>
+        ::builder()
+        .max_capacity(cache_size)
+        .time_to_live(
+            std::time::Duration::from_secs(
+                u64::try_from(*db::statics::TOKEN_TTL)
+                    .unwrap_or(db::statics::DEFAULT_TOKEN_TTL)
+            )
+        )
+        .build()
 }
 
 #[named]
@@ -51,16 +61,14 @@ pub async fn check_token(
     un: Option<String>,
 ) -> Option<()> {
     let query_rows: scylla::response::query_result::QueryRowsResult;
-    let plain_token = token.clone();
-    let crypted_token = security::armor_token(plain_token);
-
-    
+    let crypted_token = security::armor_token(&token);
 
     if let Some(username) = un.clone() {
         if let Some(cache_token) = cache.get(&username.clone()).await
-            && cache_token == crypted_token.clone() {
-                return Some(());
-            }
+        && cache_token == crypted_token.clone() {
+            logging::log("Cache hit...", Some(function_name!()));
+            return Some(());
+        }
 
         query_rows = session
             .query_unpaged(statics::CHECK_TOKEN_USER, (crypted_token.clone(), username))
@@ -76,7 +84,7 @@ pub async fn check_token(
             .into_rows_result()
             .ok()?;
     }
-    logging::log(&format!(" db/check_token {:?} {:?}", token, un), Some(function_name!()));
+    logging::log(&format!(" db/check_token {token:?} {un:?}"), Some(function_name!()));
     match query_rows.rows::<(Option<&str>,)>() {
         Ok(row) => {
             if row.rows_remaining() > 0 {
@@ -87,6 +95,55 @@ pub async fn check_token(
         }
         _ => None,
     }
+}
+
+pub async fn check_sid(
+    session: &scylla::client::session::Session,
+    sid: String
+) -> bool {
+    if let Ok(query_result) = session
+        .query_unpaged(statics::SELECT_SERVER_SID, (sid.clone(),))
+        .await
+    && let Ok(query_rows) = query_result.into_rows_result()
+    && let Ok(rows) = query_rows.rows::<(Option<&str>,)>() 
+    && let Some(row_ok) = rows.flatten().next() {
+
+        match row_ok {
+            (Some(db_sid),) => {
+                return db_sid == sid;
+            }
+            _ => {
+                return false;
+            }
+        }
+
+    }
+    false
+}
+
+pub async fn check_channel_name(
+    session: &scylla::client::session::Session,
+    sid: String,
+    channel_name: String
+) -> bool {
+    if let Ok(query_result) = session
+        .query_unpaged(statics::SELECT_SERVER_CHANNEL, (sid.clone(), channel_name.clone()))
+        .await
+    && let Ok(query_rows) = query_result.into_rows_result()
+    && let Ok(rows) = query_rows.rows::<(Option<&str>,)>() 
+    && let Some(row_ok) = rows.flatten().next() {
+
+        match row_ok {
+            (Some(db_channel_name),) => {
+                return db_channel_name == channel_name;
+            }
+            _ => {
+                return false;
+            }
+        }
+
+    }
+    false
 }
 
 pub async fn check_user_is_in_server(

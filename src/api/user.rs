@@ -177,7 +177,7 @@ pub async fn get_user_servers(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
-                key: Some(security::armor_token(new_token_holder.token.clone())),
+                key: Some(security::armor_token(&new_token_holder.token)),
                 username: Some(req.username.clone()),
             },
         )
@@ -186,7 +186,7 @@ pub async fn get_user_servers(
         let _ = db::users::delete_token(
             &scylla_session,
             req.username.clone(),
-            security::armor_token(req.token.clone()),
+            security::armor_token(&req.token),
         )
         .await;
 
@@ -230,7 +230,7 @@ pub async fn get_user_pfp(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
-                key: Some(security::armor_token(new_token_holder.token.clone())),
+                key: Some(security::armor_token(&new_token_holder.token)),
                 username: Some(req.username.clone()),
             },
         )
@@ -239,7 +239,7 @@ pub async fn get_user_pfp(
         let _ = db::users::delete_token(
             &scylla_session,
             req.username.clone(),
-            security::armor_token(req.token.clone()),
+            security::armor_token(&req.token),
         )
         .await;
 
@@ -284,13 +284,13 @@ pub async fn set_user_pfp(
     if db::users::set_user_pfp(&scylla_session, &req.username, img_opt).await.is_err() {
         return actix_web::HttpResponse::InternalServerError()
             .body("Failed to update profile picture.");
-    };
+    }
 
     let _ = db::prelude::insert_user_token(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(new_token_holder.token.clone())),
+            key: Some(security::armor_token(&new_token_holder.token)),
             username: Some(req.username.clone()),
         },
     )
@@ -299,7 +299,7 @@ pub async fn set_user_pfp(
     let _ = db::users::delete_token(
         &scylla_session,
         req.username.clone(),
-        security::armor_token(req.token.clone()),
+        security::armor_token(&req.token),
     )
     .await;
 

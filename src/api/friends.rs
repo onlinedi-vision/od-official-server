@@ -72,7 +72,7 @@ pub async fn delete_friend(
         db::friends::delete_friend(&scylla_session, req.friend.clone(), req.user.clone()).await;
 
     match (result1, result2) {
-        (Some(Ok(_)), Some(Ok(_))) => {
+        (Some(Ok(())), Some(Ok(()))) => {
             actix_web::HttpResponse::Ok().json(structures::DeleteFriendResp {
                 status: "friendship_deleted".to_string(),
                 user: req.user.clone(),
@@ -80,7 +80,7 @@ pub async fn delete_friend(
             })
         }
         (Some(Err(e)), _) | (_, Some(Err(e))) => {
-            logging::log(&format!("Error detecting friend: {}", e), Some(function_name!()));
+            logging::log(&format!("Error detecting friend: {e}"), Some(function_name!()));
             actix_web::HttpResponse::InternalServerError().body("Failed to delete friend.")
         }
         _ => actix_web::HttpResponse::InternalServerError().body("Failed to delete friend."),

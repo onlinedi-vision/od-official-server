@@ -1,0 +1,27 @@
+services:
+  od-official-server:
+    build:
+      context: ..
+      dockerfile: test-env-compose/Dockerfile.test
+      args:
+        - SALT_ENCRYPTION_KEY=xxxxxxxxxxxxxxxx
+        - SALT_ENCRYPTION_IV=xxxxxxxxxxxxxxxx
+        - SCYLLA_CASSANDRA_PASSWORD=cassandra
+        - SCYLLA_DB_USER=cassandra
+        - API_PORT=1313
+        - SCYLLA_INET
+        - RUN_UT
+        - RUN_LINT
+    container_name: od-official-server
+    mem_limit: 1G
+    cpus: '2'
+    network_mode: host
+    environment:
+      - SALT_ENCRYPTION_KEY=xxxxxxxxxxxxxxxx
+      - SALT_ENCRYPTION_IV=xxxxxxxxxxxxxxxx
+      - SCYLLA_CASSANDRA_PASSWORD=cassandra
+      - SCYLLA_DB_USER=cassandra
+      - API_PORT=1313
+      - TOKEN_TTL=2
+      - SCYLLA_INET
+      - NO_OF_WORKERS              
