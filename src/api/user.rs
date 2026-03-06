@@ -18,18 +18,24 @@ pub async fn new_user_login(
     }
     let user_salt = security::salt();
     let password_salt = security::salt();
-    let password_hash = security::sha512(security::aes::encrypt(&security::aes::encrypt_with_key(
-        &format!("{}{}", user_salt.clone(), req.password.clone()),
-        &password_salt,
-    )));
+    let password_hash = security::argon(
+        &security::aes::encrypt(
+            &security::aes::encrypt_with_key(
+                &format!("{}{}", user_salt.clone(), req.password.clone()),
+                &password_salt,
+            )
+        )
+    );
     let token_holder = structures::TokenHolder {
         token: security::token(),
     };
     let user_instance = db::structures::User::new(
         req.username.clone(),
         req.email.clone(),
-        password_hash.clone(),
-        security::armor_token(token_holder.token.clone()),
+        password_hash.clone().expect(
+            "Argon2 failed to create a proper hash. Check src/security/mod.rs:argon()"
+        ),
+        security::armor_token(&token_holder.token),
         security::aes::encrypt(&user_salt),
         security::aes::encrypt(&password_salt),
     );
@@ -172,7 +178,7 @@ pub async fn get_user_servers(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
-                key: Some(security::armor_token(new_token_holder.token.clone())),
+                key: Some(security::armor_token(&new_token_holder.token)),
                 username: Some(req.username.clone()),
             },
         )
@@ -181,7 +187,7 @@ pub async fn get_user_servers(
         let _ = db::users::delete_token(
             &scylla_session,
             req.username.clone(),
-            security::armor_token(req.token.clone()),
+            security::armor_token(&req.token),
         )
         .await;
 
@@ -225,7 +231,7 @@ pub async fn get_user_pfp(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
-                key: Some(security::armor_token(new_token_holder.token.clone())),
+                key: Some(security::armor_token(&new_token_holder.token)),
                 username: Some(req.username.clone()),
             },
         )
@@ -234,7 +240,7 @@ pub async fn get_user_pfp(
         let _ = db::users::delete_token(
             &scylla_session,
             req.username.clone(),
-            security::armor_token(req.token.clone()),
+            security::armor_token(&req.token),
         )
         .await;
 
@@ -279,13 +285,13 @@ pub async fn set_user_pfp(
     if db::users::set_user_pfp(&scylla_session, &req.username, img_opt).await.is_err() {
         return actix_web::HttpResponse::InternalServerError()
             .body("Failed to update profile picture.");
-    };
+    }
 
     let _ = db::prelude::insert_user_token(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(new_token_holder.token.clone())),
+            key: Some(security::armor_token(&new_token_holder.token)),
             username: Some(req.username.clone()),
         },
     )
@@ -294,7 +300,7 @@ pub async fn set_user_pfp(
     let _ = db::users::delete_token(
         &scylla_session,
         req.username.clone(),
-        security::armor_token(req.token.clone()),
+        security::armor_token(&req.token),
     )
     .await;
 

@@ -66,8 +66,6 @@ pub async fn get_channel_messages_migration(
     actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
 }
 
-// TODO: what happens if channel/server doesn't exist:
-//     - it seems you can send messages to *things* that don't exist
 #[named]
 #[actix_web::post("/servers/{sid}/{channel_name}/send_message")]
 pub async fn send_message(
@@ -76,17 +74,15 @@ pub async fn send_message(
     req: actix_web::web::Json<structures::SendMessage>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-    if req.m_content.len() > statics::MAX_MESSAGE_LENGTH {
-        return actix_web::HttpResponse::LengthRequired().body(format!(
-            "Failed to send message: Message longer than {}",
-            statics::MAX_MESSAGE_LENGTH
-        ));
-    }
-    let sid = param!(http, "sid");
-    let channel_name = param!(http, "channel_name");
-
+	if req.m_content.len() > statics::MAX_MESSAGE_LENGTH {
+		return actix_web::HttpResponse::LengthRequired()
+			.body(format!("Failed to send message: Message longer than {}", statics::MAX_MESSAGE_LENGTH));
+	}
+	
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let sid = param!(http, "sid", &scylla_session);
+    let channel_name = param!(http, "channel_name", &scylla_session, sid);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -156,13 +152,11 @@ pub async fn delete_message(
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
 
-    let dt = match chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f") {
-        Ok(dt) => dt,
-        Err(_) => {
-            return actix_web::HttpResponse::BadRequest()
-                .body("invalid `datetime` format, expected `%Y-%m-%d %H:%M:%S%.f`");
-        }
+    let Ok(dt) = chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f") else {
+        return actix_web::HttpResponse::BadRequest()
+            .body("invalid `datetime` format, expected `%Y-%m-%d %H:%M:%S%.f`");
     };
+
     let millis = dt.and_utc().timestamp_millis();
     let cql_datetime = scylla::value::CqlTimestamp(millis);
 

@@ -4,6 +4,7 @@ mod security;
 mod db;
 mod env;
 mod utils;
+mod metrics;
 
 use actix_web::{middleware::Logger};
 use actix_web_ratelimit::{config::RateLimitConfig, store::MemoryStore, RateLimit};
@@ -28,8 +29,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         None => 512,
     };
 
-    if let Ok(ssesh) = db::prelude::new_scylla_session(&format!("{}:9042", scylla_inet)).await 
-    && let Ok(mcache) = db::prelude::new_moka_cache(1_000).await {   
+    if let Ok(ssesh) = Box::pin(db::prelude::new_scylla_session(&format!("{scylla_inet}:9042"))).await {
+        let mcache = db::prelude::new_moka_cache(1_000);   
         let session = actix_web::web::Data::new(security::structures::ScyllaSession {
             lock: std::sync::Mutex::new(ssesh)
         });
@@ -42,14 +43,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let rl_config = RateLimitConfig::default().max_requests(API_RATELIMIT_COUNT).window_secs(API_RATELIMIT_WINDOW_SECONDS);
         let rl_store = std::sync::Arc::new(MemoryStore::new());
 
+        let registry = prometheus::Registry::new();
+
+        let metrics_collector = match metrics::prelude::MetricsCollector::new(&registry) {
+            Ok(collector) => actix_web::web::Data::new(collector),
+            Err(e) => {
+                eprintln!("Failed to create metrics collector: {e}");
+                std::process::exit(1);
+            }
+        };
+
+        let app_state = actix_web::web::Data::new(api::structures::AppState {
+            metrics_collector: metrics_collector.clone(),
+            registry,
+        });
+
         // setting up the API server
         let _ = actix_web::HttpServer::new(move || {
+            
+            let metrics_middleware = std::sync::Arc::new(metrics::prelude::MetricsMiddleware::new(metrics_collector.clone()));
+
             actix_web::App::new()
                 .wrap(RateLimit::new(rl_config.clone(), rl_store.clone()))
                 .wrap(Logger::new("%a %{User-Agent}i %U"))
-            
-                .app_data(session.clone())                                             // sharing scyllaDB session
+                .wrap(metrics_middleware)
+
+                .app_data(app_state.clone())
+                .app_data(session.clone())
                 .app_data(cache.clone())
+
+                .service(api::metrics::metrics)
 
                 .service(api::get_api_version)
                 .service(api::user::new_user_login)                     // API route for signing up

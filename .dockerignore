@@ -1,0 +1,7 @@
+*
+
+!Cargo*
+!/src/*
+!/target/*
+!/test-env-compose/*
+!clippy.toml

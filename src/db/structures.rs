@@ -5,6 +5,9 @@ pub struct User {
     pub password_hash: Option<String>,
     pub key: Option<String>,
     pub bio: Option<String>,
+
+    // TODO: when bored try and fix this
+    #[allow(clippy::struct_field_names)]
     pub user_salt: Option<String>,
     pub password_salt: Option<String>,
 }
@@ -25,7 +28,7 @@ impl User {
             key: Some(key),
             user_salt: Some(user_salt),
             password_salt: Some(password_salt),
-            bio: Some("".to_string()),
+            bio: Some(String::new()),
         }
     }
 }
