@@ -6,7 +6,7 @@ use crate::utils::logging;
 use ::function_name::named;
 
 #[named]
-#[actix_web::post("/api/add_server_role")]
+#[actix_web::post("/add_server_role")]
 pub async fn add_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -49,7 +49,7 @@ pub async fn add_server_role(
 }
 
 #[named]
-#[actix_web::post("/api/delete_server_role")]
+#[actix_web::post("/delete_server_role")]
 pub async fn delete_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -110,7 +110,7 @@ pub async fn delete_server_role(
 }
 
 #[named]
-#[actix_web::post("/api/assign_role_to_user")]
+#[actix_web::post("/assign_role_to_user")]
 pub async fn assign_role_to_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -157,7 +157,7 @@ pub async fn assign_role_to_user(
 }
 
 #[named]
-#[actix_web::post("/api/remove_role_from_user")]
+#[actix_web::post("/remove_role_from_user")]
 pub async fn remove_role_from_user(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -193,7 +193,7 @@ pub async fn remove_role_from_user(
 
 }
 
-#[actix_web::get("/api/fetch_server_roles")]
+#[actix_web::get("/fetch_server_roles")]
 pub async fn fetch_server_roles(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -222,7 +222,7 @@ pub async fn fetch_server_roles(
 
 }
 
-#[actix_web::get("/api/fetch_user_roles")]
+#[actix_web::get("/fetch_user_roles")]
 pub async fn fetch_user_roles(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,

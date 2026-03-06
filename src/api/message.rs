@@ -1,6 +1,6 @@
-use crate::api::structures;
-use crate::api::structures::{LimitMessageTokenUser};
 use crate::api::statics;
+use crate::api::structures;
+use crate::api::structures::LimitMessageTokenUser;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
@@ -8,7 +8,7 @@ use crate::utils::logging;
 use ::function_name::named;
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages_migration")]
+#[actix_web::post("/servers/{sid}/{channel_name}/get_messages_migration")]
 pub async fn get_channel_messages_migration(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -67,7 +67,7 @@ pub async fn get_channel_messages_migration(
 }
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/send_message")]
+#[actix_web::post("/servers/{sid}/{channel_name}/send_message")]
 pub async fn send_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -127,7 +127,7 @@ pub async fn send_message(
 //     - it seems that when the datetime is invalid the API doesn't fail with a proper message but instead says
 //       "Message deleted succesfully" without anything actually happening...
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/delete_message")]
+#[actix_web::post("/servers/{sid}/{channel_name}/delete_message")]
 pub async fn delete_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,

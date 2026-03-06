@@ -1,8 +1,8 @@
 #![allow(unused_imports)]
 use scylla::client::session::Session;
 
-use crate::api::structures;
 use crate::api::statics;
+use crate::api::structures;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
@@ -10,16 +10,18 @@ use crate::utils::logging;
 use ::function_name::named;
 
 #[named]
-#[actix_web::post("/api/create_server")]
+#[actix_web::post("/create_server")]
 pub async fn create_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::CreateServer>,
 ) -> impl actix_web::Responder {
-	if req.name.len() > statics::MAX_SERVER_LENGTH {
-		return actix_web::HttpResponse::LengthRequired()
-			.body(format!("Failed to create server: Server name longer than {}", statics::MAX_SERVER_LENGTH));
-	}
+    if req.name.len() > statics::MAX_SERVER_LENGTH {
+        return actix_web::HttpResponse::LengthRequired().body(format!(
+            "Failed to create server: Server name longer than {}",
+            statics::MAX_SERVER_LENGTH
+        ));
+    }
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
     if db::prelude::check_token(
@@ -94,7 +96,7 @@ pub async fn create_server(
 }
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/join")]
+#[actix_web::post("/servers/{sid}/join")]
 pub async fn join_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -149,7 +151,7 @@ pub async fn join_server(
     actix_web::HttpResponse::Ok().json(&new_token_holder)
 }
 
-#[actix_web::post("/servers/{sid}/api/get_server_users")]
+#[actix_web::post("/servers/{sid}/get_server_users")]
 pub async fn get_server_users(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -180,7 +182,7 @@ pub async fn get_server_users(
     actix_web::HttpResponse::Ok().json(&structures::UsersList { u_list: Vec::new() })
 }
 
-#[actix_web::get("/servers/{sid}/api/get_server_info")]
+#[actix_web::get("/servers/{sid}/get_server_info")]
 pub async fn get_server_info(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     http: actix_web::HttpRequest,
@@ -196,7 +198,7 @@ pub async fn get_server_info(
 }
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/delete_server")]
+#[actix_web::post("/servers/{sid}/delete_server")]
 pub async fn delete_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -239,7 +241,7 @@ pub async fn delete_server(
 
 }
 
-#[actix_web::post("/api/am_i_in_server")]
+#[actix_web::post("/am_i_in_server")]
 pub async fn am_i_in_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,

@@ -5,7 +5,7 @@ use crate::utils::logging;
 
 use ::function_name::named;
 
-#[actix_web::post("/api/fetch_friend_list")]
+#[actix_web::post("/fetch_friend_list")]
 pub async fn fetch_friend_list(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -45,7 +45,7 @@ pub async fn fetch_friend_list(
 }
 
 #[named]
-#[actix_web::post("/api/delete_friend")]
+#[actix_web::post("/delete_friend")]
 pub async fn delete_friend(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,

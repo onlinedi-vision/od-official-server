@@ -2,7 +2,7 @@ use crate::api::structures;
 use crate::db;
 use crate::security;
 
-#[actix_web::post("/api/send_dm_invite")]
+#[actix_web::post("/send_dm_invite")]
 pub async fn send_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -65,7 +65,7 @@ pub async fn send_dm_invite(
     })
 }
 
-#[actix_web::post("/api/accept_dm_invite")]
+#[actix_web::post("/accept_dm_invite")]
 pub async fn accept_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -136,7 +136,7 @@ pub async fn accept_dm_invite(
 
 }
 
-#[actix_web::post("/api/reject_dm_invite")]
+#[actix_web::post("/reject_dm_invite")]
 pub async fn reject_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -179,7 +179,7 @@ pub async fn reject_dm_invite(
 
 }
 
-#[actix_web::post("/api/fetch_pending_dm_invites")]
+#[actix_web::post("/fetch_pending_dm_invites")]
 pub async fn fetch_pending_dm_invites(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,

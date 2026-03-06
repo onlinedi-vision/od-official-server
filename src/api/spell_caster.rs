@@ -5,7 +5,7 @@ use crate::api::structures;
 use crate::db;
 use crate::security;
 
-#[actix_web::post("/api/spell/cast")]
+#[actix_web::post("/spell/cast")]
 pub async fn spell_cast(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<structures::SpellCaster>,
@@ -34,7 +34,7 @@ pub async fn spell_cast(
 
 }
 
-#[actix_web::post("/api/spell/check")]
+#[actix_web::post("/spell/check")]
 pub async fn spell_check(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,

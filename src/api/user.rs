@@ -1,19 +1,21 @@
-use crate::api::{structures,statics,prelude};
+use crate::api::{prelude, statics, structures};
 use crate::db;
 use crate::security;
 use crate::utils::logging;
 
 use ::function_name::named;
 
-#[actix_web::post("/api/new_user")]
+#[actix_web::post("/new_user")]
 pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     req: actix_web::web::Json<structures::NewUser>,
 ) -> impl actix_web::Responder {
-	if req.username.len() > statics::MAX_USERNAME_LENGTH {
-		return actix_web::HttpResponse::LengthRequired()
-			.body(format!("Failed to create user: Username longer than {}", statics::MAX_SERVER_LENGTH));
-	}
+    if req.username.len() > statics::MAX_USERNAME_LENGTH {
+        return actix_web::HttpResponse::LengthRequired().body(format!(
+            "Failed to create user: Username longer than {}",
+            statics::MAX_SERVER_LENGTH
+        ));
+    }
     let user_salt = security::salt();
     let password_salt = security::salt();
     let password_hash = security::argon(
@@ -45,13 +47,12 @@ pub async fn new_user_login(
     }
 }
 
-#[actix_web::patch("/api/user/ttl")]
+#[actix_web::patch("/user/ttl")]
 pub async fn patch_user_ttl(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::UpdateUserTTL>,
 ) -> impl actix_web::Responder {
-
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
     
@@ -83,7 +84,7 @@ pub async fn patch_user_ttl(
 }
 
 #[named]
-#[actix_web::post("/api/try_login")]
+#[actix_web::post("/try_login")]
 pub async fn try_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -108,7 +109,7 @@ pub async fn try_login(
 }
 
 #[named]
-#[actix_web::post("/api/token_login")]
+#[actix_web::post("/token_login")]
 pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -148,7 +149,7 @@ pub async fn token_login(
 }
 
 #[named]
-#[actix_web::post("/api/get_user_servers")]
+#[actix_web::post("/get_user_servers")]
 pub async fn get_user_servers(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -201,7 +202,7 @@ pub async fn get_user_servers(
 }
 
 #[named]
-#[actix_web::post("/api/get_user_pfp")]
+#[actix_web::post("/get_user_pfp")]
 pub async fn get_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -252,7 +253,7 @@ pub async fn get_user_pfp(
 }
 
 #[named]
-#[actix_web::post("/api/set_user_pfp")]
+#[actix_web::post("/set_user_pfp")]
 pub async fn set_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
