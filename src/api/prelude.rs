@@ -28,7 +28,7 @@ pub async fn check_user_password(
             )
         );
 
-        if security::argon_check(user_password_plain, password_hash) {
+        if security::argon_check(&user_password_plain, &password_hash) {
             // TODO: should be checked.
             let _ = db::prelude::insert_user_token(
                 &scylla_session,

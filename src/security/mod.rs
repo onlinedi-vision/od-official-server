@@ -8,7 +8,7 @@ pub mod structures;
 
 #[cfg(test)]
 mod tests {
-    use super::{armor_token, sha256, sha512};
+    use super::{armor_token, sha256, argon, argon_check};
 
     #[test]
     fn test_token_armor() {
@@ -29,15 +29,15 @@ mod tests {
     #[test]
     fn test_argon2() {
         let plain_text_secret: String = "pre_hash".to_string();
-        let argon_hash: String = argon(plain_text_secret.clone()).expect(
+        let argon_hash: String = argon(&plain_text_secret).expect(
             "Argon2 failed to create a proper hash. Check src/security/mod.rs:argon()"
         );
 
-        assert!(argon_check(plain_text_secret, argon_hash));
+        assert!(argon_check(&plain_text_secret, &argon_hash));
     }
 }
 
-pub fn argon(secret: String) -> Option<String> {
+pub fn argon(secret: &str) -> Option<String> {
     let salt = SaltString::generate(&mut OsRng);
     // TODO: note the '?'... wtf
     Some(
@@ -50,8 +50,8 @@ pub fn argon(secret: String) -> Option<String> {
     )
 }
 
-pub fn argon_check(plain_text: String, hash: String) -> bool {
-    match argon2::password_hash::PasswordHash::new(&hash) {
+pub fn argon_check(plain_text: &str, hash: &str) -> bool {
+    match argon2::password_hash::PasswordHash::new(hash) {
         Ok(parsed_hash) => argon2::Argon2::default()
             .verify_password(plain_text.as_bytes(), &parsed_hash)
             .is_ok(),
