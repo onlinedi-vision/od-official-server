@@ -152,13 +152,11 @@ pub async fn delete_message(
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
 
-    let dt = match chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f") {
-        Ok(dt) => dt,
-        Err(_) => {
-            return actix_web::HttpResponse::BadRequest()
-                .body("invalid `datetime` format, expected `%Y-%m-%d %H:%M:%S%.f`");
-        }
+    let Ok(dt) = chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f") else {
+        return actix_web::HttpResponse::BadRequest()
+            .body("invalid `datetime` format, expected `%Y-%m-%d %H:%M:%S%.f`");
     };
+
     let millis = dt.and_utc().timestamp_millis();
     let cql_datetime = scylla::value::CqlTimestamp(millis);
 

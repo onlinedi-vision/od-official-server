@@ -76,9 +76,9 @@ pub async fn fetch_pending_dm_invites(
         }
     }
 
-    if !invites.is_empty() {
-        Some(invites)
-    } else {
+    if invites.is_empty() {
         None
+    } else {
+        Some(invites)
     }
 }

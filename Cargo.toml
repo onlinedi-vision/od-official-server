@@ -1,6 +1,6 @@
 [package]
 name = "api"
-version = "0.0.1"
+version = "0.0.5"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -25,6 +25,9 @@ moka = { version = "0.12.11", features = ["future"] }
 actix-web-ratelimit = { version = "0.1.1", default-features = false } 
 async-std = "1.13.2"
 function_name = "0.3.0"
+prometheus = { version = "0.14.0", features = ["process"] }
+anyhow = "1.0.102"
+futures = "0.3.32"
 
 # Improves comp time ?
 [profile.dev]
@@ -32,5 +35,8 @@ opt-level=1
 
 [profile.dev.package."*"]
 opt-level=3
+
+[lints.clippy]
+pedantic = "warn"
 
 [features]

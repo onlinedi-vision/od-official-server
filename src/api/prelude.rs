@@ -32,7 +32,7 @@ pub async fn check_user_password(
                 &scylla_session,
                 &cache,
                 db::structures::KeyUser {
-                    key: Some(security::armor_token(new_token_holder.token.clone())),
+                    key: Some(security::armor_token(&new_token_holder.token)),
                     username: Some(username.to_string()),
                 },
             )
