@@ -8,14 +8,14 @@ pub async fn insert_server_role(
     session: &scylla::client::session::Session,
     server_id: String,
     role: structures::ServerRole,
-) -> Option<Result<()>> {
+) -> Result<()> {
     let res: std::result::Result<scylla::response::query_result::QueryResult, _> = session
         .query_unpaged(
             statics::INSERT_SERVER_ROLE,
             (server_id, role.name, role.color, role.permissions),
         )
         .await;
-    Some(res.map(|_| ()).map_err(From::from))
+    res.map(|_| ()).map_err(From::from)
 }
 
 pub async fn assign_role(
@@ -108,4 +108,30 @@ pub async fn fetch_user_permissions(
         }
     }
     combined
+}
+
+/// Remove all user-role assignments for a deleted role in a server.
+pub async fn remove_role_from_all_users(
+    session: &scylla::client::session::Session,
+    server_id: String,
+    role_name: String,
+) -> Result<()> {
+    let query_rows = session
+        .query_unpaged(statics::SELECT_USER_ROLES_BY_ROLE, (server_id.clone(), role_name.clone()))
+        .await
+        .map_err(|e| -> Box<dyn std::error::Error> { From::from(e) })?
+        .into_rows_result()
+        .map_err(|e| -> Box<dyn std::error::Error> { From::from(e) })?;
+
+    for row in query_rows.rows::<(Option<&str>,)>().into_iter().flatten() {
+        if let Ok((Some(username),)) = row {
+            let _ = session
+                .query_unpaged(
+                    statics::REMOVE_ROLE_FROM_USER,
+                    (server_id.clone(), username.to_string(), role_name.clone()),
+                )
+                .await;
+        }
+    }
+    Ok(())
 }
