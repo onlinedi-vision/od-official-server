@@ -40,7 +40,17 @@ pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Se
 }
 
 pub fn new_moka_cache(cache_size: u64) -> moka::future::Cache<String, String> {
-    moka::future::Cache::<String,String>::new(cache_size)
+    moka::future::Cache
+        ::<String,String>
+        ::builder()
+        .max_capacity(cache_size)
+        .time_to_live(
+            std::time::Duration::from_secs(
+                u64::try_from(*db::statics::TOKEN_TTL)
+                    .unwrap_or(db::statics::DEFAULT_TOKEN_TTL)
+            )
+        )
+        .build()
 }
 
 #[named]
@@ -56,6 +66,7 @@ pub async fn check_token(
     if let Some(username) = un.clone() {
         if let Some(cache_token) = cache.get(&username.clone()).await
         && cache_token == crypted_token.clone() {
+            logging::log("Cache hit...", Some(function_name!()));
             return Some(());
         }
 

@@ -48,7 +48,7 @@ pub fn token() -> String {
     let salt = uuid::Uuid::now_v7().to_string();
     let mut hasher = sha2::Sha256::new();
 
-    hasher.update(salt.to_string().to_string().into_bytes());
+    hasher.update(salt.clone().into_bytes());
 
     format!("{:x}", hasher.finalize())
 }

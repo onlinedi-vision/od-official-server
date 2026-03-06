@@ -126,7 +126,7 @@ where
         let collector = self.collector.clone();
         
         let method: String = req.method().to_string();
-        let endpoint = MetricsCollector::get_endpoint_pattern(&req).to_string();
+        let endpoint = MetricsCollector::get_endpoint_pattern(&req).clone();
         
         if let Some(content_length) = req.headers().get("content-length")
         && let Ok(size_str) = content_length.to_str()

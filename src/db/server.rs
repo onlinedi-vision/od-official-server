@@ -58,15 +58,15 @@ pub async fn fetch_server_users(
                     {
                         users.push(api::structures::PublicInfoUser {
                             username: username.to_string(),
-                            bio: user_info[0].bio.clone()?.to_string(),
-                            img_url: user_info[0].pfp.clone()?.to_string(),
+                            bio: user_info[0].bio.clone()?.clone(),
+                            img_url: user_info[0].pfp.clone()?.clone(),
                             roles,
                         });
                     } else {
                         users.push(api::structures::PublicInfoUser {
                             username: username.to_string(),
-                            bio: user_info[0].bio.clone()?.to_string(),
-                            img_url: user_info[0].pfp.clone()?.to_string(),
+                            bio: user_info[0].bio.clone()?.clone(),
+                            img_url: user_info[0].pfp.clone()?.clone(),
                             roles: Vec::new(),
                         });
                     }

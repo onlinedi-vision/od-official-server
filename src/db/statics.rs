@@ -1,11 +1,10 @@
-
-use once_cell::sync::Lazy;
 use std::env;
 
-pub static TOKEN_TTL: Lazy<i32> = Lazy::new(|| {
+pub static DEFAULT_TOKEN_TTL: u64 = 604_800;
+pub static TOKEN_TTL: std::sync::LazyLock<i32> = std::sync::LazyLock::new(|| {
     env::var("TOKEN_TTL").unwrap_or_else(|_| "604800".to_string())
         .parse::<i32>()
-        .unwrap_or(604800)
+        .unwrap_or(604_800)
 });
 pub static DEFAULT_MESSAGE_LIMIT: i32 = 100;
 
