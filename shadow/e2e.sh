@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+test_count=0
 HOST=${1:-https://onlinedi.vision}
 printf "HOST: %s\n" "${HOST}"
 QA_USERNAME=$(mktemp --dry-run qa_e2e_user-XXXXXXXXXXXX)
@@ -7,6 +8,19 @@ QA_USERNAME=$(mktemp --dry-run qa_e2e_user-XXXXXXXXXXXX)
 printf "QA_USERNAME: %s\n" "${QA_USERNAME}"
 
 set -eo pipefail
+
+function results() {
+  if [[ $? != 0 ]]; then
+    echo
+    echo "E2E TESTING *FAILED*"
+    exit 1
+  fi
+
+  echo
+  echo " ** SUCCESS ** all ${test_count} tests PASSED !"
+}
+
+trap results EXIT
 
 function expected_failure() {
   echo
@@ -72,6 +86,7 @@ function assert_neq() {
 }
 
 function eetest() {
+  test_count=$((test_count+1))
   printf " Testing %s... " "${1}"
 }
 

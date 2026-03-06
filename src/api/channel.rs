@@ -129,9 +129,6 @@ pub async fn delete_channel(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    let sid = param!(http, "sid");
-    let channel_name = param!(http, "channel_name");
-
     if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await != Some(true) {
         logging::log("Unauthorized: not server owner", Some(function_name!()));
         return actix_web::HttpResponse::Unauthorized()

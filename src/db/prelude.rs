@@ -104,26 +104,21 @@ pub async fn check_sid(
     if let Ok(query_result) = session
         .query_unpaged(statics::SELECT_SERVER_SID, (sid.clone(),))
         .await
-    {
-        if let Ok(query_rows) = query_result.into_rows_result()
-        {
-            if let Ok(rows) = query_rows.rows::<(Option<&str>,)>() {
-                for row in rows {
-                    if let Ok(row_ok) = row {
-                        match row_ok {
-                            (Some(db_sid),) => {
-                                return db_sid.to_string() == sid;
-                            }
-                            _ => {
-                                return false;
-                            }
-                        }
-                    }
-                }
+    && let Ok(query_rows) = query_result.into_rows_result()
+    && let Ok(rows) = query_rows.rows::<(Option<&str>,)>() 
+    && let Some(row_ok) = rows.flatten().next() {
+
+        match row_ok {
+            (Some(db_sid),) => {
+                return db_sid == sid;
+            }
+            _ => {
+                return false;
             }
         }
+
     }
-    return false;
+    false
 }
 
 pub async fn check_channel_name(
@@ -134,26 +129,21 @@ pub async fn check_channel_name(
     if let Ok(query_result) = session
         .query_unpaged(statics::SELECT_SERVER_CHANNEL, (sid.clone(), channel_name.clone()))
         .await
-    {
-        if let Ok(query_rows) = query_result.into_rows_result()
-        {
-            if let Ok(rows) = query_rows.rows::<(Option<&str>,)>() {
-                for row in rows {
-                    if let Ok(row_ok) = row {
-                        match row_ok {
-                            (Some(db_channel_name),) => {
-                                return db_channel_name.to_string() == channel_name;
-                            }
-                            _ => {
-                                return false;
-                            }
-                        }
-                    }
-                }
+    && let Ok(query_rows) = query_result.into_rows_result()
+    && let Ok(rows) = query_rows.rows::<(Option<&str>,)>() 
+    && let Some(row_ok) = rows.flatten().next() {
+
+        match row_ok {
+            (Some(db_channel_name),) => {
+                return db_channel_name == channel_name;
+            }
+            _ => {
+                return false;
             }
         }
+
     }
-    return false;
+    false
 }
 
 pub async fn check_user_is_in_server(
