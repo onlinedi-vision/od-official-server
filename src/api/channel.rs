@@ -58,7 +58,6 @@ pub async fn create_channel(
             statics::MAX_CHANNEL_LENGTH
         ));
     }
-    let sid = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let sid = param!(http, "sid", &scylla_session);
     let cache = cache!(shared_cache);
