@@ -140,3 +140,20 @@ pub async fn check_permission(
         None
     }
 }
+
+pub async fn is_member_of_server(
+    session: &scylla::client::session::Session,
+    sid: String,
+    username: String,
+) -> bool {
+    let Ok(result) = session
+        .query_unpaged(statics::SELECT_SERVER_USER, (sid, username))
+        .await
+    else {
+        return false;
+    };
+    let Ok(rows) = result.into_rows_result() else {
+        return false;
+    };
+    rows.rows_num() > 0
+}
