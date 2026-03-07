@@ -57,7 +57,7 @@ pub async fn patch_user_ttl(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
     
     if db::prelude::check_token(
         &scylla_session,
@@ -131,7 +131,7 @@ pub async fn token_login(
 
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -168,7 +168,7 @@ pub async fn get_user_servers(
     };
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
@@ -224,7 +224,7 @@ pub async fn get_user_pfp(
     };
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
@@ -278,7 +278,7 @@ pub async fn set_user_pfp(
     };
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,

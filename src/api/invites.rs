@@ -12,7 +12,7 @@ pub async fn send_dm_invite(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -78,7 +78,7 @@ pub async fn accept_dm_invite(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -152,7 +152,7 @@ pub async fn reject_dm_invite(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -198,7 +198,7 @@ pub async fn fetch_pending_dm_invites(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,

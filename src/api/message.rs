@@ -37,7 +37,7 @@ pub async fn get_channel_messages_migration(
 
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -88,7 +88,7 @@ pub async fn send_message(
     let cache = cache!(shared_cache);
     let sid = param!(http, "sid", &scylla_session);
     let channel_name = param!(http, "channel_name", &scylla_session, sid);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -144,7 +144,7 @@ pub async fn delete_message(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,

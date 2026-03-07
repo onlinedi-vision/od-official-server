@@ -26,7 +26,7 @@ pub async fn create_server(
     }
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
@@ -111,6 +111,7 @@ pub async fn join_server(
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -168,7 +169,7 @@ pub async fn get_server_users(
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -217,7 +218,7 @@ pub async fn delete_server(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -262,7 +263,7 @@ pub async fn am_i_in_server(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,

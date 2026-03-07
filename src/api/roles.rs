@@ -16,7 +16,7 @@ pub async fn add_server_role(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -62,7 +62,7 @@ pub async fn delete_server_role(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -126,7 +126,7 @@ pub async fn assign_role_to_user(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -176,7 +176,7 @@ pub async fn remove_role_from_user(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -215,7 +215,7 @@ pub async fn fetch_server_roles(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
@@ -247,7 +247,7 @@ pub async fn fetch_user_roles(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = collector!(shared_collector);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
