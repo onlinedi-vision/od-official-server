@@ -4,7 +4,7 @@ use scylla::client::session::Session;
 use crate::api::structures;
 use crate::db;
 use crate::security;
-use crate::metrics;
+// use crate::metrics;
 
 #[actix_web::post("/spell/cast")]
 pub async fn spell_cast(

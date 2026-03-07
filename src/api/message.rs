@@ -4,7 +4,6 @@ use crate::api::structures::LimitMessageTokenUser;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
-use crate::metrics;
 
 use ::function_name::named;
 

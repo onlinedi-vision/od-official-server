@@ -1,7 +1,6 @@
 use crate::api::structures;
 use crate::db;
 use crate::security;
-use crate::metrics;
 
 #[actix_web::post("/send_dm_invite")]
 pub async fn send_dm_invite(
