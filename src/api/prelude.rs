@@ -29,8 +29,7 @@ pub async fn check_user_password(
         );
 
         if security::argon_check(&user_password_plain, &password_hash) {
-            // TODO: should be checked.
-            let _ = db::prelude::insert_user_token(
+            if let Err(insert_err) = db::prelude::insert_user_token(
                 &scylla_session,
                 &cache,
                 db::structures::KeyUser {
@@ -38,7 +37,10 @@ pub async fn check_user_password(
                     username: Some(username.to_string()),
                 },
             )
-            .await;
+            .await {
+                logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+                return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+            }
 
             return actix_web::HttpResponse::Ok().json(&new_token_holder);
 
@@ -51,6 +53,12 @@ pub async fn check_user_password(
     
     logging::log("Failed because user supplied data is incorrect.", Some(function_name!()));
     actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
+}
+
+macro_rules! cache_metrics {
+    ($col:ident) => {
+        $col.metrics_collector.clone()
+    };
 }
 
 macro_rules! scylla_session {

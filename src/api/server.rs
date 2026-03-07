@@ -6,6 +6,7 @@ use crate::api::structures;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
+use crate::metrics;
 
 use ::function_name::named;
 
@@ -15,6 +16,7 @@ pub async fn create_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::CreateServer>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     if req.name.len() > statics::MAX_SERVER_LENGTH {
         return actix_web::HttpResponse::LengthRequired().body(format!(
@@ -24,11 +26,13 @@ pub async fn create_server(
     }
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -55,19 +59,22 @@ pub async fn create_server(
     
     let _ =
         db::server::create_channel(&scylla_session, sid.clone(), "info".to_string()).await;
-    let server_created = structures::ServerCreatedResponse {
+    let mut server_created = structures::ServerCreatedResponse {
         token: security::token(),
         sid: sid.clone(),
     };
-    let _ = db::prelude::insert_user_token(
+    if let Err(insert_err) = db::prelude::insert_user_token(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(&server_created.token)),
+            key: Some(security::armor_token(&server_created.token.clone())),
             username: Some(req.username.clone()),
         },
     )
-    .await;
+    .await {
+        logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+        server_created.token = req.token.clone();
+    }
 
     let role = db::structures::ServerRole {
         role_name: "member".to_string(),
@@ -102,16 +109,19 @@ pub async fn join_server(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -131,7 +141,7 @@ pub async fn join_server(
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
-    let _ = db::prelude::insert_user_token(
+    if let Err(insert_err) = db::prelude::insert_user_token(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
@@ -139,7 +149,10 @@ pub async fn join_server(
             username: Some(req.username.clone()),
         },
     )
-    .await;
+    .await {
+        logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+        return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+    }
 
     let _ = db::users::delete_token(
         &scylla_session,
@@ -157,10 +170,12 @@ pub async fn get_server_users(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -168,6 +183,7 @@ pub async fn get_server_users(
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        &collector,
     )
     .await
     .is_none()
@@ -204,15 +220,18 @@ pub async fn delete_server(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -246,9 +265,11 @@ pub async fn am_i_in_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUserServer>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -256,6 +277,7 @@ pub async fn am_i_in_server(
         req.sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        &collector,
     )
     .await
     .is_some()
