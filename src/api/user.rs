@@ -52,15 +52,18 @@ pub async fn patch_user_ttl(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::UpdateUserTTL>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
     
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await.is_none()
     {
@@ -114,6 +117,7 @@ pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenLoginUser>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     
     let new_token_holder = structures::TokenHolder {
@@ -126,12 +130,14 @@ pub async fn token_login(
 
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -154,17 +160,20 @@ pub async fn get_user_servers(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -207,17 +216,20 @@ pub async fn get_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -258,17 +270,20 @@ pub async fn set_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SetUserPfpReq>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
