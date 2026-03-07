@@ -4,6 +4,7 @@ use crate::api::structures::{CreateChannel, TokenUser};
 use crate::db;
 use crate::security;
 use crate::utils::logging;
+use crate::metrics;
 
 use ::function_name::named;
 
@@ -19,12 +20,14 @@ pub async fn get_channels(
     let sid = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
     if db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        &collector,
     )
     .await
     .is_none()
@@ -61,12 +64,14 @@ pub async fn create_channel(
     let scylla_session = scylla_session!(session);
     let sid = param!(http, "sid", &scylla_session);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
     if db::prelude::check_user_is_in_server(
         &scylla_session,
         &cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        &collector,
     )
     .await
     .is_none()
@@ -111,18 +116,21 @@ pub async fn delete_channel(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
 ) -> impl actix_web::Responder {
 
     let scylla_session = scylla_session!(session);
     let sid = param!(http, "sid", &scylla_session);
     let channel_name = param!(http, "channel_name", &scylla_session, sid);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
     
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()

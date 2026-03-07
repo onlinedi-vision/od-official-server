@@ -4,6 +4,7 @@ use crate::api::structures::LimitMessageTokenUser;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
+use crate::metrics;
 
 use ::function_name::named;
 
@@ -14,6 +15,7 @@ pub async fn get_channel_messages_migration(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<LimitMessageTokenUser>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
 ) -> impl actix_web::Responder {
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
@@ -35,6 +37,7 @@ pub async fn get_channel_messages_migration(
 
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -42,6 +45,7 @@ pub async fn get_channel_messages_migration(
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        &collector,
     )
     .await
     .is_none()
@@ -73,6 +77,7 @@ pub async fn send_message(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SendMessage>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
 ) -> impl actix_web::Responder {
 	if req.m_content.len() > statics::MAX_MESSAGE_LENGTH {
 		return actix_web::HttpResponse::LengthRequired()
@@ -83,6 +88,7 @@ pub async fn send_message(
     let cache = cache!(shared_cache);
     let sid = param!(http, "sid", &scylla_session);
     let channel_name = param!(http, "channel_name", &scylla_session, sid);
+    let collector = collector!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -90,6 +96,7 @@ pub async fn send_message(
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        &collector,
     )
     .await
     .is_none()
@@ -133,15 +140,18 @@ pub async fn delete_message(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::DeleteMessage>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()

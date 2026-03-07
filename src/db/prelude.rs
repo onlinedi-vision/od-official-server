@@ -5,6 +5,7 @@ use crate::db::{statics, structures};
 use crate::env::get_env_var;
 use crate::security;
 use crate::utils::logging;
+use crate::metrics;
 
 use ::function_name::named;
 
@@ -59,6 +60,7 @@ pub async fn check_token(
     cache: &moka::future::Cache<String, String>,
     token: String,
     un: Option<String>,
+    collector: &metrics::prelude::MetricsCollector
 ) -> Option<()> {
     if token.len() < 16 {
         return None;
@@ -70,9 +72,18 @@ pub async fn check_token(
     if let Some(username) = un.clone() {
         if let Some(cache_token) = cache.get(&username.clone()).await
         && cache_token == crypted_token.clone() {
+            
+            collector.total_cache_hit_count
+                .inc();
+
             logging::log("Cache hit...", Some(function_name!()));
             return Some(());
         }
+        
+        collector.total_cache_miss_count
+            .inc();
+
+        logging::log("Cache miss...", Some(function_name!()));
 
         query_rows = session
             .query_unpaged(statics::CHECK_TOKEN_USER, (crypted_token.clone(), username))
@@ -156,8 +167,9 @@ pub async fn check_user_is_in_server(
     sid: String,
     token: String,
     un: String,
+    collector: &metrics::prelude::MetricsCollector
 ) -> Option<Vec<structures::UserUsername>> {
-    if (db::prelude::check_token(session, cache, token.clone(), Some(un.clone())).await).is_some() {
+    if db::prelude::check_token(session, cache, token.clone(), Some(un.clone()), collector).await.is_some() {
         let query_rows = session
             .query_unpaged(statics::SELECT_SERVER_USER, (sid, un.clone()))
             .await

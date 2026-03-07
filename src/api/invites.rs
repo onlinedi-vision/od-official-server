@@ -1,21 +1,25 @@
 use crate::api::structures;
 use crate::db;
 use crate::security;
+use crate::metrics;
 
 #[actix_web::post("/send_dm_invite")]
 pub async fn send_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SendInviteReq>,
+    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.sender.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -70,15 +74,18 @@ pub async fn accept_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::AcceptInviteReq>,
+    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.recipient.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -141,15 +148,18 @@ pub async fn reject_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::RejectInviteReq>,
+    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.recipient.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -184,15 +194,18 @@ pub async fn fetch_pending_dm_invites(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
+    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = collector!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
