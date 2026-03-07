@@ -54,7 +54,7 @@ pub async fn fetch_server_users(
                 if let Some(user_info) = users::fetch_user_info(session, username.to_string()).await
                 {
                     if let Some(roles) =
-                        roles::fetch_user_roles(session, sid.clone(), username.to_string()).await
+                        roles::fetch_user_role_names(session, sid.clone(), username.to_string()).await
                     {
                         users.push(api::structures::PublicInfoUser {
                             username: username.to_string(),

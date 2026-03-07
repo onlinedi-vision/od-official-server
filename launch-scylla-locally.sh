@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS division_online.o_server_roles (
     server_id text,
     role_name text,
     color text,
-    permissions set<text>,
+    permissions bigint,
     PRIMARY KEY (server_id, role_name)
 ) WITH CLUSTERING ORDER BY (role_name ASC)
     AND bloom_filter_fp_chance = 0.01
