@@ -55,14 +55,7 @@ pub async fn check_user_password(
 
 macro_rules! cache_metrics {
     ($col:ident) => {
-        $col
-        // match $shared_collector.lock() {
-        //     Ok(guard) => guard,
-        //     Err(_) => {
-        //         return actix_web::HttpResponse::InternalServerError()
-        //             .body("Internal error: collector lock poisoned.");
-        //     }
-        // }
+        $col.metrics_collector.clone()
     };
 }
 

@@ -53,7 +53,7 @@ pub async fn patch_user_ttl(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::UpdateUserTTL>,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
@@ -118,7 +118,7 @@ pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenLoginUser>,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     
     let new_token_holder = structures::TokenHolder {
@@ -161,7 +161,7 @@ pub async fn get_user_servers(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
@@ -217,7 +217,7 @@ pub async fn get_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
@@ -271,7 +271,7 @@ pub async fn set_user_pfp(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SetUserPfpReq>,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let new_token_holder = structures::TokenHolder {
         token: security::token(),

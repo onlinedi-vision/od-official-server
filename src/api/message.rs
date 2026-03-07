@@ -15,7 +15,7 @@ pub async fn get_channel_messages_migration(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<LimitMessageTokenUser>,
     http: actix_web::HttpRequest,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
@@ -77,7 +77,7 @@ pub async fn send_message(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SendMessage>,
     http: actix_web::HttpRequest,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
 	if req.m_content.len() > statics::MAX_MESSAGE_LENGTH {
 		return actix_web::HttpResponse::LengthRequired()
@@ -140,7 +140,7 @@ pub async fn delete_message(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::DeleteMessage>,
     http: actix_web::HttpRequest,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);

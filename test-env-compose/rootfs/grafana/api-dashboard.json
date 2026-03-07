@@ -67,6 +67,17 @@
         }
       ],
       "gridPos": {"h": 4, "w": 4, "x": 16, "y": 8}
+    },
+    {
+      "title": "Token Cache Hit Percentage",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets" : [
+        {
+          "expr": "total_cache_hit_count * 100 / (total_cache_hit_count + total_cache_miss_count)"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 8}
     }
   ],
   "refresh": "10s"

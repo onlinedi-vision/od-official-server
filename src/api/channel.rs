@@ -15,7 +15,7 @@ pub async fn get_channels(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<TokenUser>,
     http: actix_web::HttpRequest,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     
     let sid = param!(http, "sid");
@@ -55,7 +55,7 @@ pub async fn create_channel(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<CreateChannel>,
     http: actix_web::HttpRequest,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     if req.channel_name.len() > statics::MAX_CHANNEL_LENGTH {
         return actix_web::HttpResponse::LengthRequired().body(format!(
@@ -118,7 +118,7 @@ pub async fn delete_channel(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
-    shared_collector: actix_web::web::Data<metrics::prelude::MetricsCollector>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
 
     let scylla_session = scylla_session!(session);
