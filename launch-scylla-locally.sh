@@ -12,11 +12,12 @@
 set -o pipefail
 
 wait_for_settle_time="${1:-5}"
+COMPOSE_FILE="test-env-compose/compose.yaml"
 
 CREATE_USERS="
-CREATE KEYSPACE division_online WITH replication = {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1'} AND durable_writes = true AND tablets = {'enabled': false};
+CREATE KEYSPACE IF NOT EXISTS division_online WITH replication = {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1'} AND durable_writes = true AND tablets = {'enabled': false};
 
-CREATE TABLE division_online.users (
+CREATE TABLE IF NOT EXISTS division_online.users (
     username text,
     bio text,
     email text,
@@ -41,7 +42,7 @@ CREATE TABLE division_online.users (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_user_tokens (
+CREATE TABLE IF NOT EXISTS division_online.o_user_tokens (
     username text,
     datetime timestamp,
     key text,
@@ -61,7 +62,7 @@ CREATE TABLE division_online.o_user_tokens (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_user_server_roles (
+CREATE TABLE IF NOT EXISTS division_online.o_user_server_roles (
     server_id text,
     username text,
     role_name text,
@@ -81,7 +82,7 @@ CREATE TABLE division_online.o_user_server_roles (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_user_friends (
+CREATE TABLE IF NOT EXISTS division_online.o_user_friends (
     username text,
     friend text,
     created_at timestamp,
@@ -101,7 +102,7 @@ CREATE TABLE division_online.o_user_friends (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_servers (
+CREATE TABLE IF NOT EXISTS division_online.o_servers (
     sid text,
     desc text,
     img_url text,
@@ -125,7 +126,7 @@ CREATE TABLE division_online.o_servers (
 
 INSERT INTO division_online.o_servers(sid, name) VALUES ('1313', 'division');
 
-CREATE TABLE division_online.o_server_users (
+CREATE TABLE IF NOT EXISTS division_online.o_server_users (
     sid text,
     username text,
     PRIMARY KEY (sid, username)
@@ -144,7 +145,7 @@ CREATE TABLE division_online.o_server_users (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_server_roles (
+CREATE TABLE IF NOT EXISTS division_online.o_server_roles (
     server_id text,
     role_name text,
     color text,
@@ -165,7 +166,7 @@ CREATE TABLE division_online.o_server_roles (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_server_messages_migration (
+CREATE TABLE IF NOT EXISTS division_online.o_server_messages_migration (
     sid text,
     channel_name text,
     datetime timestamp,
@@ -190,7 +191,7 @@ CREATE TABLE division_online.o_server_messages_migration (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_server_messages (
+CREATE TABLE IF NOT EXISTS division_online.o_server_messages (
     mid text,
     channel_name text,
     datetime timestamp,
@@ -212,7 +213,7 @@ CREATE TABLE division_online.o_server_messages (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_server_channels (
+CREATE TABLE IF NOT EXISTS division_online.o_server_channels (
     sid text,
     channel_name text,
     PRIMARY KEY (sid, channel_name)
@@ -231,7 +232,7 @@ CREATE TABLE division_online.o_server_channels (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_dm_invites (
+CREATE TABLE IF NOT EXISTS division_online.o_dm_invites (
     u1 text,
     u2 text,
     invite_id text,
@@ -251,7 +252,7 @@ CREATE TABLE division_online.o_dm_invites (
     AND speculative_retry = '99.0PERCENTILE'
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 
-CREATE TABLE division_online.o_spell_caster_secrets (
+CREATE TABLE IF NOT EXISTS division_online.o_spell_caster_secrets (
     key text,
     spell text,
     username text,
@@ -272,17 +273,11 @@ CREATE TABLE division_online.o_spell_caster_secrets (
     AND tombstone_gc = {'mode': 'timeout', 'propagation_delay_in_seconds': '3600'};
 "
 
-echo " * Killing running scylla containers."
-docker kill scylla-division-online
-
-echo " * Removing old scylla containers."
-docker rm scylla-division-online
-
 echo " * Running scylladb/scylla image."
-docker run --name scylla-division-online -d scylladb/scylla --reactor-backend=epoll 
+docker compose -f "${COMPOSE_FILE}" up -d scylla
 
 echo " * Waiting for docker container to settle."
 sleep "${wait_for_settle_time}"
 
 echo " * Creating scylla keyspaces and tables."
-echo "${CREATE_USERS}" | docker exec -i scylla-division-online cqlsh
+echo "${CREATE_USERS}" | docker exec -i scylla cqlsh

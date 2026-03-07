@@ -1,6 +1,6 @@
+def version=""
 pipeline {
   agent any
-
   
   environment {
     API_PORT='1313'
@@ -8,39 +8,24 @@ pipeline {
   }
 
   stages {
-
-	  stage('Docker Build') {
+	  stage('Push Image to Docker Registry') {
 		  steps {
-				withCredentials([string(credentialsId:'vault-scylla-db-user',variable:'SCYLLA_DB_USER')]){
-					withCredentials([string(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
-						withCredentials([vaultString(credentialsId:'vault-aes-key',variable:'SALT_ENCRYPTION_KEY')]){
-							withCredentials([vaultString(credentialsId:'vault-aes-iv',variable:'SALT_ENCRYPTION_IV')]){
-								sh 'docker compose build'
-							}
-						}
-					}
-				}
-			}
-	  }
-
-		stage('Docker Kill') {
-			steps {
-				sh 'docker compose down' 		  
-			}
-	  }
-
-   	stage('Docker Run') {
-			steps {
-				withCredentials([string(credentialsId:'vault-scylla-db-user',variable:'SCYLLA_DB_USER')]){
-					withCredentials([string(credentialsId:'vault-scylla-cassandra-password',variable:'SCYLLA_CASSANDRA_PASSWORD')]){
-						withCredentials([vaultString(credentialsId:'vault-aes-key',variable:'SALT_ENCRYPTION_KEY')]){
-							withCredentials([vaultString(credentialsId:'vault-aes-iv',variable:'SALT_ENCRYPTION_IV')]){
-		        		sh 'docker compose up -d'
-							}
-						}
+				script {
+				
+					withDockerRegistry(url: 'https://registry.onlinedi.vision:5000',  credentialsId:'docker-registry') {
+						version="v" + sh(script:'echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n', returnStdout: true)
+						echo "VERSION TO BE DEPLOYED: $version"
+						sh "docker build . -t od-official-server:${version}"
+						sh "docker tag od-official-server:${version} registry.onlinedi.vision:5000/od-official-server:${version}"
+						sh "docker push registry.onlinedi.vision:5000/od-official-server:${version}"
 					}
 				}
 			}
 		}
+		stage ('Deploying to K8S') {
+			steps {
+		    build job: 'PROD/K8S-INFRA/DEPLOY', parameters: [[$class: 'StringParameterValue', name: 'DEPLOYMENT', value: 'od-official-server'], [$class: 'StringParameterValue', name: 'NEW_VERSION', value: version]]
+			}
+		}	
   }
 }

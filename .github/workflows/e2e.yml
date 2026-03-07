@@ -18,7 +18,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     - name: Run E2E tests
       run: |
-        ./launch-test-env.sh -cup 9999 -t 10 -T 10
+        COMPOSE_BAKE=true ./launch-test-env.sh -cuk -t 10 -T 10
 

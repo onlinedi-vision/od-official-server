@@ -1,6 +1,6 @@
-use crate::api::structures;
-use crate::api::structures::{LimitMessageTokenUser};
 use crate::api::statics;
+use crate::api::structures;
+use crate::api::structures::LimitMessageTokenUser;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
@@ -8,7 +8,7 @@ use crate::utils::logging;
 use ::function_name::named;
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/get_messages_migration")]
+#[actix_web::post("/servers/{sid}/{channel_name}/get_messages_migration")]
 pub async fn get_channel_messages_migration(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -66,10 +66,8 @@ pub async fn get_channel_messages_migration(
     actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
 }
 
-// TODO: what happens if channel/server doesn't exist:
-//     - it seems you can send messages to *things* that don't exist
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/send_message")]
+#[actix_web::post("/servers/{sid}/{channel_name}/send_message")]
 pub async fn send_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -80,11 +78,11 @@ pub async fn send_message(
 		return actix_web::HttpResponse::LengthRequired()
 			.body(format!("Failed to send message: Message longer than {}", statics::MAX_MESSAGE_LENGTH));
 	}
-    let sid = param!(http, "sid");
-    let channel_name = param!(http, "channel_name");
-
+	
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let sid = param!(http, "sid", &scylla_session);
+    let channel_name = param!(http, "channel_name", &scylla_session, sid);
 
     if db::prelude::check_permission(
         &scylla_session,
@@ -130,7 +128,7 @@ pub async fn send_message(
 //     - it seems that when the datetime is invalid the API doesn't fail with a proper message but instead says
 //       "Message deleted succesfully" without anything actually happening...
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/delete_message")]
+#[actix_web::post("/servers/{sid}/{channel_name}/delete_message")]
 pub async fn delete_message(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -155,13 +153,11 @@ pub async fn delete_message(
     let sid = param!(http, "sid");
     let channel_name = param!(http, "channel_name");
 
-    let dt = match chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f") {
-        Ok(dt) => dt,
-        Err(_) => {
-            return actix_web::HttpResponse::BadRequest()
-                .body("invalid `datetime` format, expected `%Y-%m-%d %H:%M:%S%.f`");
-        }
+    let Ok(dt) = chrono::NaiveDateTime::parse_from_str(&req.datetime, "%Y-%m-%d %H:%M:%S%.f") else {
+        return actix_web::HttpResponse::BadRequest()
+            .body("invalid `datetime` format, expected `%Y-%m-%d %H:%M:%S%.f`");
     };
+
     let millis = dt.and_utc().timestamp_millis();
     let cql_datetime = scylla::value::CqlTimestamp(millis);
 

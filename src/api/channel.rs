@@ -1,6 +1,6 @@
+use crate::api::statics;
 use crate::api::structures;
 use crate::api::structures::{CreateChannel, TokenUser};
-use crate::api::statics;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
@@ -8,13 +8,14 @@ use crate::utils::logging;
 use ::function_name::named;
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/get_channels")]
+#[actix_web::post("/servers/{sid}/get_channels")]
 pub async fn get_channels(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+    
     let sid = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
@@ -44,19 +45,21 @@ pub async fn get_channels(
 }
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/create_channel")]
+#[actix_web::post("/servers/{sid}/create_channel")]
 pub async fn create_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<CreateChannel>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
-	if req.channel_name.len() > statics::MAX_CHANNEL_LENGTH {
-		return actix_web::HttpResponse::LengthRequired()
-			.body(format!("Failed to create channel: Channel name longer than {}", statics::MAX_CHANNEL_LENGTH));
-	}
-    let sid = param!(http, "sid");
+    if req.channel_name.len() > statics::MAX_CHANNEL_LENGTH {
+        return actix_web::HttpResponse::LengthRequired().body(format!(
+            "Failed to create channel: Channel name longer than {}",
+            statics::MAX_CHANNEL_LENGTH
+        ));
+    }
     let scylla_session = scylla_session!(session);
+    let sid = param!(http, "sid", &scylla_session);
     let cache = cache!(shared_cache);
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -85,7 +88,7 @@ pub async fn create_channel(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(new_token_holder.token.clone())),
+            key: Some(security::armor_token(&new_token_holder.token)),
             username: Some(req.username.clone()),
         },
     )
@@ -94,7 +97,7 @@ pub async fn create_channel(
     let _ = db::users::delete_token(
         &scylla_session,
         req.username.clone(),
-        security::armor_token(req.token.clone()),
+        security::armor_token(&req.token),
     )
     .await;
 
@@ -102,15 +105,19 @@ pub async fn create_channel(
 }
 
 #[named]
-#[actix_web::post("/servers/{sid}/api/{channel_name}/delete_channel")]
+#[actix_web::post("/servers/{sid}/{channel_name}/delete_channel")]
 pub async fn delete_channel(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
 ) -> impl actix_web::Responder {
+
     let scylla_session = scylla_session!(session);
+    let sid = param!(http, "sid", &scylla_session);
+    let channel_name = param!(http, "channel_name", &scylla_session, sid);
     let cache = cache!(shared_cache);
+    
     if db::prelude::check_token(
         &scylla_session,
         &cache,
@@ -122,9 +129,6 @@ pub async fn delete_channel(
     {
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
-
-    let sid = param!(http, "sid");
-    let channel_name = param!(http, "channel_name");
 
     if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await != Some(true) {
         logging::log("Unauthorized: not server owner", Some(function_name!()));

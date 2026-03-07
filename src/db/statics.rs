@@ -1,161 +1,185 @@
-pub static SELECT_USER_USERNAME: &str = r#"
+use std::env;
+
+pub static DEFAULT_TOKEN_TTL: u64 = 604_800;
+pub static TOKEN_TTL: std::sync::LazyLock<i32> = std::sync::LazyLock::new(|| {
+    env::var("TOKEN_TTL").unwrap_or_else(|_| "604800".to_string())
+        .parse::<i32>()
+        .unwrap_or(604_800)
+});
+pub static DEFAULT_MESSAGE_LIMIT: i32 = 100;
+
+pub static SELECT_USER_USERNAME: &str = r"
     SELECT username FROM division_online.users
         WHERE username = ?;
-"#;
+";
 
-pub static CHECK_TOKEN: &str = r#"
+pub static CHECK_TOKEN: &str = r"
     SELECT key FROM division_online.o_user_tokens
         WHERE key = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static CHECK_TOKEN_USER: &str = r#"
+pub static CHECK_TOKEN_USER: &str = r"
     SELECT key FROM division_online.o_user_tokens
         WHERE key = ? AND username = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static SELECT_SERVER_CHANNELS: &str = r#"
+pub static SELECT_SERVER_CHANNELS: &str = r"
     SELECT channel_name FROM division_online.o_server_channels
         WHERE sid = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static INSERT_NEW_USER: &str = r#"
+pub static SELECT_SERVER_CHANNEL: &str = r"
+    SELECT channel_name FROM division_online.o_server_channels
+        WHERE sid=? AND channel_name=?
+        ALLOW FILTERING;
+";
+
+pub static INSERT_NEW_USER: &str = r"
     INSERT INTO division_online.users (username, password_hash, email, key, bio, user_salt, password_salt, pfp)
         VALUES (?,?,?,?,?,?,?,'');
-"#;
+";
 
-pub static INSERT_NEW_TOKEN: &str = r#"
+pub static INSERT_NEW_TOKEN: &str = r"
     INSERT INTO division_online.o_user_tokens (username, key, datetime)
-        VALUES (?,?,dateof(now()));
-"#;
+        VALUES (?,?,dateof(now()))
+        USING TTL ?;
+";
 
-pub static UPDATE_USER_TTL: &str = r#"
+
+pub static UPDATE_USER_TTL: &str = r"
     UPDATE division_online.users SET ttl=?
         WHERE username = ?;
-"#;
+";
 
-pub static SELECT_USER_PASSWORD_HASH: &str = r#"
+pub static SELECT_USER_PASSWORD_HASH: &str = r"
     SELECT password_hash, user_salt, password_salt FROM division_online.users
         WHERE username = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static SELECT_USER_TTL: &str = r#"
+pub static SELECT_USER_TTL: &str = r"
     SELECT ttl FROM division_online.users
         WHERE username = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static INSERT_SERVER_CHANNEL_MESSAGE: &str = r#"
+pub static INSERT_SERVER_CHANNEL_MESSAGE: &str = r"
     INSERT INTO division_online.o_server_messages_migration(mid,channel_name,datetime,m_content,sid,username,encrypted,salt) 
         VALUES(?,?,dateof(now()),?,?,?,?,?); 
-"#;
+";
 
-pub static INSERT_SERVER_CHANNEL_MESSAGE_TTL: &str = r#"
+pub static INSERT_SERVER_CHANNEL_MESSAGE_TTL: &str = r"
     INSERT INTO division_online.o_server_messages_migration(mid,channel_name,datetime,m_content,sid,username,encrypted,salt) 
         VALUES(?,?,dateof(now()),?,?,?,?,?)
         USING TTL ?; 
-"#;
+";
 
-pub static SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION: &str = r#"
+pub static SELECT_SERVER_CHANNEL_MESSAGES_MIGRATION: &str = r"
     SELECT username, datetime, m_content, encrypted, salt FROM division_online.o_server_messages_migration
         WHERE sid=? AND channel_name=?
         ORDER BY datetime DESC
         LIMIT ?
         ALLOW FILTERING; 
-"#;
+";
 
-pub static SELECT_SERVER_CHANNEL_MESSAGES: &str = r#"
+pub static SELECT_SERVER_SID: &str = r"
+  SELECT sid FROM division_online.o_servers
+        WHERE sid=?
+        ALLOW FILTERING; 
+";
+
+pub static SELECT_SERVER_CHANNEL_MESSAGES: &str = r"
     SELECT username, datetime, m_content FROM division_online.o_server_messages 
         WHERE sid=? AND channel_name=? 
         ALLOW FILTERING; 
-"#;
+";
 
-pub static SELECT_USER_SID_LIST: &str = r#"
+pub static SELECT_USER_SID_LIST: &str = r"
     SELECT sid FROM division_online.o_server_users
         WHERE username = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static INSERT_SERVER_CHANNEL: &str = r#"
+pub static INSERT_SERVER_CHANNEL: &str = r"
     INSERT INTO division_online.o_server_channels(sid, channel_name)
         VALUES(?,?);
-"#;
+";
 
-pub static SELECT_SERVER_USER: &str = r#"
+pub static SELECT_SERVER_USER: &str = r"
     SELECT username FROM division_online.o_server_users
         WHERE sid = ? AND username = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static INSERT_NEW_SERVER: &str = r#"
+pub static INSERT_NEW_SERVER: &str = r"
     INSERT INTO division_online.o_servers(sid, desc, img_url, name, owner)
         VALUES(?,?,?,?,?);
-"#;
+";
 
-pub static INSERT_USER_INTO_SERVER: &str = r#"
+pub static INSERT_USER_INTO_SERVER: &str = r"
     INSERT INTO division_online.o_server_users(sid, username)
         VALUES(?,?);
-"#;
+";
 
-pub static SELECT_SERVER_USERS: &str = r#"
+pub static SELECT_SERVER_USERS: &str = r"
     SELECT username FROM division_online.o_server_users
         WHERE sid = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static SELECT_USER_INFO: &str = r#"
+pub static SELECT_USER_INFO: &str = r"
     SELECT pfp, bio FROM division_online.users
         WHERE username = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static SELECT_USER_PFP: &str = r#"
+pub static SELECT_USER_PFP: &str = r"
     SELECT pfp FROM division_online.users
         WHERE username = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static UPDATE_USER_PFP: &str = r#"
+pub static UPDATE_USER_PFP: &str = r"
     UPDATE division_online.users
     SET pfp = ?
     WHERE username = ?
     IF EXISTS;
-"#;
+";
 
-pub static SELECT_SERVER_INFO: &str = r#"
+pub static SELECT_SERVER_INFO: &str = r"
     SELECT name, desc, img_url FROM division_online.o_servers
         WHERE sid = ?
         ALLOW FILTERING;
-"#;
+";
 
 
-pub static SELECT_USER_ROLES: &str = r#"
+pub static SELECT_USER_ROLES: &str = r"
    SELECT role_name FROM division_online.o_user_server_roles
        WHERE server_id = ? AND username = ?;
-"#;
+";
 
-pub static INSERT_SERVER_ROLE: &str = r#"
+pub static INSERT_SERVER_ROLE: &str = r"
    INSERT INTO division_online.o_server_roles (server_id, role_name, color, permissions)
        VALUES(?, ?, ?, ?); 
-"#;
+";
 
-pub static DELETE_SERVER_ROLE: &str = r#"
+pub static DELETE_SERVER_ROLE: &str = r"
     DELETE FROM division_online.o_server_roles
         WHERE server_id = ? AND role_name = ?;
-"#;
+";
 
-pub static ASSIGN_ROLE_TO_USER: &str = r#"
+pub static ASSIGN_ROLE_TO_USER: &str = r"
    INSERT INTO division_online.o_user_server_roles (server_id, username, role_name)
        VALUES (?, ?, ?); 
-"#;
+";
 
-pub static REMOVE_ROLE_FROM_USER: &str = r#"
+pub static REMOVE_ROLE_FROM_USER: &str = r"
     DELETE FROM division_online.o_user_server_roles
         WHERE server_id = ? AND username = ? AND role_name = ?;
-"#;
+";
 
 
 pub static SELECT_ROLE_PERMISSIONS: &str = r#"
@@ -167,116 +191,116 @@ pub static SELECT_USER_ROLES_BY_ROLE: &str = r#"
     SELECT username FROM division_online.o_user_server_roles
         WHERE server_id = ? AND role_name = ?
         ALLOW FILTERING;
-"#;
+";
 
 
-pub static DELETE_SERVER_BY_SID: &str = r#"
+pub static DELETE_SERVER_BY_SID: &str = r"
         DELETE FROM division_online.o_servers WHERE sid = ?;
-"#;
+";
 
-pub static DELETE_SERVER_CHANNELS_BY_SID: &str = r#"
+pub static DELETE_SERVER_CHANNELS_BY_SID: &str = r"
     DELETE FROM division_online.o_server_channels WHERE sid = ?;
-"#;
+";
 
-pub static DELETE_SERVER_USERS_BY_SID: &str = r#"
+pub static DELETE_SERVER_USERS_BY_SID: &str = r"
     DELETE FROM division_online.o_server_users WHERE sid = ?;
-"#;
+";
 
-pub static DELETE_SERVER_MESSAGES_MIGRATION_BY_SID: &str = r#"
+pub static DELETE_SERVER_MESSAGES_MIGRATION_BY_SID: &str = r"
     DELETE FROM division_online.o_server_messages_migration WHERE sid = ?;
-"#;
+";
 
-pub static DELETE_SERVER_MESSAGES_MIGRATIONS_BY_SID_AND_CHANNEL: &str = r#"
+pub static DELETE_SERVER_MESSAGES_MIGRATIONS_BY_SID_AND_CHANNEL: &str = r"
     DELETE FROM division_online.o_server_messages_migration WHERE sid = ? AND channel_name = ?;
-"#;
+";
 
-pub static DELETE_SERVER_ROLES_BY_SID: &str = r#"
+pub static DELETE_SERVER_ROLES_BY_SID: &str = r"
     DELETE FROM division_online.o_server_roles WHERE server_id = ?;
-"#;
+";
 
-pub static DELETE_USER_ROLES_BY_SID: &str = r#"
+pub static DELETE_USER_ROLES_BY_SID: &str = r"
     DELETE FROM division_online.o_user_server_roles WHERE server_id = ?;
-"#;
+";
 
-pub static DELETE_SERVER_MESSAGES_MIGRATION: &str = r#"
+pub static DELETE_SERVER_MESSAGES_MIGRATION: &str = r"
     DELETE FROM division_online.o_server_messages_migration
         WHERE sid = ? AND channel_name = ? AND datetime = ?;
-"#;
+";
 
-pub static SELECT_SERVER_MESSAGE_MIGRATIONS_OWNER: &str = r#"
+pub static SELECT_SERVER_MESSAGE_MIGRATIONS_OWNER: &str = r"
     SELECT username FROM division_online.o_server_messages_migration
         WHERE sid = ? AND channel_name = ? AND datetime = ?;
-"#;
+";
 
-pub static DELETE_CHANNEL: &str = r#"
+pub static DELETE_CHANNEL: &str = r"
     DELETE FROM division_online.o_server_channels
         WHERE sid = ? AND channel_name = ?;
-"#;
+";
 
-pub static SELECT_SERVER_OWNER: &str = r#"
+pub static SELECT_SERVER_OWNER: &str = r"
     SELECT owner FROM division_online.o_servers
         WHERE sid = ?
         ALLOW FILTERING;
-"#;
+";
 
-pub static INSERT_DM_INVITE: &str = r#"
+pub static INSERT_DM_INVITE: &str = r"
     INSERT INTO division_online.o_dm_invites(u1, u2, invite_id, sender)
         VALUES(?,?,?,?)
         IF NOT EXISTS;     
-"#;
+";
 
-pub static SELECT_DM_INVITE: &str = r#"
+pub static SELECT_DM_INVITE: &str = r"
     SELECT invite_id, sender FROM division_online.o_dm_invites
         WHERE u1 = ? AND u2 = ?;
-"#;
+";
 
-pub static DELETE_DM_INVITE: &str = r#"
+pub static DELETE_DM_INVITE: &str = r"
     DELETE FROM division_online.o_dm_invites
         WHERE u1 = ? AND u2 = ?;
-"#;
+";
 
-pub static SELECT_PENDING_INVITES_BY_U1: &str = r#"
+pub static SELECT_PENDING_INVITES_BY_U1: &str = r"
     SELECT invite_id, sender FROM division_online.o_dm_invites
         WHERE u1 = ? ALLOW FILTERING;
-"#;
+";
 
-pub static SELECT_PENDING_INVITES_BY_U2: &str = r#"
+pub static SELECT_PENDING_INVITES_BY_U2: &str = r"
     SELECT invite_id, sender FROM division_online.o_dm_invites
         WHERE u2 = ? ALLOW FILTERING;
-"#;
+";
 
-pub static INSERT_FRIEND: &str = r#"
+pub static INSERT_FRIEND: &str = r"
     INSERT INTO division_online.o_user_friends(username, friend, created_at)
         VALUES(?,?,?);
-"#;
+";
 
-pub static SELECT_FRIENDS: &str = r#"
+pub static SELECT_FRIENDS: &str = r"
     SELECT friend, created_at FROM division_online.o_user_friends
         WHERE username = ?;
-"#;
+";
 
-pub static DELETE_FRIEND: &str = r#"
+pub static DELETE_FRIEND: &str = r"
     DELETE FROM division_online.o_user_friends
         WHERE username = ? and friend = ?; 
-"#;
+";
 
-pub static DELETE_TOKEN: &str = r#"
+pub static DELETE_TOKEN: &str = r"
     DELETE FROM division_online.o_user_tokens
         WHERE username = ? and key = ?; 
-"#;
+";
 
-pub static DELETE_SPELL: &str = r#"
+pub static DELETE_SPELL: &str = r"
     DELETE FROM division_online.o_spell_caster_secrets
         WHERE key = ?; 
-"#;
+";
 
-pub static INSERT_SPELL: &str = r#"
+pub static INSERT_SPELL: &str = r"
     INSERT INTO division_online.o_spell_caster_secrets(key, spell, username)
         VALUES(?,?, ?);
-"#;
+";
 
-pub static SELECT_SPELL: &str = r#"
+pub static SELECT_SPELL: &str = r"
     SELECT spell FROM division_online.o_spell_caster_secrets
         WHERE key = ? AND username = ?
         ALLOW FILTERING;
-"#;
+";
