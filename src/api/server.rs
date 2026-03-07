@@ -59,19 +59,22 @@ pub async fn create_server(
     
     let _ =
         db::server::create_channel(&scylla_session, sid.clone(), "info".to_string()).await;
-    let server_created = structures::ServerCreatedResponse {
+    let mut server_created = structures::ServerCreatedResponse {
         token: security::token(),
         sid: sid.clone(),
     };
-    let _ = db::prelude::insert_user_token(
+    if let Err(insert_err) = db::prelude::insert_user_token(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(&server_created.token)),
+            key: Some(security::armor_token(&server_created.token.clone())),
             username: Some(req.username.clone()),
         },
     )
-    .await;
+    .await {
+        logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+        server_created.token = req.token.clone()    
+    }
 
     let role = db::structures::ServerRole {
         role_name: "member".to_string(),
@@ -138,7 +141,7 @@ pub async fn join_server(
     let new_token_holder = structures::TokenHolder {
         token: security::token(),
     };
-    let _ = db::prelude::insert_user_token(
+    if let Err(insert_err) = db::prelude::insert_user_token(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
@@ -146,7 +149,10 @@ pub async fn join_server(
             username: Some(req.username.clone()),
         },
     )
-    .await;
+    .await {
+        logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+        return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+    }
 
     let _ = db::users::delete_token(
         &scylla_session,
