@@ -183,7 +183,7 @@ pub async fn get_user_servers(
     }
 
     if let Some(sids) = db::server::fetch_user_servers(&scylla_session, req.username.clone()).await {
-        let _ = db::prelude::insert_user_token(
+        if let Err(insert_err) = db::prelude::insert_user_token(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
@@ -191,7 +191,11 @@ pub async fn get_user_servers(
                 username: Some(req.username.clone()),
             },
         )
-        .await;
+        .await {
+            logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+            return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+        }
+
 
         let _ = db::users::delete_token(
             &scylla_session,
@@ -239,7 +243,7 @@ pub async fn get_user_pfp(
     }
     
     if let Some(pfp_row) = db::users::fetch_user_pfp(&scylla_session, &req.username).await {
-        let _ = db::prelude::insert_user_token(
+        if let Err(insert_err) = db::prelude::insert_user_token(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
@@ -247,7 +251,10 @@ pub async fn get_user_pfp(
                 username: Some(req.username.clone()),
             },
         )
-        .await;
+        .await {
+            logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+            return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+        }
 
         let _ = db::users::delete_token(
             &scylla_session,
@@ -302,7 +309,7 @@ pub async fn set_user_pfp(
             .body("Failed to update profile picture.");
     }
 
-    let _ = db::prelude::insert_user_token(
+    if let Err(insert_err) = db::prelude::insert_user_token(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
@@ -310,7 +317,10 @@ pub async fn set_user_pfp(
             username: Some(req.username.clone()),
         },
     )
-    .await;
+    .await {
+        logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+        return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+    }
 
     let _ = db::users::delete_token(
         &scylla_session,

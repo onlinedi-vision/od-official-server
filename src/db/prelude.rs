@@ -15,20 +15,27 @@ pub async fn insert_user_token(
     session: &scylla::client::session::Session,
     cache: &moka::future::Cache<String,String>,
     user: structures::KeyUser,
-) -> Option<Result<()>> {
+) -> Result<()> {
 
     if let Some(username) = user.username.clone()
-        && let Some(key) = user.key.clone() {
+    && let Some(key) = user.key.clone() {
+        
             let () = cache.insert(username.clone(), key.clone()).await;
-        }
        
-    Some(
-        session
-            .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key, *statics::TOKEN_TTL))
-            .await
-            .map(|_| ())
-            .map_err(From::from),
-    )
+            if let Err(e) =
+                session
+                    .query_unpaged(statics::INSERT_NEW_TOKEN, (user.username, user.key, *statics::TOKEN_TTL))
+                    .await
+                    .map(|_| ())
+                    .map_err(From::from)
+            {
+               cache.invalidate(&username).await;
+               return Err(e);
+            }
+            return Ok(());
+    }
+
+    Err("Either username or key was not provided for inserting token...".into())
 }
 
 pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Session> {
