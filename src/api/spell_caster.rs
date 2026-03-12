@@ -4,6 +4,7 @@ use scylla::client::session::Session;
 use crate::api::structures;
 use crate::db;
 use crate::security;
+// use crate::metrics;
 
 #[actix_web::post("/spell/cast")]
 pub async fn spell_cast(
@@ -39,15 +40,18 @@ pub async fn spell_check(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::SpellChecker>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_some()
