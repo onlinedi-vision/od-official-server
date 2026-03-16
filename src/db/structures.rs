@@ -5,7 +5,7 @@ bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
     pub struct Permissions: i64 {
         const SEND_MESSAGES = 1 << 0;
-        const ADD_ROLE = 1 << 1;
+        const ADD_ROLE =      1 << 1;
     }
 }
 
