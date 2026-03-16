@@ -10,15 +10,18 @@ pub async fn fetch_friend_list(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -50,15 +53,18 @@ pub async fn delete_friend(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::FriendListReq>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.user.clone()),
+        &collector,
     )
     .await
     .is_none()

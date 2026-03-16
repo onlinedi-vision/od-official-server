@@ -1,7 +1,7 @@
 use actix_web::{web::Data, Error};
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use futures::future::{ok, Ready};
-use prometheus::{HistogramVec, HistogramOpts, IntCounterVec, Opts, Registry};
+use prometheus::{HistogramVec, HistogramOpts, IntCounterVec, IntCounter, Opts, Registry};
 use std::task::{Context, Poll};
 use std::time::Instant;
 use std::pin::Pin;
@@ -11,6 +11,8 @@ pub struct MetricsCollector {
     request_counter: IntCounterVec,
     response_time_histogram: HistogramVec,
     request_size: IntCounterVec,
+    pub total_cache_hit_count: IntCounter,
+    pub total_cache_miss_count: IntCounter,
 }
 
 impl MetricsCollector {
@@ -29,8 +31,18 @@ impl MetricsCollector {
             Opts::new("http_request_size_bytes", "HTTP request size in bytes"),
             &["method", "endpoint"]
         )?;
+
+        let total_cache_hit_count = IntCounter::new(
+            "total_cache_hit_count", "How many cache hits happened."
+        )?;
+
+        let total_cache_miss_count = IntCounter::new(
+            "total_cache_miss_count", "How many cache misses happened."
+        )?;
         
         registry.register(Box::new(request_counter.clone()))?;
+        registry.register(Box::new(total_cache_hit_count.clone()))?;
+        registry.register(Box::new(total_cache_miss_count.clone()))?;
         registry.register(Box::new(response_time_histogram.clone()))?;
         registry.register(Box::new(request_size.clone()))?;
 
@@ -38,6 +50,8 @@ impl MetricsCollector {
             request_counter,
             response_time_histogram,
             request_size,
+            total_cache_hit_count,
+            total_cache_miss_count,
         })
     }
 

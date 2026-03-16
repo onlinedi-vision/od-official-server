@@ -6,6 +6,7 @@ use crate::api::structures;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
+use crate::metrics;
 
 use ::function_name::named;
 
@@ -15,6 +16,7 @@ pub async fn create_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::CreateServer>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     if req.name.len() > statics::MAX_SERVER_LENGTH {
         return actix_web::HttpResponse::LengthRequired().body(format!(
@@ -24,11 +26,13 @@ pub async fn create_server(
     }
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -116,16 +120,19 @@ pub async fn join_server(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -181,10 +188,12 @@ pub async fn get_server_users(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -192,6 +201,7 @@ pub async fn get_server_users(
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        &collector,
     )
     .await
     .is_none()
@@ -228,15 +238,18 @@ pub async fn delete_server(
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
         &scylla_session,
         &cache,
         req.token.clone(),
         Some(req.username.clone()),
+        &collector,
     )
     .await
     .is_none()
@@ -270,9 +283,11 @@ pub async fn am_i_in_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUserServer>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
         &scylla_session,
@@ -280,6 +295,7 @@ pub async fn am_i_in_server(
         req.sid.clone(),
         req.token.clone(),
         req.username.clone(),
+        &collector,
     )
     .await
     .is_some()

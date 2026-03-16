@@ -12,9 +12,11 @@ pub async fn add_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::ServerRoleRequest>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if req.name.len() > statics::MAX_ROLE_NAME_LENGTH {
         return actix_web::HttpResponse::BadRequest()
@@ -66,6 +68,7 @@ pub async fn assign_role(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
         return actix_web::HttpResponse::BadRequest()
@@ -117,9 +120,11 @@ pub async fn remove_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::UserServerRoleRequest>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
         return actix_web::HttpResponse::BadRequest()
@@ -174,6 +179,7 @@ pub async fn delete_server_role(
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
 
     if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
         return actix_web::HttpResponse::BadRequest()

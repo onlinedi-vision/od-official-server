@@ -24,4 +24,5 @@ services:
       - API_PORT=1313
       - TOKEN_TTL=2
       - SCYLLA_INET
-      - NO_OF_WORKERS              
+      - NO_OF_WORKERS
+      - RUST_LOG=debug              
