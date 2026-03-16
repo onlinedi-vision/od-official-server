@@ -80,15 +80,12 @@ pub async fn create_server(
         .await
         .is_some()
     {
-        // we make an admin role that can send messages and make roles for now
         let admin_role = db::structures::ServerRole {
             server_id: sid.clone(),
             name: "admin".to_string(),
             color: String::new(),
             permissions: db::structures::Permissions::SEND_MESSAGES.bits() | db::structures::Permissions::ADD_ROLE.bits(),
         };
-
-        // here the basic "member" role that can send messages is created
         let member_role = db::structures::ServerRole {
             server_id: sid.clone(),
             name: "member".to_string(),
@@ -100,7 +97,6 @@ pub async fn create_server(
         let _ = db::roles::insert_server_role(&scylla_session, sid.clone(), admin_role).await;
         let _ = db::roles::insert_server_role(&scylla_session,sid.clone(), member_role).await;
 
-        // make the one that made the server a admin
         let _ = scylla_session
             .query_unpaged(
                 db::statics::ASSIGN_ROLE_TO_USER,

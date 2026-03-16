@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 
-//this is a zero cost abstraction(it stays 8bytes) that adds a ton of usefull methods 
+//more at https://docs.rs/flags/latest/bitflags/
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
     pub struct Permissions: i64 {
