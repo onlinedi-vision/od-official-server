@@ -53,6 +53,12 @@ pub async fn check_user_password(
     actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
+macro_rules! cache_metrics {
+    ($col:ident) => {
+        $col.metrics_collector.clone()
+    };
+}
+
 macro_rules! scylla_session {
     ($session:ident) => {
         match $session.lock.lock() {
