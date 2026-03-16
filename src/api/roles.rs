@@ -30,6 +30,7 @@ pub async fn add_server_role(
         req.token.clone(),
         req.username.clone(),
         db::structures::Permissions::ADD_ROLE.bits(),
+        &collector,
     )
     .await
     .is_none()
@@ -65,6 +66,7 @@ pub async fn assign_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::UserServerRoleRequest>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
@@ -82,6 +84,7 @@ pub async fn assign_role(
         req.token.clone(),
         req.username.clone(),
         db::structures::Permissions::ADD_ROLE.bits(),
+        &collector,
     )
     .await
     .is_none()
@@ -138,6 +141,7 @@ pub async fn remove_role(
         req.token.clone(),
         req.username.clone(),
         db::structures::Permissions::ADD_ROLE.bits(),
+        &collector,
     )
     .await
     .is_none()
@@ -176,6 +180,7 @@ pub async fn delete_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::DeleteServerRoleRequest>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
@@ -193,6 +198,7 @@ pub async fn delete_server_role(
         req.token.clone(),
         req.username.clone(),
         db::structures::Permissions::ADD_ROLE.bits(),
+        &collector,
     )
     .await
     .is_none()

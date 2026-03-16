@@ -96,6 +96,7 @@ pub async fn send_message(
         req.token.clone(),
         req.username.clone(),
         db::structures::Permissions::SEND_MESSAGES.bits(),
+        &collector,
     )
     .await
     .is_none()

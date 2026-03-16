@@ -204,8 +204,9 @@ pub async fn check_permission(
     token: String,
     username: String,
     required: i64,
+    collector: &metrics::prelude::MetricsCollector,
 ) -> Option<()> {
-    check_user_is_in_server(session, cache, sid.clone(), token, username.clone()).await?;
+    check_user_is_in_server(session, cache, sid.clone(), token, username.clone(), collector).await?;
     let perms = db::roles::fetch_user_permissions(session, sid, username).await;
     if (perms & required) == required {
         Some(())
