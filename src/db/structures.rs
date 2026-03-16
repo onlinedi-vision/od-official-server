@@ -1,6 +1,9 @@
 use bitflags::bitflags;
 
-//more at https://docs.rs/flags/latest/bitflags/
+/*
+This provides some quality of life overloaded operators which makes the development process much easier. 
+More about it at: https://docs.rs/flags/latest/bitflags/ 
+*/
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
     pub struct Permissions: i64 {
