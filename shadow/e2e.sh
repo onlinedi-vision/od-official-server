@@ -238,6 +238,61 @@ eetest "/user/ttl -- set TTL back to _N_ormal"
 payload=$(patch "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"ttl\":\"N\"}" "/user/ttl")
 assert "TTL Updated." "${payload}" "/user/ttl"
 
+QA_USERNAME2=$(mktemp --dry-run qa_e2e_user2-XXXXXXXXXXXX)
+eetest "/new_user (user2 for role tests)"
+token2=$(post "{\"username\":\"${QA_USERNAME2}\", \"password\":\"${QA_E2E_ACCOUNT_PASSWORD}\", \"email\":\"L2\"}" "/new_user" | jq '.token')
+assert_neq "null" "${token2}" "/new_user (user2)"
+
+eetest "/servers/{sid}/join (user2 joins server)"
+join_payload=$(post "{\"username\":\"${QA_USERNAME2}\", \"token\":${token2}}" "/servers/${sid}/join")
+token2=$(echo "${join_payload}" | jq '.token')
+assert_neq "null" "${token2}" "/servers/{sid}/join (user2)"
+
+eetest "/add_server_role -- admin creates role"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"server_id\":\"${sid}\", \"name\":\"moderator\", \"permissions\":1}" "/add_server_role")
+assert "Role added successfully" "${payload}" "/add_server_role"
+
+eetest "/add_server_role -- member cannot create role"
+payload=$(post "{\"username\":\"${QA_USERNAME2}\", \"token\":${token2}, \"server_id\":\"${sid}\", \"name\":\"hackerman_role\", \"permissions\":1}" "/add_server_role")
+assert "You do not have permission to manage roles" "${payload}" "/add_server_role (member denied)"
+
+eetest "/add_server_role -- invalid permission bits"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"server_id\":\"${sid}\", \"name\":\"wrong_role\", \"permissions\":9999}" "/add_server_role")
+assert "Invalid permission request!" "${payload}" "/add_server_role (invalid perms)"
+
+eetest "/api/assign_role -- admin assigns role to user2"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"server_id\":\"${sid}\", \"target_user\":\"${QA_USERNAME2}\", \"role_name\":\"moderator\"}" "/api/assign_role")
+assert "Role assigned" "${payload}" "/api/assign_role"
+
+eetest "/api/assign_role -- member cannot assign role"
+payload=$(post "{\"username\":\"${QA_USERNAME2}\", \"token\":${token2}, \"server_id\":\"${sid}\", \"target_user\":\"${QA_USERNAME}\", \"role_name\":\"moderator\"}" "/api/assign_role")
+assert "You do not have permission to manage roles" "${payload}" "/api/assign_role (member denied)"
+
+eetest "/api/assign_role -- target user not in server"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"server_id\":\"${sid}\", \"target_user\":\"nonexistent_user_xyz\", \"role_name\":\"moderator\"}" "/api/assign_role")
+assert "Target user is not in the server" "${payload}" "/api/assign_role (not in server)"
+
+eetest "/api/remove_role -- admin removes role from user2"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"server_id\":\"${sid}\", \"target_user\":\"${QA_USERNAME2}\", \"role_name\":\"moderator\"}" "/api/remove_role")
+assert "Role removed successfully" "${payload}" "/api/remove_role"
+
+eetest "/api/remove_role -- member cannot remove role"
+payload=$(post "{\"username\":\"${QA_USERNAME2}\", \"token\":${token2}, \"server_id\":\"${sid}\", \"target_user\":\"${QA_USERNAME}\", \"role_name\":\"admin\"}" "/api/remove_role")
+assert "You do not have permission to manage roles" "${payload}" "/api/remove_role (member denied)"
+
+eetest "/api/delete_server_role -- admin deletes role"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"server_id\":\"${sid}\", \"role_name\":\"moderator\"}" "/api/delete_server_role")
+assert "Role deleted successfully" "${payload}" "/api/delete_server_role"
+
+eetest "/api/delete_server_role -- member cannot delete role"
+payload=$(post "{\"username\":\"${QA_USERNAME2}\", \"token\":${token2}, \"server_id\":\"${sid}\", \"role_name\":\"admin\"}" "/api/delete_server_role")
+assert "You do not have permission to manage roles" "${payload}" "/api/delete_server_role (member denied)"
+
+long_role_name=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 31) || pwd > /dev/null
+eetest "/add_server_role -- role name too long"
+payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}, \"server_id\":\"${sid}\", \"name\":\"${long_role_name}\", \"permissions\":1}" "/add_server_role")
+assert_match "Role name exceeds maximum length of "* "${payload}" "/add_server_role (name too long)"
+
 eetest "/servers/{sid}/delete_server (${QA_USERNAME} is owner)" ""
 payload=$(post "{\"username\":\"${QA_USERNAME}\", \"token\":${token}}" "/servers/${sid}/delete_server"  )
 assert 'Server deleted successfully' "${payload}" "/servers/{sid}/delete_server"
