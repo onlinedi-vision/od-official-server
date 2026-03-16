@@ -48,7 +48,7 @@ pub async fn add_server_role(
         name: req.name.clone(),
         server_id: req.server_id.clone(),
         color: req.color.clone().unwrap_or_default(),
-        permissions: req.permissions.clone(),
+        permissions: req.permissions,
     };
 
     match db::roles::insert_server_role(&scylla_session, req.server_id.clone(), role).await {
@@ -109,9 +109,9 @@ pub async fn assign_role(
         req.role_name.clone(),
     ).await
     {
-        Ok(_) => actix_web::HttpResponse::Ok().body("Role assigned"),
+        Ok(()) => actix_web::HttpResponse::Ok().body("Role assigned"),
         Err(e) => {
-            logging::log(&format!("Error assigning role: {:?}", e), Some(function_name!()));
+            logging::log(&format!("Error assigning role: {e:?}"), Some(function_name!()));
             actix_web::HttpResponse::InternalServerError().body("Failed to assign role")
         }
     }
@@ -166,9 +166,9 @@ pub async fn remove_role(
         req.role_name.clone(),
         ).await
     {
-        Ok(_) => actix_web::HttpResponse::Ok().body("Role removed successfully"),
+        Ok(()) => actix_web::HttpResponse::Ok().body("Role removed successfully"),
         Err(e) => {
-            logging::log(&format!("Error removing role: {:?}", e), Some(function_name!()));
+            logging::log(&format!("Error removing role: {e:?}"), Some(function_name!()));
             actix_web::HttpResponse::InternalServerError().body("Failed to remove role")
         }
     }
@@ -211,7 +211,7 @@ pub async fn delete_server_role(
         req.server_id.clone(),
         req.role_name.clone(),
     ).await {
-        logging::log(&format!("Error cleaning up role assignments: {:?}", e), Some(function_name!()));
+        logging::log(&format!("Error cleaning up role assignments: {e:?}"), Some(function_name!()));
     }
 
     match db::roles::delete_role(&scylla_session, 
@@ -219,9 +219,9 @@ pub async fn delete_server_role(
         req.role_name.clone())
         .await
     {
-        Ok(_) => actix_web::HttpResponse::Ok().body("Role deleted successfully"),
+        Ok(()) => actix_web::HttpResponse::Ok().body("Role deleted successfully"),
         Err(e) => {
-            logging::log(&format!("Error deleting role: {:?}", e), Some(function_name!()));
+            logging::log(&format!("Error deleting role: {e:?}"), Some(function_name!()));
             actix_web::HttpResponse::InternalServerError().body("Failed to delete role")
         }
     }
