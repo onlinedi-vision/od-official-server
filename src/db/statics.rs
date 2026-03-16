@@ -182,16 +182,16 @@ pub static REMOVE_ROLE_FROM_USER: &str = r"
 ";
 
 
-pub static SELECT_ROLE_PERMISSIONS: &str = r#"
+pub static SELECT_ROLE_PERMISSIONS: &str = r"
     SELECT permissions FROM division_online.o_server_roles
         WHERE server_id = ? AND role_name = ?;
-"#;
+";
 
-pub static SELECT_USER_ROLES_BY_ROLE: &str = r#"
+pub static SELECT_USER_ROLES_BY_ROLE: &str = r"
     SELECT username FROM division_online.o_user_server_roles
         WHERE server_id = ? AND role_name = ?
         ALLOW FILTERING;
-"#;
+";
 
 
 pub static DELETE_SERVER_BY_SID: &str = r"
