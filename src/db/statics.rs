@@ -187,7 +187,7 @@ pub static SELECT_ROLE_PERMISSIONS: &str = r"
         WHERE server_id = ? AND role_name = ?;
 ";
 
-pub static SELECT_USER_ROLES_BY_ROLE: &str = r"
+pub static SELECT_USER_NAME_BY_ROLE: &str = r"
     SELECT username FROM division_online.o_user_server_roles
         WHERE server_id = ? AND role_name = ?
         ALLOW FILTERING;

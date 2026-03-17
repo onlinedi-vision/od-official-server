@@ -115,7 +115,7 @@ pub async fn remove_role_from_all_users(
     role_name: String,
 ) -> Result<()> {
     let query_rows = session
-        .query_unpaged(statics::SELECT_USER_ROLES_BY_ROLE, (server_id.clone(), role_name.clone()))
+        .query_unpaged(statics::SELECT_USER_NAME_BY_ROLE, (server_id.clone(), role_name.clone()))
         .await
         .map_err(|e| -> Box<dyn std::error::Error> { From::from(e) })?
         .into_rows_result()
