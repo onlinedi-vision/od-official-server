@@ -156,9 +156,9 @@ pub struct ServerRoleRequest {
     pub token: String,
     pub username: String,
     pub server_id: String,
-    pub role_name: String,
+    pub name: String,
     pub color: Option<String>,
-    pub permissions: Option<Vec<String>>,
+    pub permissions: i64,
 }
 
 #[derive(serde::Deserialize)]
@@ -188,6 +188,7 @@ pub struct UserServerRoleRequest {
     pub token: String,
     pub username: String,
     pub server_id: String,
+    pub target_user: String,
     pub role_name: String,
 }
 

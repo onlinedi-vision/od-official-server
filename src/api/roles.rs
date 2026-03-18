@@ -1,3 +1,4 @@
+use crate::api::statics;
 use crate::api::structures;
 use crate::db;
 use crate::security;
@@ -17,42 +18,164 @@ pub async fn add_server_role(
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
 
-    if db::prelude::check_token(
+    if req.name.len() > statics::MAX_ROLE_NAME_LENGTH {
+        return actix_web::HttpResponse::BadRequest()
+            .body(format!("Role name exceeds maximum length of {}", statics::MAX_ROLE_NAME_LENGTH));
+    }
+
+    if db::prelude::check_permission(
         &scylla_session,
         &cache,
+        req.server_id.clone(),
         req.token.clone(),
-        Some(req.username.clone()),
+        req.username.clone(),
+        db::structures::Permissions::ADD_ROLE.bits(),
         &collector,
     )
     .await
     .is_none()
     {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to manage roles");
     }
     
+    //gotta watch out for injection attacks
+    if (req.permissions & !db::structures::Permissions::all().bits()) != 0{
+        return actix_web::HttpResponse::Forbidden().body("Invalid permission request!")
+    }
+
+
     let role = db::structures::ServerRole {
-        role_name: req.role_name.clone(),
+        name: req.name.clone(),
         server_id: req.server_id.clone(),
-        color: req.color.clone(),
-        permissions: req
-            .permissions
-            .clone()
-            .unwrap_or_default()
-            .into_iter()
-            .collect::<std::collections::HashSet<String>>(),
+        color: req.color.clone().unwrap_or_default(),
+        permissions: req.permissions,
     };
 
-    if let Some(result) =
-        db::roles::insert_server_role(&scylla_session, req.server_id.clone(), role).await
-        && result.is_ok() {
-            return actix_web::HttpResponse::Ok().body("Role added successfully");
+    match db::roles::insert_server_role(&scylla_session, req.server_id.clone(), role).await {
+        Ok(()) => actix_web::HttpResponse::Ok().body("Role added successfully"),
+        Err(e) => {
+            logging::log(&format!("Error inserting role '{}': {:?}", req.name, e), Some(function_name!()));
+            actix_web::HttpResponse::InternalServerError().body("Failed to insert role")
         }
-    logging::log(&format!("Error inserting role: {:?}", req.role_name.clone()), Some(function_name!()));
-    actix_web::HttpResponse::InternalServerError().body("Failed to insert role")
+    }
 }
 
 #[named]
-#[actix_web::post("/delete_server_role")]
+#[actix_web::post("/api/assign_role")]
+pub async fn assign_role(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
+    req: actix_web::web::Json<structures::UserServerRoleRequest>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
+) -> impl actix_web::Responder {
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
+
+    if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
+        return actix_web::HttpResponse::BadRequest()
+            .body(format!("Role name exceeds maximum length of {}", statics::MAX_ROLE_NAME_LENGTH));
+    }
+
+    if db::prelude::check_permission(
+        &scylla_session,
+        &cache,
+        req.server_id.clone(),
+        req.token.clone(),
+        req.username.clone(),
+        db::structures::Permissions::ADD_ROLE.bits(),
+        &collector,
+    )
+    .await
+    .is_none()
+    {
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to manage roles");
+    }
+
+    if !db::prelude::is_member_of_server(
+        &scylla_session,
+        req.server_id.clone(),
+        req.target_user.clone(),
+    )
+    .await
+    {
+        return actix_web::HttpResponse::BadRequest().body("Target user is not in the server");
+    }
+
+    match db::roles::assign_role(
+        &scylla_session,
+        req.server_id.clone(),
+        req.target_user.clone(),
+        req.role_name.clone(),
+    ).await
+    {
+        Ok(()) => actix_web::HttpResponse::Ok().body("Role assigned"),
+        Err(e) => {
+            logging::log(&format!("Error assigning role: {e:?}"), Some(function_name!()));
+            actix_web::HttpResponse::InternalServerError().body("Failed to assign role")
+        }
+    }
+}
+
+#[named]
+#[actix_web::post("/api/remove_role")]
+pub async fn remove_role(
+    session: actix_web::web::Data<security::structures::ScyllaSession>,
+    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
+    req: actix_web::web::Json<structures::UserServerRoleRequest>,
+    shared_collector: actix_web::web::Data<structures::AppState>,
+) -> impl actix_web::Responder {
+    let scylla_session = scylla_session!(session);
+    let cache = cache!(shared_cache);
+    let collector = cache_metrics!(shared_collector);
+
+    if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
+        return actix_web::HttpResponse::BadRequest()
+            .body(format!("Role name exceeds maximum length of {}", statics::MAX_ROLE_NAME_LENGTH));
+    }
+
+    if db::prelude::check_permission(
+        &scylla_session,
+        &cache,
+        req.server_id.clone(),
+        req.token.clone(),
+        req.username.clone(),
+        db::structures::Permissions::ADD_ROLE.bits(),
+        &collector,
+    )
+    .await
+    .is_none()
+    {
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to manage roles");
+    }
+
+    if !db::prelude::is_member_of_server(
+        &scylla_session,
+        req.server_id.clone(),
+        req.target_user.clone(),
+    )
+    .await
+    {
+        return actix_web::HttpResponse::BadRequest().body("Target user is not in the server");
+    }
+
+    match db::roles::remove_role(
+        &scylla_session,
+        req.server_id.clone(), 
+        req.target_user.clone(),
+        req.role_name.clone(),
+        ).await
+    {
+        Ok(()) => actix_web::HttpResponse::Ok().body("Role removed successfully"),
+        Err(e) => {
+            logging::log(&format!("Error removing role: {e:?}"), Some(function_name!()));
+            actix_web::HttpResponse::InternalServerError().body("Failed to remove role")
+        }
+    }
+}
+
+#[named]
+#[actix_web::post("/api/delete_server_role")]
 pub async fn delete_server_role(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
@@ -63,213 +186,43 @@ pub async fn delete_server_role(
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
 
-    if db::prelude::check_token(
+    if req.role_name.len() > statics::MAX_ROLE_NAME_LENGTH {
+        return actix_web::HttpResponse::BadRequest()
+            .body(format!("Role name exceeds maximum length of {}", statics::MAX_ROLE_NAME_LENGTH));
+    }
+
+    if db::prelude::check_permission(
         &scylla_session,
         &cache,
+        req.server_id.clone(),
         req.token.clone(),
-        Some(req.username.clone()),
+        req.username.clone(),
+        db::structures::Permissions::ADD_ROLE.bits(),
         &collector,
     )
     .await
     .is_none()
     {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid user token.");
-    }
-    
-    if let Some(role_exists) =
-        db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
-        && !role_exists
-    {
-        return actix_web::HttpResponse::BadRequest()
-            .body("Role does not exist on this server.");
+        return actix_web::HttpResponse::Forbidden().body("You do not have permission to manage roles");
     }
 
-    if let Some(result) = db::roles::remove_role_from_all_users(
+    if let Err(e) = db::roles::remove_role_from_all_users(
         &scylla_session,
         req.server_id.clone(),
         req.role_name.clone(),
-    )
-    .await
-    {
-        if result.is_err() {
-            logging::log(&format!("Error removing role from users: {:?}/{:?}", req.role_name.clone(), req.username.clone()), Some(function_name!()));
-            return actix_web::HttpResponse::InternalServerError()
-                .body("Failed to remove role from users.");
-        }
-        
-        if let Some(result) = db::roles::delete_server_role(
-            &scylla_session,
-            req.server_id.clone(),
-            req.role_name.clone(),
-        )
+    ).await {
+        logging::log(&format!("Error cleaning up role assignments: {e:?}"), Some(function_name!()));
+    }
+
+    match db::roles::delete_role(&scylla_session, 
+        req.server_id.clone(),
+        req.role_name.clone())
         .await
-        {
-            if result.is_err() {
-                logging::log(&format!("Error deleting role: {:?}",req.role_name.clone()), Some(function_name!()));
-                return actix_web::HttpResponse::InternalServerError()
-                    .body("Failed to delete role from server.");
-            }
-            return actix_web::HttpResponse::Ok().body("Role deleted successfully");
+    {
+        Ok(()) => actix_web::HttpResponse::Ok().body("Role deleted successfully"),
+        Err(e) => {
+            logging::log(&format!("Error deleting role: {e:?}"), Some(function_name!()));
+            actix_web::HttpResponse::InternalServerError().body("Failed to delete role")
         }
     }
-    actix_web::HttpResponse::InternalServerError().body("Not able to delete role.")
-}
-
-#[named]
-#[actix_web::post("/assign_role_to_user")]
-pub async fn assign_role_to_user(
-    session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
-    req: actix_web::web::Json<structures::UserServerRoleRequest>,
-    shared_collector: actix_web::web::Data<structures::AppState>,
-) -> impl actix_web::Responder {
-    let scylla_session = scylla_session!(session);
-    let cache = cache!(shared_cache);
-    let collector = cache_metrics!(shared_collector);
-
-    if db::prelude::check_token(
-        &scylla_session,
-        &cache,
-        req.token.clone(),
-        Some(req.username.clone()),
-        &collector,
-    )
-    .await
-    .is_none()
-    {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
-    }
-    
-    if let Some(role_exists) =
-        db::roles::check_role_exists(&scylla_session, &req.server_id, &req.role_name).await
-    {
-        if !role_exists {
-            return actix_web::HttpResponse::BadRequest()
-                .body("Role does not exist on this server");
-        }
-    } else {
-        return actix_web::HttpResponse::InternalServerError()
-            .body("Failed to check role existence on server.");
-    }
-
-    let user_role = db::structures::UserServerRole {
-        server_id: req.server_id.clone(),
-        username: req.username.clone(),
-        role_name: req.role_name.clone(),
-    };
-    if let Some(result) = db::roles::assign_role_to_user(&scylla_session, user_role).await && result.is_ok() {
-        return actix_web::HttpResponse::BadRequest().body("Role assigned successfully");
-    }
-
-    logging::log(&format!("Error assigning role: {:?}", req.role_name.clone()), Some(function_name!()));
-    actix_web::HttpResponse::InternalServerError().body("Failed to assign role")
-}
-
-#[named]
-#[actix_web::post("/remove_role_from_user")]
-pub async fn remove_role_from_user(
-    session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
-    req: actix_web::web::Json<structures::UserServerRoleRequest>,
-    shared_collector: actix_web::web::Data<structures::AppState>,
-) -> impl actix_web::Responder {
-    let scylla_session = scylla_session!(session);
-    let cache = cache!(shared_cache);
-    let collector = cache_metrics!(shared_collector);
-
-    if db::prelude::check_token(
-        &scylla_session,
-        &cache,
-        req.token.clone(),
-        Some(req.username.clone()),
-        &collector,
-    )
-    .await
-    .is_none()
-    {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
-    }
-    
-    let user_role = db::structures::UserServerRole {
-        server_id: req.server_id.clone(),
-        username: req.username.clone(),
-        role_name: req.role_name.clone(),
-    };
-
-    if let Some(result) = db::roles::remove_role_from_user(&scylla_session, user_role).await && result.is_ok() {
-        return actix_web::HttpResponse::Ok().body("Role removed successfully");
-    }
-    
-    logging::log(&format!("Error removing role: {:?}", req.role_name.clone()), Some(function_name!()));
-    actix_web::HttpResponse::InternalServerError().body("Failed to remove role")
-
-}
-
-#[actix_web::get("/fetch_server_roles")]
-pub async fn fetch_server_roles(
-    session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
-    query: actix_web::web::Query<structures::ServerRoleQuery>,
-    shared_collector: actix_web::web::Data<structures::AppState>,
-) -> impl actix_web::Responder {
-    let scylla_session = scylla_session!(session);
-    let cache = cache!(shared_cache);
-    let collector = cache_metrics!(shared_collector);
-
-    if db::prelude::check_token(
-        &scylla_session,
-        &cache,
-        query.token.clone(),
-        Some(query.username.clone()),
-        &collector,
-    )
-    .await
-    .is_none()
-    {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid Token");
-    }
-    
-    if let Some(roles) = db::roles::fetch_server_roles(&scylla_session, &query.server_id).await
-    {
-        return actix_web::HttpResponse::Ok().json(roles);
-    }
-    actix_web::HttpResponse::InternalServerError().body("Failed to fetch server roles")
-
-}
-
-#[actix_web::get("/fetch_user_roles")]
-pub async fn fetch_user_roles(
-    session: actix_web::web::Data<security::structures::ScyllaSession>,
-    shared_cache: actix_web::web::Data<security::structures::MokaCache>,
-    query: actix_web::web::Query<structures::UserRoleQuery>,
-    shared_collector: actix_web::web::Data<structures::AppState>,
-) -> impl actix_web::Responder {
-    let scylla_session = scylla_session!(session);
-    let cache = cache!(shared_cache);
-    let collector = cache_metrics!(shared_collector);
-
-    if db::prelude::check_token(
-        &scylla_session,
-        &cache,
-        query.token.clone(),
-        Some(query.username.clone()),
-        &collector
-    )
-    .await
-    .is_none()
-    {
-        return actix_web::HttpResponse::Unauthorized().body("Invalid Token");
-    }
-    
-    if let Some(roles) = db::roles::fetch_user_roles(
-        &scylla_session,
-        query.server_id.clone(),
-        query.username.clone(),
-    )
-    .await
-    {
-        return actix_web::HttpResponse::Ok().json(roles);
-    }
-    actix_web::HttpResponse::InternalServerError().body("Failed to fetch user roles")
-
 }

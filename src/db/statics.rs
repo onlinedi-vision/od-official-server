@@ -155,10 +155,6 @@ pub static SELECT_SERVER_INFO: &str = r"
         ALLOW FILTERING;
 ";
 
-pub static SELECT_SERVER_ROLES: &str = r"
-   SELECT role_name, color, permissions FROM division_online.o_server_roles
-       WHERE server_id = ?; 
-";
 
 pub static SELECT_USER_ROLES: &str = r"
    SELECT role_name FROM division_online.o_user_server_roles
@@ -185,16 +181,18 @@ pub static REMOVE_ROLE_FROM_USER: &str = r"
         WHERE server_id = ? AND username = ? AND role_name = ?;
 ";
 
-pub static SELECT_USERS_BY_ROLE: &str = r"
+
+pub static SELECT_ROLE_PERMISSIONS: &str = r"
+    SELECT permissions FROM division_online.o_server_roles
+        WHERE server_id = ? AND role_name = ?;
+";
+
+pub static SELECT_USER_NAME_BY_ROLE: &str = r"
     SELECT username FROM division_online.o_user_server_roles
         WHERE server_id = ? AND role_name = ?
         ALLOW FILTERING;
 ";
 
-pub static SELECT_SERVER_ROLE_BY_NAME: &str = r"
-    SELECT role_name FROM division_online.o_server_roles
-        WHERE server_id = ? AND role_name = ?;
-";
 
 pub static DELETE_SERVER_BY_SID: &str = r"
         DELETE FROM division_online.o_servers WHERE sid = ?;
