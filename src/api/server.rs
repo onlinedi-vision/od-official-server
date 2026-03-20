@@ -74,6 +74,13 @@ pub async fn create_server(
     .await {
         logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
         server_created.token = req.token.clone();
+    } else {
+        let _ = db::users::delete_token(
+            &scylla_session,
+            req.username.clone(),
+            security::armor_token(&req.token),
+        )
+        .await;
     }
 
     let role = db::structures::ServerRole {
