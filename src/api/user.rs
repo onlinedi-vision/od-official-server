@@ -111,6 +111,9 @@ pub async fn try_login(
     actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
+
+// TODO: use this endpoint... when it's ready...
+// could also be redone... maybe just a new refresh token... when we have those.
 #[named]
 #[actix_web::post("/token_login")]
 pub async fn token_login(
@@ -120,10 +123,6 @@ pub async fn token_login(
     shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     
-    let username = db::structures::UserUsername {
-        username: Some(req.username.clone()),
-    };
-
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
@@ -144,7 +143,7 @@ pub async fn token_login(
 
     // TODO: whenever we fix tokens... we must rotate the token here.
     logging::log("Logged in using token succesfully.", Some(function_name!()));
-    return actix_web::HttpResponse::Ok().body("Logged in.");
+    actix_web::HttpResponse::Ok().body("Logged in.")
     
 }
 
