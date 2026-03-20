@@ -111,23 +111,18 @@ pub async fn try_login(
     actix_web::HttpResponse::Unauthorized().body("Invalid username or password")
 }
 
+
+// TODO: use this endpoint... when it's ready...
+// could also be redone... maybe just a new refresh token... when we have those.
 #[named]
 #[actix_web::post("/token_login")]
 pub async fn token_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
-    req: actix_web::web::Json<structures::TokenLoginUser>,
+    req: actix_web::web::Json<structures::TokenUser>,
     shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     
-    let new_token_holder = structures::TokenHolder {
-        token: security::token(),
-    };
-
-    let username = db::structures::UserUsername {
-        username: Some(req.username.clone()),
-    };
-
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
@@ -145,13 +140,11 @@ pub async fn token_login(
         logging::log("Failed because user supplied token is incorrect.", Some(function_name!()));
         return actix_web::HttpResponse::Unauthorized().body("Invalid or expired token");
     }
-    if let Some(secrets) = db::users::get_user_password_hash(&scylla_session, username).await {
-        return prelude::check_user_password(secrets, &req.username, &req.password, scylla_session, cache, new_token_holder).await;
-    }
-    
-    logging::log("Failed because user password hash cannot be retrieved from scylla.", Some(function_name!()));
-    actix_web::HttpResponse::Unauthorized().body("Invalid password")
 
+    // TODO: whenever we fix tokens... we must rotate the token here.
+    logging::log("Logged in using token succesfully.", Some(function_name!()));
+    actix_web::HttpResponse::Ok().body("Logged in.")
+    
 }
 
 #[named]
@@ -183,7 +176,7 @@ pub async fn get_user_servers(
     }
 
     if let Some(sids) = db::server::fetch_user_servers(&scylla_session, req.username.clone()).await {
-        let _ = db::prelude::insert_user_token(
+        if let Err(insert_err) = db::prelude::insert_user_token(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
@@ -191,7 +184,11 @@ pub async fn get_user_servers(
                 username: Some(req.username.clone()),
             },
         )
-        .await;
+        .await {
+            logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+            return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+        }
+
 
         let _ = db::users::delete_token(
             &scylla_session,
@@ -239,7 +236,7 @@ pub async fn get_user_pfp(
     }
     
     if let Some(pfp_row) = db::users::fetch_user_pfp(&scylla_session, &req.username).await {
-        let _ = db::prelude::insert_user_token(
+        if let Err(insert_err) = db::prelude::insert_user_token(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
@@ -247,7 +244,10 @@ pub async fn get_user_pfp(
                 username: Some(req.username.clone()),
             },
         )
-        .await;
+        .await {
+            logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+            return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+        }
 
         let _ = db::users::delete_token(
             &scylla_session,
@@ -302,7 +302,7 @@ pub async fn set_user_pfp(
             .body("Failed to update profile picture.");
     }
 
-    let _ = db::prelude::insert_user_token(
+    if let Err(insert_err) = db::prelude::insert_user_token(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
@@ -310,7 +310,10 @@ pub async fn set_user_pfp(
             username: Some(req.username.clone()),
         },
     )
-    .await;
+    .await {
+        logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+        return actix_web::HttpResponse::InternalServerError().body("Failed to insert new token");
+    }
 
     let _ = db::users::delete_token(
         &scylla_session,
