@@ -16,8 +16,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 FROM rust:1.93 AS builder
 WORKDIR /app
 COPY --link --from=planner /app/ .
-RUN --mount=from=cacher,source=/app/target/,target=target/,rw \
-    --mount=type=cache,target=/usr/local/cargo/registry \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo build --release
 
 FROM rust:1.93-slim AS runtime
@@ -26,6 +25,6 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=cacher /app/target/release/api /usr/local/bin/
+COPY --from=builder /app/target/release/api /usr/local/bin/
 
 CMD ["/usr/local/bin/api"]

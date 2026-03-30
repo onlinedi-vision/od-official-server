@@ -12,16 +12,16 @@ RUN if [ "$RUN_LINT" = "true" ]; then \
     rustup component add clippy ; \
 fi
 COPY --link --from=bare-repo . .
+COPY --link Cargo* .
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo build --release
 
 FROM requirements AS workspace
-COPY --link src .
+COPY --link src/ src/
 COPY --link Cargo* .
 
 FROM workspace AS linter
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/build/target             \
 <<EOF
 if [ "$RUN_LINT" = "true" ]; then
     cargo clippy --release -- -D warnings -A clippy::await_holding_lock
@@ -30,7 +30,6 @@ EOF
 
 FROM workspace AS ut
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/build/target             \
 <<EOF
 if [ "$RUN_UT" = "true" ]; then 
     cargo test ; 
@@ -39,6 +38,5 @@ EOF
 
 FROM workspace AS builder
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/build/target             \
     cargo build --release
-ENTRYPOINT ["./target/release/api"]
+ENTRYPOINT ["/build/target/release/api"]
