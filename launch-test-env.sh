@@ -54,7 +54,6 @@ function print_usage() {
   echo "   -T <SECS>   how many seconds to wait for API program to settle (experimental)"
   echo "   -G          launch Grafana (and prometheus)"
   echo "   -e          skip end2end tests"
-  echo "   -k          skip cargo target (k)aching"
   echo "   -L          run linter"
 }
 
@@ -67,11 +66,9 @@ u_flag=''
 L_flag=''
 G_flag=''
 e_flag=''
-k_flag=''
 scylla_wait_time=''
 while getopts 't:T:a:chsCLSuGp:ek' flag; do
   case "${flag}" in
-    k) k_flag='true' ;;
     e) e_flag='true' ;;
     c) c_flag='true' ;;
     C) cleanup && exit 0 || exit 1;;
@@ -139,19 +136,6 @@ docker compose -f "${COMPOSE_FILE}" build od-official-server
 docker compose -f "${COMPOSE_FILE}" up -d od-official-server
 sleep "${api_wait_time:-1}"
 
-
-if ! [[ "${k_flag}" == "true" ]]; then
-  echo "====================== CACHING COMPILATION ========================="
-  if [ -d ./target ] ; then
-     rm -rf ./target
-  fi
-
-  mkdir -p ./target/release
-  mkdir -p ./target/debug
-
-  docker cp od-official-server:/build/target/release ./target
-  docker cp od-official-server:/build/target/debug ./target || true
-fi
 
 echo "======================= LAUNCHING GRAFANA ======================="
 launch_grafana
