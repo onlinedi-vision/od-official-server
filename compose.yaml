@@ -2,7 +2,8 @@ services:
   od-official-server:
     build:
       context: .
-      dockerfile: Dockerfile
+      additional_contexts:
+        bare-repo: test-env-compose/rootfs/repo
     mem_limit: 1G
     cpus: '2'
     ports: 

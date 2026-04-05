@@ -22,5 +22,4 @@ jobs:
       uses: docker/setup-buildx-action@v3
     - name: Run Unit Tests
       run: |
-        COMPOSE_BAKE=true ./launch-test-env.sh -cekS
-
+        COMPOSE_BAKE=true ./launch-test-env.sh -ceS
