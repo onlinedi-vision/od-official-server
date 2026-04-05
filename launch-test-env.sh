@@ -126,18 +126,18 @@ fi
 echo "======================= LAUNCHING API ========================="
 echo " * api is lauching on 127.0.0.1:${API_PORT} * "
 
-export RUN_LINT="false"
+services=('od-official-server')
 if ! [[ "${s_flag}" == "true" ]]; then
   if ! [[ "${u_flag}" == "true" ]]; then
-    export RUN_UT="true"
+    services+=("ut")
   fi
 
   if [[ "${L_flag}" == "true" ]]; then
-    export RUN_LINT="true"
+    services+=("linter")
   fi
 fi
 
-docker compose -f "${COMPOSE_FILE}" build od-official-server
+docker compose -f "${COMPOSE_FILE}" build "${services[@]}"
 docker compose -f "${COMPOSE_FILE}" up -d od-official-server
 sleep "${api_wait_time:-1}"
 

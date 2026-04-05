@@ -6,11 +6,9 @@ ARG SALT_ENCRYPTION_KEY
 ARG SALT_ENCRYPTION_IV
 ARG SCYLLA_CASSANDRA_PASSWORD
 ARG RUN_UT
+ARG OUTPUT=output
 
 FROM base AS requirements
-RUN if [ "$RUN_LINT" = "true" ]; then \
-    rustup component add clippy ; \
-fi
 COPY --link --from=bare-repo . .
 COPY --link Cargo* .
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
@@ -21,21 +19,26 @@ COPY --link src/ src/
 COPY --link Cargo* .
 RUN touch src/main.rs
 
-FROM workspace AS linter
+FROM workspace AS linter-run
+RUN mkdir ${OUTPUT}
+RUN rustup component add clippy
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
-<<EOF
-if [ "$RUN_LINT" = "true" ]; then
-    cargo clippy --release -- -D warnings -A clippy::await_holding_lock
-fi
-EOF
+   cargo clippy --release --target x86_64-unknown-linux-musl \
+   -- -D warnings -A clippy::await_holding_lock \
+   |& tee ${OUTPUT}/linter.log || ${OUTPUT}/LINTER_FAIL
 
-FROM workspace AS ut
+FROM scratch AS linter
+ARG OUTPUT=output
+COPY --from=linter-run /build/${OUTPUT}/ .
+
+FROM workspace AS ut-run
+RUN mkdir ${OUTPUT}
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
-<<EOF
-if [ "$RUN_UT" = "true" ]; then 
-    cargo test ; 
-fi
-EOF
+   cargo test |& tee ${OUTPUT}/ut.log || touch ${OUTPUT}/UT_FAIL
+
+FROM scratch AS ut
+ARG OUTPUT=output
+COPY --from=ut-run /build/${OUTPUT}/ .
 
 FROM workspace AS builder
 RUN --mount=type=cache,target=/usr/local/cargo/registry \

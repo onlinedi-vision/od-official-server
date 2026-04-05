@@ -27,4 +27,15 @@ services:
       - TOKEN_TTL=2
       - SCYLLA_INET
       - NO_OF_WORKERS
-      - RUST_LOG=debug              
+      - RUST_LOG=debug
+  linter:
+    extends:
+      service: od-official-server
+    build:
+        target: linter 
+  ut:
+    extends:
+      service: od-official-server
+    build:
+      target: ut 
+      
