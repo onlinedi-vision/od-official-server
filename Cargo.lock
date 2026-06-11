@@ -336,7 +336,7 @@ dependencies = [
 
 [[package]]
 name = "api"
-version = "0.0.7"
+version = "0.0.9"
 dependencies = [
  "actix-web",
  "actix-web-ratelimit",

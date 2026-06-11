@@ -18,5 +18,5 @@ pub mod metrics;
 
 #[actix_web::get("/version")]
 pub async fn get_api_version() -> impl actix_web::Responder {
-    actix_web::HttpResponse::Ok().body("v0.0.7".to_string())
+    actix_web::HttpResponse::Ok().body("v0.0.9".to_string())
 }
