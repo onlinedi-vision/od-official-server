@@ -15,7 +15,7 @@ pipeline {
 					withDockerRegistry(url: 'https://registry.onlinedi.vision:5000',  credentialsId:'docker-registry') {
 						version="v" + sh(script:'echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n', returnStdout: true)
 						echo "VERSION TO BE DEPLOYED: $version"
-						sh "docker build . -t od-official-server:${version}"
+						sh "docker build . -t od-official-server:${version} --build-context 'bare-repo=test-env-compose/rootfs/repo'"
 						sh "docker tag od-official-server:${version} registry.onlinedi.vision:5000/od-official-server:${version}"
 						sh "docker push registry.onlinedi.vision:5000/od-official-server:${version}"
 					}
