@@ -1,27 +1,16 @@
-FROM rust:1.93 AS planner
+FROM clux/muslrust:1.93.1-stable AS base 
 WORKDIR /app
-RUN cargo install cargo-chef
-COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
+COPY --link --from=bare-repo . .
+COPY --link Cargo* .
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    cargo build --release --target x86_64-unknown-linux-musl
 
-FROM rust:1.93 AS cacher
-WORKDIR /app
-RUN cargo install cargo-chef
-COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+FROM base AS builder
+COPY --link src/ src/
+RUN touch src/main.rs
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    cargo build --release --target x86_64-unknown-linux-musl
 
-FROM rust:1.93 AS builder
-WORKDIR /app
-COPY --from=cacher /app/target target/
-COPY . .
-RUN cargo build --release
-
-FROM rust:1.93-slim AS runtime
-WORKDIR /app
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /app/target/release/api /usr/local/bin/
-
-CMD ["/usr/local/bin/api"]
+FROM scratch AS runtime
+COPY --link --from=builder /app/target/x86_64-unknown-linux-musl/release/api .
+CMD ["/api"]
