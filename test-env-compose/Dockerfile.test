@@ -25,7 +25,7 @@ FROM workspace AS linter
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
 <<EOF
 if [ "$RUN_LINT" = "true" ]; then
-    cargo clippy --release -- -D warnings -A clippy::await_holding_lock
+    cargo clippy --release -- -D warnings
 fi
 EOF
 
