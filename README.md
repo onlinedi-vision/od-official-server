@@ -23,8 +23,8 @@ For more in depth analysis of what it does please either check out the code of `
 
 The "Test Env" sets up some random credentials (such as keys for encryption, and so on...). To have better control of what the keys are you can edit `launch-test-env.sh`, specifically these lines:
 ```sh
-export SALT_ENCRYPTION_IV="ffA_1D6s^jf!6\$xx"
-export SALT_ENCRYPTION_KEY='#a1aA3!h4a@ah3a4'
+export SALT_ENCRYPTION_IV="FFFFFFFFFFFFFFFF"
+export SALT_ENCRYPTION_KEY='aaaaaaaaaaaaaaaa'
 export SCYLLA_CASSANDRA_PASSWORD='cassandra'
 export API_PORT=1313
 export NO_OF_WORKERS=32
@@ -36,3 +36,19 @@ These being the lines that set up the necessary environment variables for `od-of
 
 Please checkout [CONTRIBUTING.md](./CONTRIBUTING.md) and [TESTING.md](./TESTING.md).
 
+## Building server images with docker bake
+
+To simply build a local server image you can run the following command:
+```sh
+GIT_BRANCH="refs/tags/1.2.3" docker buildx bake --set release.output="type=docker"
+```
+
+If you'd like to publish this image to the registry you can use:
+```sh
+GIT_BRANCH="refs/tags/1.2.3" docker buildx bake --set release.output="type=registry"
+```
+
+> ![WARNING]
+> `GIT_BRANCH` is the ref to the tag in git. Whatever you set it to will be used
+> to tag the image you create. For example `GIT_BRANCH="refs/tags/1.2.3` will tag
+> your image as `registry.onlinedi.vision:5000/od-official-server:v1.2.3`.
