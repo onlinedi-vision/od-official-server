@@ -21,4 +21,4 @@ jobs:
       uses: docker/setup-buildx-action@v3
     - name: Build Docker Image
       run: |
-        docker compose build 
+        GIT_BRANCH='refs/tags/0.0.0' docker buildx bake 
