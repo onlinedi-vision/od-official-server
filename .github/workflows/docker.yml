@@ -21,4 +21,20 @@ jobs:
       uses: docker/setup-buildx-action@v3
     - name: Build Docker Image
       run: |
-        GIT_BRANCH='refs/tags/0.0.0' docker buildx bake 
+        GIT_BRANCH='refs/tags/0.0.0' docker buildx bake --set release.output='type=docker'
+
+    - name: Save Docker image
+      run: |
+        docker save -o ${{ github.sha }} registry.onlinedi.vision:5000/od-official-server:v0.0.0
+
+    - name: Run Clair V4
+      uses: quay/clair-action@main
+      with:
+        image-path: ${{ github.sha }}
+        format: sarif
+        output: clair_results.sarif
+
+    - name: Upload sarif
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: clair_results.sarif
