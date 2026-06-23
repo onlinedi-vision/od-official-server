@@ -2,13 +2,14 @@ name: Check Docker image builds
 on:
   pull_request:
     branches: [ "main" ]
+  push:
+    branches: [ "main" ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     services:
       docker:
@@ -21,4 +22,13 @@ jobs:
       uses: docker/setup-buildx-action@v3
     - name: Build Docker Image
       run: |
-        GIT_BRANCH='refs/tags/0.0.0' docker buildx bake 
+          GIT_BRANCH='refs/tags/0.0.0' docker buildx bake --set release.output='type=docker' --set release.tags='od-official-server:${{ github.sha }}'
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        image-ref: 'od-official-server:${{ github.sha }}'
+        format: 'table'
+        exit-code: '1'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'
