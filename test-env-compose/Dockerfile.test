@@ -24,7 +24,7 @@ RUN mkdir ${OUTPUT}
 RUN rustup component add clippy
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo clippy --release --target x86_64-unknown-linux-musl \
-   -- -D warnings -A clippy::await_holding_lock \
+   -- -D warnings \
    |& tee ${OUTPUT}/linter.log || ${OUTPUT}/LINTER_FAIL
 
 FROM scratch AS linter

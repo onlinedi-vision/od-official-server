@@ -1,10 +1,10 @@
-use actix_web::{web::Data, Error};
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
-use futures::future::{ok, Ready};
-use prometheus::{HistogramVec, HistogramOpts, IntCounterVec, IntCounter, Opts, Registry};
+use actix_web::{Error, web::Data};
+use futures::future::{Ready, ok};
+use prometheus::{HistogramOpts, HistogramVec, IntCounter, IntCounterVec, Opts, Registry};
+use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Instant;
-use std::pin::Pin;
 
 #[derive(Clone)]
 pub struct MetricsCollector {
@@ -19,27 +19,28 @@ impl MetricsCollector {
     pub fn new(registry: &Registry) -> Result<Self, prometheus::Error> {
         let request_counter = IntCounterVec::new(
             Opts::new("http_requests_total", "Total number of HTTP requests"),
-            &["method", "endpoint", "status"]
+            &["method", "endpoint", "status"],
         )?;
-        
+
         let response_time_histogram = HistogramVec::new(
-            HistogramOpts::new("http_request_duration_seconds", "HTTP request duration in seconds"),
-            &["method", "endpoint"]
+            HistogramOpts::new(
+                "http_request_duration_seconds",
+                "HTTP request duration in seconds",
+            ),
+            &["method", "endpoint"],
         )?;
-        
+
         let request_size = IntCounterVec::new(
             Opts::new("http_request_size_bytes", "HTTP request size in bytes"),
-            &["method", "endpoint"]
+            &["method", "endpoint"],
         )?;
 
-        let total_cache_hit_count = IntCounter::new(
-            "total_cache_hit_count", "How many cache hits happened."
-        )?;
+        let total_cache_hit_count =
+            IntCounter::new("total_cache_hit_count", "How many cache hits happened.")?;
 
-        let total_cache_miss_count = IntCounter::new(
-            "total_cache_miss_count", "How many cache misses happened."
-        )?;
-        
+        let total_cache_miss_count =
+            IntCounter::new("total_cache_miss_count", "How many cache misses happened.")?;
+
         registry.register(Box::new(request_counter.clone()))?;
         registry.register(Box::new(total_cache_hit_count.clone()))?;
         registry.register(Box::new(total_cache_miss_count.clone()))?;
@@ -113,7 +114,6 @@ pub struct MetricsMiddlewareService<S> {
     collector: Data<MetricsCollector>,
 }
 
-
 /// To actually be able to interact with services asynchronously
 /// we need to implement this `actix_web` trait:
 ///
@@ -138,14 +138,16 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let start_time = Instant::now();
         let collector = self.collector.clone();
-        
+
         let method: String = req.method().to_string();
         let endpoint = MetricsCollector::get_endpoint_pattern(&req).clone();
-        
+
         if let Some(content_length) = req.headers().get("content-length")
-        && let Ok(size_str) = content_length.to_str()
-        && let Ok(size) = size_str.parse::<u64>() {
-            collector.request_size
+            && let Ok(size_str) = content_length.to_str()
+            && let Ok(size) = size_str.parse::<u64>()
+        {
+            collector
+                .request_size
                 .with_label_values(&[&method, &endpoint])
                 .inc_by(size);
         }
@@ -177,29 +179,33 @@ where
             // counter for requests total, etc.)
             let result = fut.await;
             let duration = start_time.elapsed().as_secs_f64();
-            
+
             match result {
                 Ok(response) => {
-                    collector.response_time_histogram
+                    collector
+                        .response_time_histogram
                         .with_label_values(&[&method, &endpoint])
                         .observe(duration);
-                    
+
                     let status = response.status().as_u16().to_string();
-                    collector.request_counter
+                    collector
+                        .request_counter
                         .with_label_values(&[&method, &endpoint, &status])
                         .inc();
 
                     Ok(response)
-                },
+                }
                 Err(e) => {
-                    collector.response_time_histogram
+                    collector
+                        .response_time_histogram
                         .with_label_values(&[&method, &endpoint])
                         .observe(duration);
-                    
-                    collector.request_counter
+
+                    collector
+                        .request_counter
                         .with_label_values(&[&method, &endpoint, &"error".to_string()])
                         .inc();
-                    
+
                     Err(e)
                 }
             }

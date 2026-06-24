@@ -10,8 +10,8 @@ pub async fn check_user_password(
     secrets:Vec<db::structures::UserSecrets>,
     username: &str,
     password: &str,
-    scylla_session: std::sync::MutexGuard<'_, scylla::client::session::Session>,
-    cache: std::sync::MutexGuard<'_, Cache<std::string::String, std::string::String>>,
+    scylla_session: tokio::sync::MutexGuard<'_, scylla::client::session::Session>,
+    cache: tokio::sync::MutexGuard<'_, Cache<std::string::String, std::string::String>>,
     new_token_holder: structures::TokenHolder
 ) -> actix_web::HttpResponse {
 
@@ -63,25 +63,13 @@ macro_rules! cache_metrics {
 
 macro_rules! scylla_session {
     ($session:ident) => {
-        match $session.lock.lock() {
-            Ok(guard) => guard,
-            Err(_) => {
-                return actix_web::HttpResponse::InternalServerError()
-                    .body("Internal error: scylla session lock poisoned.");
-            }
-        }
+        $session.lock.lock().await
     };
 }
 
 macro_rules! cache {
     ($shared_cache:ident) => {
-        match $shared_cache.lock.lock() {
-            Ok(guard) => guard,
-            Err(_) => {
-                return actix_web::HttpResponse::InternalServerError()
-                    .body("Internal error: cache lock poisoned.");
-            }
-        }
+        $shared_cache.lock.lock().await
     };
 }
 
