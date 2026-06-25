@@ -28,6 +28,9 @@ class BaseAPITestCase(unittest.TestCase):
     def _request(self, method: str, endpoint: str, data = None) -> dict:
         url = f"{self.HOST}{endpoint}"
 
+        version = requests.get(f"{self.HOST}/version", timeout=TIMEOUT)
+        self.assertTrue(version.ok)
+
         try:
             if method == "GET":
                 response = requests.get(url, timeout=TIMEOUT)
