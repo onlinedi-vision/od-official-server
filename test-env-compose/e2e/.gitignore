@@ -1,0 +1,4 @@
+pylint.log
+tests.log
+__pycache__/*
+FAIL
