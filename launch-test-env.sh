@@ -153,11 +153,12 @@ if [[ "${s_flag}" == "true" ]] || [[ "${e_flag}" == "true" ]]; then
 fi
 
 echo "================== LAUNCHING API E2E TESTS ===================="
-env -C shadow docker buildx bake --allow=network.host --progress=plain
-if [[ -f shadow/FAIL ]]; then
-  cat shadow/*.log
+env -C test-env-compose/e2e docker buildx bake --allow=network.host
+if [[ -f test-env-compose/e2e/FAIL ]]; then
+  cat test-env-compose/e2e/*.log
   echo "E2E TESTING FAILED BECAUSE OF: "
-  cat shadow/FAIL
+  cat test-env-compose/e2e/FAIL
+  docker buildx version
   exit 1
 fi
 
