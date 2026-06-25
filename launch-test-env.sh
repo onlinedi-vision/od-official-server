@@ -153,7 +153,13 @@ if [[ "${s_flag}" == "true" ]] || [[ "${e_flag}" == "true" ]]; then
 fi
 
 echo "================== LAUNCHING API E2E TESTS ===================="
-./shadow/e2e.sh "http://localhost:${API_PORT}"
+env -C shadow docker buildx bake --allow=network.host --progress=plain
+if [[ -f shadow/FAIL ]]; then
+  cat shadow/*.log
+  echo "E2E TESTING FAILED BECAUSE OF: "
+  cat shadow/FAIL
+  exit 1
+fi
 
 if [[ "${c_flag}" == "true" ]]; then
   cleanup
