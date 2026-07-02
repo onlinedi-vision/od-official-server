@@ -159,6 +159,7 @@ if [[ -f test-env-compose/e2e/FAIL ]]; then
   echo "E2E TESTING FAILED BECAUSE OF: "
   cat test-env-compose/e2e/FAIL
   docker buildx version
+  docker ps
   exit 1
 fi
 
