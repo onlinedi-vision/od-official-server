@@ -160,6 +160,7 @@ if [[ -f test-env-compose/e2e/FAIL ]]; then
   cat test-env-compose/e2e/FAIL
   docker buildx version
   docker ps
+  curl localhost:1313/version
   exit 1
 fi
 
