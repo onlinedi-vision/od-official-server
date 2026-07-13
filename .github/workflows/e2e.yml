@@ -20,6 +20,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        driver-opts: network=host
     - name: Run E2E tests
       run: |
         COMPOSE_BAKE=true ./launch-test-env.sh -cu -t 10 -T 10

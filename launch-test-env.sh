@@ -157,10 +157,6 @@ env -C test-env-compose/e2e docker buildx bake --allow=network.host
 if [[ -f test-env-compose/e2e/FAIL ]]; then
   echo "E2E TESTING FAILED BECAUSE OF: "
   cat test-env-compose/e2e/FAIL
-  docker buildx version
-  docker ps
-  curl localhost:1313/version
-  cat test-env-compose/e2e/*.log
   exit 1
 fi
 
