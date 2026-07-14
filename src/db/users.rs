@@ -5,6 +5,12 @@ use ::function_name::named;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// Inserts a new user and its auth token, if the username isn't taken.
+///
+/// # Example
+/// ```rs
+/// insert_new_user(&session, user).await;
+/// ```
 pub async fn insert_new_user(
     session: &scylla::client::session::Session,
     user: structures::User,
@@ -78,6 +84,12 @@ pub async fn insert_new_user(
     }
 }
 
+/// Fetches the password hash and salts for a user.
+///
+/// # Example
+/// ```rs
+/// get_user_password_hash(&session, user).await;
+/// ```
 #[named]
 pub async fn get_user_password_hash(
     session: &scylla::client::session::Session,
@@ -112,6 +124,12 @@ pub async fn get_user_password_hash(
     }
 }
 
+/// Deletes an auth token for a user.
+///
+/// # Example
+/// ```rs
+/// delete_token(&session, "alice".into(), token).await;
+/// ```
 #[named]
 pub async fn delete_token(
     session: &scylla::client::session::Session,
@@ -128,6 +146,12 @@ pub async fn delete_token(
     )
 }
 
+/// Fetches profile info (picture, bio) for a user.
+///
+/// # Example
+/// ```rs
+/// fetch_user_info(&session, "alice".into()).await;
+/// ```
 pub async fn fetch_user_info(
     session: &scylla::client::session::Session,
     username: String,
@@ -159,6 +183,12 @@ pub async fn fetch_user_info(
     }
 }
 
+/// Fetches the profile picture URL for a user.
+///
+/// # Example
+/// ```rs
+/// fetch_user_pfp(&session, "alice").await;
+/// ```
 pub async fn fetch_user_pfp(
     session: &scylla::client::session::Session,
     username: &str,
@@ -184,6 +214,12 @@ pub async fn fetch_user_pfp(
     None
 }
 
+/// Updates the profile picture URL for a user.
+///
+/// # Example
+/// ```rs
+/// set_user_pfp(&session, "alice", Some("https://example.com/pfp.png")).await;
+/// ```
 pub async fn set_user_pfp(
     session: &scylla::client::session::Session,
     username: &str,
@@ -196,6 +232,12 @@ pub async fn set_user_pfp(
         .map_err(From::from)
 }
 
+/// Updates the token TTL symbol for a user.
+///
+/// # Example
+/// ```rs
+/// update_ttl(&session, "alice".into(), "d".into()).await;
+/// ```
 pub async fn update_ttl(
     session: &scylla::client::session::Session,
     username: String,
@@ -222,6 +264,12 @@ pub fn ttl_seconds_from_symbol(symbol: &str) -> i32 {
     }
 }
 
+/// Resolves a user's TTL symbol into a duration in seconds.
+///
+/// # Example
+/// ```rs
+/// get_ttl(&session, "alice".into()).await;
+/// ```
 pub async fn get_ttl(
     session: &scylla::client::session::Session,
     username: String
@@ -232,6 +280,12 @@ pub async fn get_ttl(
     ttl_seconds_from_symbol(&symbol)
 }
 
+/// Fetches the raw TTL symbol stored for a user.
+///
+/// # Example
+/// ```rs
+/// get_ttl_symbol(&session, "alice".into()).await;
+/// ```
 pub async fn get_ttl_symbol(
     session: &scylla::client::session::Session,
     username: String

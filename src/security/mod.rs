@@ -6,6 +6,75 @@ pub mod aes;
 pub mod messages;
 pub mod structures;
 
+/// Check whether a plain text input matches an argon hash.
+///
+/// # Example usage
+/// ```rs
+/// if security::argon_check(&user_password_plain, &password_hash) {
+///     // matched...
+/// }
+/// ```
+pub fn argon_check(plain_text: &str, hash: &str) -> bool {
+    match argon2::password_hash::PasswordHash::new(hash) {
+        Ok(parsed_hash) => argon2::Argon2::default()
+            .verify_password(plain_text.as_bytes(), &parsed_hash)
+            .is_ok(),
+        Err(_) => false,
+    }
+}
+
+/// Hashes (using SHA-256) a secret.
+pub fn sha256(secret: String) -> String {
+    let mut hasher = sha2::Sha256::new();
+    hasher.update(secret.into_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+/// Creates a user token.
+pub fn token() -> String {
+    let salt = uuid::Uuid::now_v7().to_string();
+    let mut hasher = sha2::Sha256::new();
+
+    hasher.update(salt.clone().into_bytes());
+
+    format!("{:x}", hasher.finalize())
+}
+
+/// Obfuscates token before storage.
+pub fn armor_token(plain_token: &str) -> String {
+    sha256(aes::encrypt(&aes::encrypt_with_key(
+        plain_token,
+        &plain_token[..16],
+    )))
+}
+
+/// Generates random server id.
+pub fn sid() -> String {
+    format!("{}{}", token(), rand::rng().random::<u64>())
+}
+
+/// Generates random salt.
+pub fn salt() -> String {
+    let mut rng = rand::rng();
+    (0..16)
+        .map(|_| rng.random_range::<u8, _>(33..127) as char)
+        .collect()
+}
+
+/// Applies argon hashing to given input.
+pub fn argon(secret: &str) -> Option<String> {
+    let salt = SaltString::generate(&mut OsRng);
+    // TODO: note the '?'... wtf
+    Some(
+        argon2::Argon2::default()
+            .hash_password(
+                secret.as_bytes(),
+                &salt
+            ).ok()?
+        .to_string()
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::{armor_token, sha256, argon, argon_check};
@@ -35,59 +104,4 @@ mod tests {
 
         assert!(argon_check(&plain_text_secret, &argon_hash));
     }
-}
-
-pub fn argon(secret: &str) -> Option<String> {
-    let salt = SaltString::generate(&mut OsRng);
-    // TODO: note the '?'... wtf
-    Some(
-        argon2::Argon2::default()
-            .hash_password(
-                secret.as_bytes(),
-                &salt
-            ).ok()?
-        .to_string()
-    )
-}
-
-pub fn argon_check(plain_text: &str, hash: &str) -> bool {
-    match argon2::password_hash::PasswordHash::new(hash) {
-        Ok(parsed_hash) => argon2::Argon2::default()
-            .verify_password(plain_text.as_bytes(), &parsed_hash)
-            .is_ok(),
-        Err(_) => false,
-    }
-}
-
-pub fn sha256(secret: String) -> String {
-    let mut hasher = sha2::Sha256::new();
-    hasher.update(secret.into_bytes());
-    format!("{:x}", hasher.finalize())
-}
-
-pub fn token() -> String {
-    let salt = uuid::Uuid::now_v7().to_string();
-    let mut hasher = sha2::Sha256::new();
-
-    hasher.update(salt.clone().into_bytes());
-
-    format!("{:x}", hasher.finalize())
-}
-
-pub fn armor_token(plain_token: &str) -> String {
-    sha256(aes::encrypt(&aes::encrypt_with_key(
-        plain_token,
-        &plain_token[..16],
-    )))
-}
-
-pub fn sid() -> String {
-    format!("{}{}", token(), rand::rng().random::<u64>())
-}
-
-pub fn salt() -> String {
-    let mut rng = rand::rng();
-    (0..16)
-        .map(|_| rng.random_range::<u8, _>(33..127) as char)
-        .collect()
 }

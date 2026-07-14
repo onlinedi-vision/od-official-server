@@ -6,6 +6,12 @@ use chrono::{DateTime, Utc};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// Adds a friendship record from `user` to `friend`.
+///
+/// # Example
+/// ```rs
+/// add_friend(&session, "alice".into(), "bob".into()).await;
+/// ```
 #[named]
 pub async fn add_friend(
     session: &scylla::client::session::Session,
@@ -24,6 +30,12 @@ pub async fn add_friend(
     Some(res)
 }
 
+/// Fetches the list of friends for `user`.
+///
+/// # Example
+/// ```rs
+/// let friends = fetch_friends(&session, "alice".into()).await;
+/// ```
 pub async fn fetch_friends(
     session: &scylla::client::session::Session,
     user: String,
@@ -50,6 +62,12 @@ pub async fn fetch_friends(
     }
 }
 
+/// Removes the friendship record between `user` and `friend`.
+///
+/// # Example
+/// ```rs
+/// delete_friend(&session, "alice".into(), "bob".into()).await;
+/// ```
 pub async fn delete_friend(
     session: &scylla::client::session::Session,
     user: String,

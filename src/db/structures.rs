@@ -27,6 +27,12 @@ pub struct User {
 }
 
 impl User {
+    /// Constructs a new `User` with the given fields and an empty bio.
+    ///
+    /// # Example
+    /// ```rs
+    /// User::new("alice".into(), "a@x.com".into(), hash, key, user_salt, pw_salt);
+    /// ```
     pub fn new(
         username: String,
         email: String,

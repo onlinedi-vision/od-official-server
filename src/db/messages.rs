@@ -1,6 +1,12 @@
 use crate::db;
 use crate::security;
 
+/// Fetches all messages in a server channel without a limit.
+///
+/// # Example
+/// ```rs
+/// fetch_server_channel_messages_unlimited(&session, "sid1".into(), "general".into()).await;
+/// ```
 pub async fn fetch_server_channel_messages_unlimited(
     session: &scylla::client::session::Session,
     sid: String,
@@ -45,6 +51,12 @@ pub async fn fetch_server_channel_messages_unlimited(
     }
 }
 
+/// Fetches a limited, offset page of messages in a server channel.
+///
+/// # Example
+/// ```rs
+/// fetch_server_channel_messages_limited(&session, "sid1".into(), "general".into(), 20, 0).await;
+/// ```
 pub async fn fetch_server_channel_messages_limited(
     session: &scylla::client::session::Session,
     sid: String,
@@ -103,6 +115,13 @@ pub async fn fetch_server_channel_messages_limited(
     }
 }
 
+/// Fetches messages in a server channel, using a limited or unlimited query
+/// depending on whether `limit_option`/`offset_option` are provided.
+///
+/// # Example
+/// ```rs
+/// fetch_server_channel_messages(&session, "sid1".into(), "general".into(), Some(20), Some(0)).await;
+/// ```
 pub async fn fetch_server_channel_messages(
     session: &scylla::client::session::Session,
     sid: String,
@@ -125,6 +144,12 @@ pub async fn fetch_server_channel_messages(
         .await;
 }
 
+/// Deletes a single message from a server channel by its timestamp.
+///
+/// # Example
+/// ```rs
+/// delete_message(&session, "sid1".into(), timestamp, "general".into()).await;
+/// ```
 pub async fn delete_message(
     session: &scylla::client::session::Session,
     sid: String,
@@ -143,6 +168,12 @@ pub async fn delete_message(
     }
 }
 
+/// Checks whether `username` is the author of the message at `datetime`.
+///
+/// # Example
+/// ```rs
+/// verify_message_ownership(&session, "sid1".into(), "general".into(), timestamp, "alice".into()).await;
+/// ```
 pub async fn verify_message_ownership(
     session: &scylla::client::session::Session,
     sid: String,

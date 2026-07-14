@@ -2,6 +2,12 @@ use crate::db::statics;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// Sends a DM invite between `u1` and `u2`.
+///
+/// # Example
+/// ```rs
+/// send_dm_invite(&session, "alice".into(), "bob".into(), "inv1".into(), "alice".into()).await;
+/// ```
 pub async fn send_dm_invite(
     session: &scylla::client::session::Session,
     u1: String,
@@ -18,6 +24,12 @@ pub async fn send_dm_invite(
     )
 }
 
+/// Fetches the pending DM invite between `u1` and `u2`.
+///
+/// # Example
+/// ```rs
+/// let invite = fetch_dm_invite(&session, "alice".into(), "bob".into()).await;
+/// ```
 pub async fn fetch_dm_invite(
     session: &scylla::client::session::Session,
     u1: String,
@@ -37,6 +49,12 @@ pub async fn fetch_dm_invite(
     None
 }
 
+/// Deletes the DM invite between `u1` and `u2`.
+///
+/// # Example
+/// ```rs
+/// delete_dm_invite(&session, "alice".into(), "bob".into()).await;
+/// ```
 pub async fn delete_dm_invite(
     session: &scylla::client::session::Session,
     u1: String,
@@ -51,6 +69,12 @@ pub async fn delete_dm_invite(
     )
 }
 
+/// Fetches all pending DM invites for `username`.
+///
+/// # Example
+/// ```rs
+/// let invites = fetch_pending_dm_invites(&session, "alice".into()).await;
+/// ```
 pub async fn fetch_pending_dm_invites(
     session: &scylla::client::session::Session,
     username: String,

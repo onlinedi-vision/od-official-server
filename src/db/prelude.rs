@@ -11,6 +11,12 @@ use ::function_name::named;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// Inserts a new auth token for a user and caches its key.
+///
+/// # Example
+/// ```rs
+/// insert_user_token(&session, &cache, user).await;
+/// ```
 pub async fn insert_user_token(
     session: &scylla::client::session::Session,
     cache: &moka::future::Cache<String,String>,
@@ -38,6 +44,12 @@ pub async fn insert_user_token(
     Err("Either username or key was not provided for inserting token...".into())
 }
 
+/// Builds a new Scylla session connected to `uri`.
+///
+/// # Example
+/// ```rs
+/// let session = new_scylla_session("127.0.0.1:9042").await?;
+/// ```
 pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Session> {
     scylla::client::session_builder::SessionBuilder::new()
         .known_node(uri)
@@ -47,6 +59,12 @@ pub async fn new_scylla_session(uri: &str) -> Result<scylla::client::session::Se
         .map_err(From::from)
 }
 
+/// Builds a new in-memory token cache with the given max capacity.
+///
+/// # Example
+/// ```rs
+/// let cache = new_moka_cache(1000);
+/// ```
 pub fn new_moka_cache(cache_size: u64) -> moka::future::Cache<String, String> {
     moka::future::Cache
         ::<String,String>
@@ -61,6 +79,12 @@ pub fn new_moka_cache(cache_size: u64) -> moka::future::Cache<String, String> {
         .build()
 }
 
+/// Validates a token, checking the cache before falling back to the database.
+///
+/// # Example
+/// ```rs
+/// check_token(&session, &cache, token, Some("alice".into()), &collector).await;
+/// ```
 #[named]
 pub async fn check_token(
     session: &scylla::client::session::Session,
@@ -119,6 +143,12 @@ pub async fn check_token(
     }
 }
 
+/// Checks whether `sid` corresponds to an existing server.
+///
+/// # Example
+/// ```rs
+/// check_sid(&session, "sid1".into()).await;
+/// ```
 pub async fn check_sid(
     session: &scylla::client::session::Session,
     sid: String
@@ -143,6 +173,12 @@ pub async fn check_sid(
     false
 }
 
+/// Checks whether `channel_name` exists in server `sid`.
+///
+/// # Example
+/// ```rs
+/// check_channel_name(&session, "sid1".into(), "general".into()).await;
+/// ```
 pub async fn check_channel_name(
     session: &scylla::client::session::Session,
     sid: String,
@@ -168,6 +204,12 @@ pub async fn check_channel_name(
     false
 }
 
+/// Validates the token and returns the matching user if they are a member of server `sid`.
+///
+/// # Example
+/// ```rs
+/// check_user_is_in_server(&session, &cache, "sid1".into(), token, "alice".into(), &collector).await;
+/// ```
 pub async fn check_user_is_in_server(
     session: &scylla::client::session::Session,
     cache: &moka::future::Cache<String,String>,
@@ -204,6 +246,11 @@ pub async fn check_user_is_in_server(
 }
 
 /// Check that a user is in the server AND has the required permission bits.
+///
+/// # Example
+/// ```rs
+/// check_permission(&session, &cache, "sid1".into(), token, "alice".into(), 1, &collector).await;
+/// ```
 pub async fn check_permission(
     session: &scylla::client::session::Session,
     cache: &moka::future::Cache<String, String>,
@@ -222,6 +269,12 @@ pub async fn check_permission(
     }
 }
 
+/// Checks whether `username` is a member of server `sid`.
+///
+/// # Example
+/// ```rs
+/// is_member_of_server(&session, "sid1".into(), "alice".into()).await;
+/// ```
 pub async fn is_member_of_server(
     session: &scylla::client::session::Session,
     sid: String,
