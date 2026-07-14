@@ -7,7 +7,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  compose_build:
 
     runs-on: ubuntu-latest
     services:
