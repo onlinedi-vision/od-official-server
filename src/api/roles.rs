@@ -55,8 +55,8 @@ pub async fn add_server_role(
     }
 
     if db::prelude::check_permission(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.server_id.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -82,7 +82,7 @@ pub async fn add_server_role(
         permissions: req.permissions,
     };
 
-    match db::roles::insert_server_role(&scylla_session, req.server_id.clone(), role).await {
+    match db::roles::insert_server_role(scylla_session, req.server_id.clone(), role).await {
         Ok(()) => actix_web::HttpResponse::Ok().body("Role added successfully"),
         Err(e) => {
             logging::log(&format!("Error inserting role '{}': {:?}", req.name, e), Some(function_name!()));
@@ -138,8 +138,8 @@ pub async fn assign_role(
     }
 
     if db::prelude::check_permission(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.server_id.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -153,7 +153,7 @@ pub async fn assign_role(
     }
 
     if !db::prelude::is_member_of_server(
-        &scylla_session,
+        scylla_session,
         req.server_id.clone(),
         req.target_user.clone(),
     )
@@ -163,7 +163,7 @@ pub async fn assign_role(
     }
 
     match db::roles::assign_role(
-        &scylla_session,
+        scylla_session,
         req.server_id.clone(),
         req.target_user.clone(),
         req.role_name.clone(),
@@ -224,8 +224,8 @@ pub async fn remove_role(
     }
 
     if db::prelude::check_permission(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.server_id.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -239,7 +239,7 @@ pub async fn remove_role(
     }
 
     if !db::prelude::is_member_of_server(
-        &scylla_session,
+        scylla_session,
         req.server_id.clone(),
         req.target_user.clone(),
     )
@@ -249,7 +249,7 @@ pub async fn remove_role(
     }
 
     match db::roles::remove_role(
-        &scylla_session,
+        scylla_session,
         req.server_id.clone(), 
         req.target_user.clone(),
         req.role_name.clone(),
@@ -308,8 +308,8 @@ pub async fn delete_server_role(
     }
 
     if db::prelude::check_permission(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.server_id.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -323,14 +323,14 @@ pub async fn delete_server_role(
     }
 
     if let Err(e) = db::roles::remove_role_from_all_users(
-        &scylla_session,
+        scylla_session,
         req.server_id.clone(),
         req.role_name.clone(),
     ).await {
         logging::log(&format!("Error cleaning up role assignments: {e:?}"), Some(function_name!()));
     }
 
-    match db::roles::delete_role(&scylla_session, 
+    match db::roles::delete_role(scylla_session, 
         req.server_id.clone(),
         req.role_name.clone())
         .await

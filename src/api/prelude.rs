@@ -10,8 +10,8 @@ pub async fn check_user_password(
     secrets:Vec<db::structures::UserSecrets>,
     username: &str,
     password: &str,
-    scylla_session: tokio::sync::MutexGuard<'_, scylla::client::session::Session>,
-    cache: tokio::sync::MutexGuard<'_, Cache<std::string::String, std::string::String>>,
+    scylla_session: &scylla::client::session::Session,
+    cache: &Cache<std::string::String, std::string::String>,
     new_token_holder: structures::TokenHolder
 ) -> actix_web::HttpResponse {
 
@@ -30,8 +30,8 @@ pub async fn check_user_password(
 
         if security::argon_check(&user_password_plain, &password_hash) {
             if let Err(insert_err) = db::prelude::insert_user_token(
-                &scylla_session,
-                &cache,
+                scylla_session,
+                cache,
                 db::structures::KeyUser {
                     key: Some(security::armor_token(&new_token_holder.token)),
                     username: Some(username.to_string()),
@@ -63,13 +63,13 @@ macro_rules! cache_metrics {
 
 macro_rules! scylla_session {
     ($session:ident) => {
-        $session.lock.lock().await
+        &$session.session
     };
 }
 
 macro_rules! cache {
     ($shared_cache:ident) => {
-        $shared_cache.lock.lock().await
+        &$shared_cache.cache
     };
 }
 
