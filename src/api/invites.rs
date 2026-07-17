@@ -14,8 +14,8 @@ pub async fn send_dm_invite(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.sender.clone()),
         &collector,
@@ -33,7 +33,7 @@ pub async fn send_dm_invite(
     };
     
     if let Some((invite_id, _)) =
-        db::invites::fetch_dm_invite(&scylla_session, u1.clone(), u2.clone()).await
+        db::invites::fetch_dm_invite(scylla_session, u1.clone(), u2.clone()).await
     {
         return actix_web::HttpResponse::Ok().json(structures::SendInviteResp {
             status: "already_invited".to_string(),
@@ -47,7 +47,7 @@ pub async fn send_dm_invite(
     let invite_id = uuid::Uuid::new_v4().to_string();
 
     if db::invites::send_dm_invite(
-        &scylla_session,
+        scylla_session,
         u1.clone(),
         u2.clone(),
         invite_id.clone(),
@@ -80,8 +80,8 @@ pub async fn accept_dm_invite(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.recipient.clone()),
         &collector,
@@ -99,11 +99,11 @@ pub async fn accept_dm_invite(
     };
     
     if let Some((invite_id, sender)) =
-        db::invites::fetch_dm_invite(&scylla_session, u1.clone(), u2.clone()).await
+        db::invites::fetch_dm_invite(scylla_session, u1.clone(), u2.clone()).await
     {
         let sid = format!("!{}", security::sid());
         if db::server::create_server(
-            &scylla_session,
+            scylla_session,
             sid.clone(),
             &"Direct Message".to_string(),
             &String::new(),
@@ -116,16 +116,16 @@ pub async fn accept_dm_invite(
             return actix_web::HttpResponse::InternalServerError().body("Failed to create DM server");
         }
 
-        let _ = db::friends::add_friend(&scylla_session, u1.clone(), u2.clone()).await;
-        let _ = db::friends::add_friend(&scylla_session, u2.clone(), u1.clone()).await;
+        let _ = db::friends::add_friend(scylla_session, u1.clone(), u2.clone()).await;
+        let _ = db::friends::add_friend(scylla_session, u2.clone(), u1.clone()).await;
         let _ =
-            db::server::add_user_to_server(&scylla_session, sid.clone(), u1.clone()).await;
+            db::server::add_user_to_server(scylla_session, sid.clone(), u1.clone()).await;
         let _ =
-            db::server::add_user_to_server(&scylla_session, sid.clone(), u2.clone()).await;
-        let _ = db::server::create_channel(&scylla_session, sid.clone(), "dm".to_string())
+            db::server::add_user_to_server(scylla_session, sid.clone(), u2.clone()).await;
+        let _ = db::server::create_channel(scylla_session, sid.clone(), "dm".to_string())
             .await;
         let _ =
-            db::invites::delete_dm_invite(&scylla_session, u1.clone(), u2.clone()).await;
+            db::invites::delete_dm_invite(scylla_session, u1.clone(), u2.clone()).await;
         
         return actix_web::HttpResponse::Ok().json(structures::AcceptInviteResp {
             status: "dm_created".to_string(),
@@ -154,8 +154,8 @@ pub async fn reject_dm_invite(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.recipient.clone()),
         &collector,
@@ -173,9 +173,9 @@ pub async fn reject_dm_invite(
     };
 
     if let Some((invite_id, _)) =
-        db::invites::fetch_dm_invite(&scylla_session, u1.clone(), u2.clone()).await
+        db::invites::fetch_dm_invite(scylla_session, u1.clone(), u2.clone()).await
     {
-        let _ = db::invites::delete_dm_invite(&scylla_session, u1.clone(), u2.clone()).await;
+        let _ = db::invites::delete_dm_invite(scylla_session, u1.clone(), u2.clone()).await;
         return actix_web::HttpResponse::Ok().json(structures::RejectInviteResp {
             status: "invite_rejected".to_string(),
             invite_id,
@@ -200,8 +200,8 @@ pub async fn fetch_pending_dm_invites(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -213,7 +213,7 @@ pub async fn fetch_pending_dm_invites(
     }
          
     if let Some(invites) =
-        db::invites::fetch_pending_dm_invites(&scylla_session, req.username.clone()).await
+        db::invites::fetch_pending_dm_invites(scylla_session, req.username.clone()).await
     {
         let pending: Vec<structures::PendingInvite> = invites
             .into_iter()

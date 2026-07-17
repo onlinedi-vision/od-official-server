@@ -17,7 +17,7 @@ pub async fn spell_cast(
     let new_spell = security::token();
 
     if db::spell_caster::spell(
-        &scylla_session,
+        scylla_session,
         new_key.clone(),
         new_spell.clone(),
         req.username.clone(),
@@ -47,8 +47,8 @@ pub async fn spell_check(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -57,10 +57,10 @@ pub async fn spell_check(
     .is_some()
     {
         if let Some(spell) =
-            db::spell_caster::spell_check(&scylla_session, req.key.clone(), req.username.clone())
+            db::spell_caster::spell_check(scylla_session, req.key.clone(), req.username.clone())
                 .await
         {
-            let _ = db::spell_caster::spell_repel(&scylla_session, req.key.clone()).await;
+            let _ = db::spell_caster::spell_repel(scylla_session, req.key.clone()).await;
 
             return actix_web::HttpResponse::Ok().body(spell);
         }

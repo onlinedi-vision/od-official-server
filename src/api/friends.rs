@@ -17,8 +17,8 @@ pub async fn fetch_friend_list(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -29,7 +29,7 @@ pub async fn fetch_friend_list(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
 
-    if let Some(friends) = db::friends::fetch_friends(&scylla_session, req.username.clone()).await {
+    if let Some(friends) = db::friends::fetch_friends(scylla_session, req.username.clone()).await {
         let friend_info: Vec<structures::FriendInfo> = friends
             .into_iter()
             .map(|(friend_username, friends_since)| structures::FriendInfo {
@@ -60,8 +60,8 @@ pub async fn delete_friend(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.user.clone()),
         &collector,
@@ -73,9 +73,9 @@ pub async fn delete_friend(
     }
 
     let result1 =
-        db::friends::delete_friend(&scylla_session, req.user.clone(), req.friend.clone()).await;
+        db::friends::delete_friend(scylla_session, req.user.clone(), req.friend.clone()).await;
     let result2 =
-        db::friends::delete_friend(&scylla_session, req.friend.clone(), req.user.clone()).await;
+        db::friends::delete_friend(scylla_session, req.friend.clone(), req.user.clone()).await;
 
     match (result1, result2) {
         (Some(Ok(())), Some(Ok(()))) => {
