@@ -106,7 +106,7 @@ pub async fn new_user_login(
     );
 
     let scylla_session = scylla_session!(session);
-    match db::users::insert_new_user(&scylla_session, user_instance).await {
+    match db::users::insert_new_user(scylla_session, user_instance).await {
         None => actix_web::HttpResponse::Conflict().body("User already exists or insert failed"),
         Some(_) => actix_web::HttpResponse::Ok().json(&token_holder),
     }
@@ -148,8 +148,8 @@ pub async fn patch_user_ttl(
     let collector = cache_metrics!(shared_collector);
     
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -160,7 +160,7 @@ pub async fn patch_user_ttl(
     }
 
     if db::users::update_ttl(
-        &scylla_session,
+        scylla_session,
         req.username.clone(),
         req.ttl.clone(),
     )
@@ -214,7 +214,7 @@ pub async fn try_login(
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
     
-    if let Some(secrets) = db::users::get_user_password_hash(&scylla_session, username).await  {
+    if let Some(secrets) = db::users::get_user_password_hash(scylla_session, username).await  {
         // TODO: wow this returns a HTTP responder... why?
         return prelude::check_user_password(secrets, &req.username, &req.password, scylla_session, cache, new_token_holder).await;
     }
@@ -263,8 +263,8 @@ pub async fn token_login(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -320,8 +320,8 @@ pub async fn get_user_servers(
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -333,10 +333,10 @@ pub async fn get_user_servers(
         return actix_web::HttpResponse::Unauthorized().body("Invalid or expired token");
     }
 
-    if let Some(sids) = db::server::fetch_user_servers(&scylla_session, req.username.clone()).await {
+    if let Some(sids) = db::server::fetch_user_servers(scylla_session, req.username.clone()).await {
         if let Err(insert_err) = db::prelude::insert_user_token(
-            &scylla_session,
-            &cache,
+            scylla_session,
+            cache,
             db::structures::KeyUser {
                 key: Some(armor_token_or!(
                     &new_token_holder.token,
@@ -352,7 +352,7 @@ pub async fn get_user_servers(
 
 
         let _ = db::users::delete_token(
-            &scylla_session,
+            scylla_session,
             req.username.clone(),
             armor_token_or!(
                 &req.token,
@@ -409,8 +409,8 @@ pub async fn get_user_pfp(
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -422,10 +422,10 @@ pub async fn get_user_pfp(
         return actix_web::HttpResponse::Unauthorized().body("Invalid or expired token");
     }
     
-    if let Some(pfp_row) = db::users::fetch_user_pfp(&scylla_session, &req.username).await {
+    if let Some(pfp_row) = db::users::fetch_user_pfp(scylla_session, &req.username).await {
         if let Err(insert_err) = db::prelude::insert_user_token(
-            &scylla_session,
-            &cache,
+            scylla_session,
+            cache,
             db::structures::KeyUser {
                 key: Some(armor_token_or!(
                     &new_token_holder.token,
@@ -440,7 +440,7 @@ pub async fn get_user_pfp(
         }
 
         let _ = db::users::delete_token(
-            &scylla_session,
+            scylla_session,
             req.username.clone(),
             armor_token_or!(
                 &req.token,
@@ -498,8 +498,8 @@ pub async fn set_user_pfp(
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -516,14 +516,14 @@ pub async fn set_user_pfp(
         other => other,
     };
 
-    if db::users::set_user_pfp(&scylla_session, &req.username, img_opt).await.is_err() {
+    if db::users::set_user_pfp(scylla_session, &req.username, img_opt).await.is_err() {
         return actix_web::HttpResponse::InternalServerError()
             .body("Failed to update profile picture.");
     }
 
     if let Err(insert_err) = db::prelude::insert_user_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         db::structures::KeyUser {
             key: Some(armor_token_or!(
                 &new_token_holder.token,
@@ -538,7 +538,7 @@ pub async fn set_user_pfp(
     }
 
     let _ = db::users::delete_token(
-        &scylla_session,
+        scylla_session,
         req.username.clone(),
         armor_token_or!(
             &req.token,
