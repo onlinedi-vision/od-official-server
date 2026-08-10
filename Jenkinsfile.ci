@@ -1,0 +1,96 @@
+def buildAndScanImage = {
+  def imageTag = "od-official-server:${env.GIT_COMMIT}"
+  sh """
+    GIT_BRANCH='refs/tags/0.0.0' docker buildx bake --set release.output='type=docker' --set release.tags='${imageTag}'
+  """
+  sh """
+    docker run --rm \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      aquasec/trivy:0.36.0 image \
+      --format table \
+      --exit-code 1 \
+      --ignore-unfixed \
+      --vuln-type os,library \
+      --severity CRITICAL,HIGH \
+      ${imageTag}
+  """
+}
+
+pipeline {
+  agent any
+
+  options {
+    disableConcurrentBuilds()
+    timeout(time: 2, unit: 'HOURS')
+  }
+
+  environment {
+    CARGO_TERM_COLOR = 'always'
+  }
+
+  stages {
+    stage('Pull Request Checks') {
+      when {
+        changeRequest()
+      }
+      parallel {
+        stage('Unit Tests') {
+          steps {
+            withChecks(name: 'Unit Tests') {
+              sh 'COMPOSE_BAKE=true ./launch-test-env.sh -ceS'
+            }
+          }
+        }
+        stage('E2E CI') {
+          steps {
+            withChecks(name: 'E2E CI') {
+              sh 'COMPOSE_BAKE=true ./launch-test-env.sh -cu -t 10 -T 10'
+            }
+          }
+        }
+        stage('Linting') {
+          steps {
+            withChecks(name: 'Linting') {
+              sh 'COMPOSE_BAKE=true ./launch-test-env.sh -cueSL'
+            }
+          }
+        }
+        stage('ShellCheck') {
+          steps {
+            withChecks(name: 'ShellCheck') {
+              sh '''
+                export SHELLCHECK_OPTS="-e SC2053 -e SC2068"
+                git ls-files '*.sh' | xargs -r shellcheck
+              '''
+            }
+          }
+        }
+        stage('Check Docker image builds') {
+          steps {
+            withChecks(name: 'Check Docker image builds') {
+              script {
+                buildAndScanImage()
+              }
+            }
+          }
+        }
+      }
+    }
+
+    stage('Check Docker image builds') {
+      when {
+        allOf {
+          branch 'main'
+          not { changeRequest() }
+        }
+      }
+      steps {
+        withChecks(name: 'Check Docker image builds') {
+          script {
+            buildAndScanImage()
+          }
+        }
+      }
+    }
+  }
+}
