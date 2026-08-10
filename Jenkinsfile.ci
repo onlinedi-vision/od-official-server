@@ -59,9 +59,9 @@ pipeline {
           steps {
             withChecks(name: 'ShellCheck') {
               sh '''
-                docker run -it
-                  -v ./shadow:/scripts/
-                  koalaman/shellcheck:latest
+                docker run -it \
+                  -v ./shadow:/scripts/ \
+                  koalaman/shellcheck:latest \
                   --exclude=SC2053 /scripts/e2e.sh
               '''
             }
