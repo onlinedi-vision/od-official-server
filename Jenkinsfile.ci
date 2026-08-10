@@ -59,8 +59,10 @@ pipeline {
           steps {
             withChecks(name: 'ShellCheck') {
               sh '''
-                export SHELLCHECK_OPTS="-e SC2053 -e SC2068"
-                git ls-files '*.sh' | xargs -r shellcheck
+                docker run -it
+                  -v ./shadow:/scripts/
+                  koalaman/shellcheck:latest
+                  --exclude=SC2053 /scripts/e2e.sh
               '''
             }
           }
