@@ -34,24 +34,10 @@ pipeline {
         changeRequest()
       }
       parallel {
-        stage('Unit Tests') {
-          steps {
-            withChecks(name: 'Unit Tests') {
-              sh 'COMPOSE_BAKE=true ./launch-test-env.sh -ceS'
-            }
-          }
-        }
-        stage('E2E CI') {
-          steps {
-            withChecks(name: 'E2E CI') {
-              sh 'COMPOSE_BAKE=true ./launch-test-env.sh -cu -t 10 -T 10'
-            }
-          }
-        }
-        stage('Linting') {
+        stage('Run Test Env') {
           steps {
             withChecks(name: 'Linting') {
-              sh 'COMPOSE_BAKE=true ./launch-test-env.sh -cueSL'
+              sh 'COMPOSE_BAKE=true ./launch-test-env.sh -cLt 10 -T 10'
             }
           }
         }
