@@ -5,6 +5,28 @@ use crate::utils::logging;
 
 use ::function_name::named;
 
+/// Fetches the authenticated user's friend list, including the date each friendship was formed.
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/fetch_friend_list")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/fetch_friend_list")]
 pub async fn fetch_friend_list(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -47,6 +69,30 @@ pub async fn fetch_friend_list(
     })
 }
 
+/// Removes the friendship between two users (deletes both directions of the relationship).
+///
+/// ### Request JSON (`FriendListReq`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "user": "alice",
+///   "friend": "bob"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/delete_friend")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "user": "alice",
+///         "friend": "bob"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/delete_friend")]
 pub async fn delete_friend(

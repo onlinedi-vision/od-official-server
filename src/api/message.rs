@@ -7,6 +7,33 @@ use crate::utils::logging;
 
 use ::function_name::named;
 
+/// Fetches a paginated slice of messages from a channel, using a `limit`/`offset` window.
+/// Note that `limit` and `offset` are supplied as strings and are parsed into `usize` server-side.
+///
+/// ### Request JSON (`LimitMessageTokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123",
+///   "limit": "50",
+///   "offset": "0"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/general/get_messages_migration")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123",
+///         "limit": "50",
+///         "offset": "0"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/servers/{sid}/{channel_name}/get_messages_migration")]
 pub async fn get_channel_messages_migration(
@@ -69,6 +96,31 @@ pub async fn get_channel_messages_migration(
     actix_web::HttpResponse::InternalServerError().body("Failed to fetch messages")
 }
 
+/// Sends a message to a channel, provided the caller has the `SEND_MESSAGES` permission
+/// in that server. The message content is encrypted before being persisted.
+///
+/// ### Request JSON (`SendMessage`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "m_content": "Hello, world!",
+///   "username": "alice"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/general/send_message")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "m_content": "Hello, world!",
+///         "username": "alice"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/servers/{sid}/{channel_name}/send_message")]
 pub async fn send_message(
@@ -133,6 +185,32 @@ pub async fn send_message(
 //     - currently a e2e test fails here... this will need to be investigated at some point
 //     - it seems that when the datetime is invalid the API doesn't fail with a proper message but instead says
 //       "Message deleted succesfully" without anything actually happening...
+/// Deletes a message from a channel. The caller must either own the message (identified by its
+/// `datetime`) or be the owner of the server.
+///
+/// ### Request JSON (`DeleteMessage`)
+/// ```json
+/// {
+///   "datetime": "2026-07-28 16:25:31.402",
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+/// > `datetime` must match the format `%Y-%m-%d %H:%M:%S%.f`.
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/general/delete_message")
+///     .json(&serde_json::json!({
+///         "datetime": "2026-07-28 16:25:31.402",
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/servers/{sid}/{channel_name}/delete_message")]
 pub async fn delete_message(

@@ -3,6 +3,20 @@ use actix_web;
 use prometheus;
 use prometheus::Encoder;
 
+/// Exposes application metrics in Prometheus text-exposition format, gathered from the shared
+/// metrics registry. This endpoint takes no request body.
+///
+/// ### Request JSON
+/// _None. This is a `GET` request with no body._
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .get("http://localhost:1313/metrics")
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::get("/metrics")]
 async fn metrics(data: actix_web::web::Data<structures::AppState>) -> impl actix_web::Responder {
     let metric_families = data.registry.gather();

@@ -7,6 +7,28 @@ use crate::utils::logging;
 
 use ::function_name::named;
 
+/// Fetches the list of channels that belong to a given server.
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/get_channels")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/servers/{sid}/get_channels")]
 pub async fn get_channels(
@@ -47,6 +69,31 @@ pub async fn get_channels(
     
 }
 
+/// Creates a new channel inside a server, provided the caller is a member of that server.
+/// On success, a new session token is issued and the caller's old token is invalidated.
+///
+/// ### Request JSON (`CreateChannel`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "channel_name": "general",
+///   "username": "alice"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/create_channel")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "channel_name": "general",
+///         "username": "alice"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/servers/{sid}/create_channel")]
 pub async fn create_channel(
@@ -113,6 +160,28 @@ pub async fn create_channel(
     actix_web::HttpResponse::Ok().json(&new_token_holder)
 }
 
+/// Deletes a channel from a server. Only the server owner is allowed to perform this action.
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/general/delete_channel")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/servers/{sid}/{channel_name}/delete_channel")]
 pub async fn delete_channel(

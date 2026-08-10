@@ -6,6 +6,37 @@ use crate::utils::logging;
 
 use ::function_name::named;
 
+/// Creates a new role on a server. The caller must have the `ADD_ROLE` permission in that server.
+///
+/// ### Request JSON (`ServerRoleRequest`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "username": "alice",
+///   "server_id": "SID123",
+///   "name": "moderator",
+///   "color": "#ff0000",
+///   "permissions": 3
+/// }
+/// ```
+/// > `color` is optional. `permissions` is a bitmask of `db::structures::Permissions`.
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/add_server_role")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "username": "alice",
+///         "server_id": "SID123",
+///         "name": "moderator",
+///         "color": "#ff0000",
+///         "permissions": 3
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/add_server_role")]
 pub async fn add_server_role(
@@ -60,6 +91,35 @@ pub async fn add_server_role(
     }
 }
 
+/// Assigns an existing role to a target user in a server. The caller must have the `ADD_ROLE`
+/// permission, and the target user must already be a member of the server.
+///
+/// ### Request JSON (`UserServerRoleRequest`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "username": "alice",
+///   "server_id": "SID123",
+///   "target_user": "bob",
+///   "role_name": "moderator"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/api/assign_role")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "username": "alice",
+///         "server_id": "SID123",
+///         "target_user": "bob",
+///         "role_name": "moderator"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/api/assign_role")]
 pub async fn assign_role(
@@ -117,6 +177,35 @@ pub async fn assign_role(
     }
 }
 
+/// Removes an assigned role from a target user in a server. The caller must have the `ADD_ROLE`
+/// permission, and the target user must already be a member of the server.
+///
+/// ### Request JSON (`UserServerRoleRequest`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "username": "alice",
+///   "server_id": "SID123",
+///   "target_user": "bob",
+///   "role_name": "moderator"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/api/remove_role")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "username": "alice",
+///         "server_id": "SID123",
+///         "target_user": "bob",
+///         "role_name": "moderator"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/api/remove_role")]
 pub async fn remove_role(
@@ -174,6 +263,33 @@ pub async fn remove_role(
     }
 }
 
+/// Deletes a role from a server entirely, unassigning it from every user that currently holds it.
+/// The caller must have the `ADD_ROLE` permission in that server.
+///
+/// ### Request JSON (`DeleteServerRoleRequest`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "username": "alice",
+///   "server_id": "SID123",
+///   "role_name": "moderator"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/api/delete_server_role")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "username": "alice",
+///         "server_id": "SID123",
+///         "role_name": "moderator"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/api/delete_server_role")]
 pub async fn delete_server_role(

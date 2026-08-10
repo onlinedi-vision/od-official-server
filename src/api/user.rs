@@ -5,6 +5,30 @@ use crate::utils::logging;
 
 use ::function_name::named;
 
+/// Registers a new user account with a hashed/salted password, and returns a fresh session token.
+///
+/// ### Request JSON (`NewUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "email": "alice@example.com",
+///   "password": "SuperSecret123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/new_user")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "email": "alice@example.com",
+///         "password": "SuperSecret123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/new_user")]
 pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -47,6 +71,30 @@ pub async fn new_user_login(
     }
 }
 
+/// Updates the message time-to-live (TTL) setting for the authenticated user.
+///
+/// ### Request JSON (`UpdateUserTTL`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123",
+///   "ttl": "3600"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .patch("http://localhost:1313/user/ttl")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123",
+///         "ttl": "3600"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::patch("/user/ttl")]
 pub async fn patch_user_ttl(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -86,6 +134,29 @@ pub async fn patch_user_ttl(
 
 }
 
+/// Attempts to log a user in with a username and password. On success, returns a new session
+/// token.
+///
+/// ### Request JSON (`LoginUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "password": "SuperSecret123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/try_login")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "password": "SuperSecret123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/try_login")]
 pub async fn try_login(
@@ -114,6 +185,29 @@ pub async fn try_login(
 
 // TODO: use this endpoint... when it's ready...
 // could also be redone... maybe just a new refresh token... when we have those.
+/// Validates that a session token is still valid for the given username, effectively logging
+/// the user back in without re-entering credentials.
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/token_login")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/token_login")]
 pub async fn token_login(
@@ -147,6 +241,29 @@ pub async fn token_login(
     
 }
 
+/// Fetches the list of server IDs the authenticated user belongs to, and issues a new session
+/// token (the old one is invalidated).
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/get_user_servers")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/get_user_servers")]
 pub async fn get_user_servers(
@@ -207,6 +324,29 @@ pub async fn get_user_servers(
     actix_web::HttpResponse::NotFound().body("No servers found for user")
 }
 
+/// Fetches the authenticated user's profile picture URL, and issues a new session token
+/// (the old one is invalidated).
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/get_user_pfp")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/get_user_pfp")]
 pub async fn get_user_pfp(
@@ -264,6 +404,32 @@ pub async fn get_user_pfp(
     actix_web::HttpResponse::NotFound().body("User not found.")
 }
 
+/// Sets (or clears, if `img_url` is `None`/empty) the authenticated user's profile picture URL,
+/// and issues a new session token (the old one is invalidated).
+///
+/// ### Request JSON (`SetUserPfpReq`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "username": "alice",
+///   "img_url": "https://example.com/pfp.png"
+/// }
+/// ```
+/// > `img_url` is optional; omit it or set it to `null`/an empty string to clear the picture.
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/set_user_pfp")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "username": "alice",
+///         "img_url": "https://example.com/pfp.png"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/set_user_pfp")]
 pub async fn set_user_pfp(
