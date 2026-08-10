@@ -22,6 +22,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         None => "onlinedi.vision".to_string()
     };
 
+    let scylla_port = match env::get_option_env_var("SCYLLA_PORT") {
+        Some(port) => port,
+        None => "9042".to_string()
+    };
+
     let no_of_workers = match env::get_option_env_var("NO_OF_WORKERS") {
         Some(s_workers_count) => {
             s_workers_count.parse::<usize>().unwrap_or(512)
@@ -29,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         None => 512,
     };
 
-    if let Ok(ssesh) = Box::pin(db::prelude::new_scylla_session(&format!("{scylla_inet}:9042"))).await {
+    if let Ok(ssesh) = Box::pin(db::prelude::new_scylla_session(&format!("{scylla_inet}:{scylla_port}"))).await {
         let mcache = db::prelude::new_moka_cache(1_000);   
         let session = actix_web::web::Data::new(security::structures::ScyllaSession {
             lock: tokio::sync::Mutex::new(ssesh)

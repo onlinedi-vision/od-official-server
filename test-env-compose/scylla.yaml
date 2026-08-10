@@ -3,5 +3,9 @@ services:
     image: scylladb/scylla
     container_name: scylla
     network_mode: host
+    environment:
+      - CQLSH_PORT=19042
+    volumes:
+      - ./rootfs/scylla/scylla.yaml:/etc/scylla/scylla.yaml
 
 
