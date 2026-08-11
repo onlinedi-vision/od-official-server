@@ -210,19 +210,26 @@ pub async fn update_ttl(
     
 }
 
+pub fn ttl_seconds_from_symbol(symbol: &str) -> i32 {
+    match symbol {
+        "s" =>                1, // every _s_econd   (only for test cases)
+        "S" =>               10, // every 10 _S_econds (only for test cases)
+        "h" =>          60 * 60, // every _h_our
+        "H" =>     12 * 60 * 60, // every 12 _H_ours
+        "d" =>     24 * 60 * 60, // every _d_ay
+        "w" => 7 * 24 * 60 * 60, // every _w_eek
+        _   =>                0, // _N_ever
+    }
+}
+
 pub async fn get_ttl(
     session: &scylla::client::session::Session,
     username: String
 ) -> i32 {
-    match get_ttl_symbol(session, username).await.unwrap_or("N".to_string()).as_str() {
-        "s"     =>          1_i32, // every _s_econd   (only for test cases)
-        "S"     =>         10_i32, // every 10 _S_econds (only for test cases)
-        "h"     =>      60*60_i32, // every _h_our
-        "H"     =>   12*60*60_i32, // every 12 _H_ours
-        "d"     =>   24*60*60_i32, // every _d_ay
-        "w"     => 7*24*60*60_i32, // every _w_eek
-        _ =>          0_i32, // _N_ever
-    }
+    let symbol = get_ttl_symbol(session, username)
+        .await
+        .unwrap_or_else(|| "N".to_string());
+    ttl_seconds_from_symbol(&symbol)
 }
 
 pub async fn get_ttl_symbol(
@@ -245,4 +252,26 @@ pub async fn get_ttl_symbol(
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ttl_seconds_from_symbol;
+
+    #[test]
+    fn ttl_seconds_from_symbol_maps_known_values() {
+        assert_eq!(ttl_seconds_from_symbol("s"),                1);
+        assert_eq!(ttl_seconds_from_symbol("S"),               10);
+        assert_eq!(ttl_seconds_from_symbol("h"),          60 * 60);
+        assert_eq!(ttl_seconds_from_symbol("H"),     12 * 60 * 60);
+        assert_eq!(ttl_seconds_from_symbol("d"),     24 * 60 * 60);
+        assert_eq!(ttl_seconds_from_symbol("w"), 7 * 24 * 60 * 60);
+    }
+
+    #[test]
+    fn ttl_seconds_from_symbol_unknown_returns_zero() {
+        assert_eq!(ttl_seconds_from_symbol("N"), 0);
+        assert_eq!(ttl_seconds_from_symbol(""), 0);
+        assert_eq!(ttl_seconds_from_symbol("invalid"), 0);
+    }
 }

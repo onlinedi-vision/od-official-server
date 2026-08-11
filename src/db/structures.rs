@@ -111,3 +111,47 @@ pub struct ServerRole {
     pub permissions:i64,
 
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Permissions;
+
+    #[test]
+    fn permissions_individual_bits() {
+        assert_eq!(Permissions::SEND_MESSAGES.bits(), 1);
+        assert_eq!(Permissions::ADD_ROLE.bits(), 2);
+    }
+
+    #[test]
+    fn permissions_combined_with_or() {
+        let combined = Permissions::SEND_MESSAGES | Permissions::ADD_ROLE;
+        assert!(combined.contains(Permissions::SEND_MESSAGES));
+        assert!(combined.contains(Permissions::ADD_ROLE));
+        assert_eq!(combined.bits(), 3);
+    }
+
+    #[test]
+    fn permissions_check_required_bits() {
+        let perms = Permissions::SEND_MESSAGES | Permissions::ADD_ROLE;
+        let required = Permissions::SEND_MESSAGES.bits();
+        assert_eq!((perms.bits() & required) == required, true);
+
+        let perms = Permissions::ADD_ROLE;
+        let required = Permissions::SEND_MESSAGES.bits();
+        assert_eq!((perms.bits() & required) == required, false);
+    }
+
+    #[test]
+    fn permissions_rejects_unknown_bits() {
+        let requested: i64 = 9999;
+        assert_ne!((requested & !Permissions::all().bits()), 0);
+    }
+
+    #[test]
+    fn permissions_serde_roundtrip() {
+        let perms = Permissions::SEND_MESSAGES | Permissions::ADD_ROLE;
+        let json = serde_json::to_string(&perms).expect("serialize permissions");
+        let decoded: Permissions = serde_json::from_str(&json).expect("deserialize permissions");
+        assert_eq!(decoded, perms);
+    }
+}
