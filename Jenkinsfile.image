@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    parameters{
+        string(
+            name: 'RELEASE_REF',
+            defaultValue: '',
+            description: 'Release ref such as refs/tags/1.2.3; defaults to GIT_BRANCH'
+        )
+    }
+
+    environment {
+        IMAGE_REPOSITORY = 'registry.onlinedi.vision:5000/od-official-server'
+        IMAGE_REPORT = 'image-size-report.md'
+    }
+
+    stages {
+        stage('Test publishing command') {
+            steps {
+                sh './ci/tests/publish-image-test.sh'
+            }
+        }
+
+        stage('Build and push image') {
+            steps{
+                withDockerRegistry(
+                    url: 'https://registry.onlinedi.vision:5000',
+                    credentialsId: 'docker-registry'
+                ){
+                    sh './ci/publish-image.sh'
+                }
+            }
+        }            
+        stage('Show image report') {
+            steps {
+                sh 'sed -n \'1,120p\' "$IMAGE_REPORT"'
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts(
+                artifacts: 'image-size-report.md',
+                allowEmptyArchive: true
+            )
+        }
+    }
+
+}
