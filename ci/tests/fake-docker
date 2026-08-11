@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# Minimal Docker replacement used by tests; it never contacts a real daemon.
+
+set -euo pipefail
+
+# Record every simulated Docker command so the test can count and inspect them.
+
+printf '%s\n' "$*" >> "${FAKE_DOCKER_LOG:?FAKE_DOCKER_LOG must be set}"
+
+# Simulate either a successful build or a requested build failure.
+
+if [[ "$1" == "buildx" && "${2:-}" == "bake" ]]; then
+    if [[ "${FAKE_DOCKER_FAIL_BUILD:-0}" == "1" ]]; then
+        exit 41
+    fi
+
+    exit 0
+fi
+
+# Accept the push command without contacting the registry.
+
+if [[ "$1" == "push" ]]; then
+    exit 0
+fi
+
+# Return deterministic metadata for report-generation tests.
+
+if [[ "$1" == "image" && "${2:-}" == "inspect" ]]; then
+    case "${4:-}" in
+        '{{.Size}}')
+            printf '12582912\n'
+            ;;
+        '{{.Id}}')
+            printf 'sha256:image-id\n'
+            ;;
+        '{{range .RepoDigests}}{{println .}}{{end}}')
+            printf '%s\n' \
+                'registry.onlinedi.vision:5000/od-official-server@sha256:digest'
+            ;;
+        *)
+            printf 'Unexpected inspect format: %s\n' "${4:-}" >&2
+            exit 3
+            ;;
+    esac
+
+    exit 0
+fi
+
+# Fail when the production script starts using an unhandled Docker command.
+
+printf 'Unexpected Docker command: %s\n' "$*" >&2
+exit 3

@@ -5,3 +5,4 @@ test_env*
 .pids
 /test-env-compose/grafana/*
 /test-env-compose/prometheus/*
+/image-size-report.md
