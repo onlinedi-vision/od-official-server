@@ -87,14 +87,14 @@ pipeline {
       emailext (
         subject: "Build Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
         body: "The build failed. Check the console output at ${env.BUILD_URL}.",
-        to: "team@mail.onlinedi.vision" // Replace with your list
+        to: "TEAM@mail.onlinedi.vision"
       )
     }
     success {
       emailext (
         subject: "Build Succeeded: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
         body: "The build was successful. Check the console output at ${env.BUILD_URL}.",
-        to: "team@mail.onlinedi.vision" // Replace with your list
+        to: "TEAM@mail.onlinedi.vision"
       )
     }
   }
