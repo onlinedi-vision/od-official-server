@@ -347,6 +347,7 @@ dependencies = [
  "rand_core 0.9.3",
  "scylla",
  "serde",
+ "serde_json",
  "sha2",
  "tokio",
  "uuid",

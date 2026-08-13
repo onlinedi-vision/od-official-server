@@ -1,0 +1,103 @@
+def buildAndScanImage = {
+  def imageTag = "od-official-server:${env.GIT_COMMIT}"
+  sh """
+    GIT_BRANCH='refs/tags/0.0.0' docker buildx bake --set release.output='type=docker' --set release.tags='${imageTag}'
+  """
+  sh """
+    docker run --rm \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      aquasec/trivy:0.36.0 image \
+      --format table \
+      --exit-code 1 \
+      --ignore-unfixed \
+      --vuln-type os,library \
+      --severity CRITICAL,HIGH \
+      ${imageTag}
+  """
+}
+
+pipeline {
+  agent any
+
+  options {
+    disableConcurrentBuilds()
+    timeout(time: 2, unit: 'HOURS')
+  }
+
+  environment {
+    CARGO_TERM_COLOR = 'always'
+  }
+
+  stages {
+    stage('Pull Request Checks') {
+      when {
+        changeRequest()
+      }
+      parallel {
+        stage('Run Test Env') {
+          steps {
+            withChecks(name: 'Linting') {
+              sh 'COMPOSE_BAKE=true ./launch-test-env.sh -cLt 10 -T 10'
+            }
+          }
+        }
+        stage('ShellCheck') {
+          steps {
+            withChecks(name: 'ShellCheck') {
+              sh '''
+                docker run -t \
+                  -v ./shadow:/scripts/ \
+                  koalaman/shellcheck:latest \
+                  --exclude=SC2053 /scripts/e2e.sh
+              '''
+            }
+          }
+        }
+        stage('Check Docker image builds') {
+          steps {
+            withChecks(name: 'Check Docker image builds') {
+              script {
+                buildAndScanImage()
+              }
+            }
+          }
+        }
+      }
+    }
+
+    stage('Check Docker image builds') {
+      when {
+        allOf {
+          branch 'main'
+          not { changeRequest() }
+        }
+      }
+      steps {
+        withChecks(name: 'Check Docker image builds') {
+          script {
+            buildAndScanImage()
+          }
+        }
+      }
+    }
+  }
+  
+  post {
+    failure {
+      emailext (
+        from: 'jenkins@mail.onlinedi.vision',
+        subject: "Build Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+        body: "The build failed. Check the console output at ${env.BUILD_URL}.",
+        to: "TEAM@mail.onlinedi.vision"
+      )
+    }
+    success {
+      emailext (
+        from: 'jenkins@mail.onlinedi.vision',
+        subject: "Build Succeeded: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+        body: "The build was successful. Check the console output at ${env.BUILD_URL}.",
+        to: "TEAM@mail.onlinedi.vision"
+      )
+    }
+  }
+}

@@ -22,6 +22,9 @@ export API_PORT=1313
 export NO_OF_WORKERS=32
 export EXECUTABLE_NAME="api"
 
+# TODO: if really necessary we may want this to be configurable by the user
+export SCYLLA_PORT="19042"
+
 if ! [ -e "$PIDS_FILE" ]; then
   touch "$PIDS_FILE"
 fi

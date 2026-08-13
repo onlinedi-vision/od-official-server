@@ -288,3 +288,110 @@ pub struct SetUserPfpReq {
     pub username: String,
     pub img_url: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        AcceptInviteReq, FriendListReq, LimitMessageTokenUser, LoginUser, NewUser, SendInviteReq,
+        SendMessage, ServerRoleRequest,
+    };
+
+    #[test]
+    fn new_user_deserializes_all_fields() {
+        let json = r#"{"username":"alice","email":"a@b.c","password":"secret"}"#;
+        let user: NewUser = serde_json::from_str(json).expect("deserialize NewUser");
+        assert_eq!(user.username, "alice");
+        assert_eq!(user.email, "a@b.c");
+        assert_eq!(user.password, "secret");
+    }
+
+    #[test]
+    fn new_user_rejects_missing_field() {
+        let json = r#"{"username":"alice","email":"a@b.c"}"#;
+        assert!(serde_json::from_str::<NewUser>(json).is_err());
+    }
+
+    #[test]
+    fn login_user_deserializes() {
+        let json = r#"{"username":"alice","password":"secret"}"#;
+        let user: LoginUser = serde_json::from_str(json).expect("deserialize LoginUser");
+        assert_eq!(user.username, "alice");
+        assert_eq!(user.password, "secret");
+    }
+
+    #[test]
+    fn send_message_deserializes() {
+        let json = r#"{"token":"tok","m_content":"hello","username":"alice"}"#;
+        let msg: SendMessage = serde_json::from_str(json).expect("deserialize SendMessage");
+        assert_eq!(msg.token, "tok");
+        assert_eq!(msg.m_content, "hello");
+        assert_eq!(msg.username, "alice");
+    }
+
+    #[test]
+    fn limit_message_token_user_deserializes() {
+        let json = r#"{"username":"alice","token":"tok","limit":"100","offset":"0"}"#;
+        let req: LimitMessageTokenUser =
+            serde_json::from_str(json).expect("deserialize LimitMessageTokenUser");
+        assert_eq!(req.username, "alice");
+        assert_eq!(req.token, "tok");
+        assert_eq!(req.limit, "100");
+        assert_eq!(req.offset, "0");
+    }
+
+    #[test]
+    fn server_role_request_deserializes_with_color() {
+        let json = r##"{
+            "token":"tok",
+            "username":"alice",
+            "server_id":"sid1",
+            "name":"moderator",
+            "color":"#ff0000",
+            "permissions":1
+        }"##;
+        let req: ServerRoleRequest =
+            serde_json::from_str(json).expect("deserialize ServerRoleRequest");
+        assert_eq!(req.color.as_deref(), Some("#ff0000"));
+        assert_eq!(req.permissions, 1);
+    }
+
+    #[test]
+    fn server_role_request_deserializes_without_color() {
+        let json = r#"{
+            "token":"tok",
+            "username":"alice",
+            "server_id":"sid1",
+            "name":"moderator",
+            "permissions":3
+        }"#;
+        let req: ServerRoleRequest =
+            serde_json::from_str(json).expect("deserialize ServerRoleRequest without color");
+        assert!(req.color.is_none());
+        assert_eq!(req.permissions, 3);
+    }
+
+    #[test]
+    fn send_invite_req_deserializes() {
+        let json = r#"{"token":"tok","sender":"alice","recipient":"bob"}"#;
+        let req: SendInviteReq = serde_json::from_str(json).expect("deserialize SendInviteReq");
+        assert_eq!(req.sender, "alice");
+        assert_eq!(req.recipient, "bob");
+    }
+
+    #[test]
+    fn accept_invite_req_deserializes() {
+        let json = r#"{"token":"tok","recipient":"bob","sender":"alice"}"#;
+        let req: AcceptInviteReq =
+            serde_json::from_str(json).expect("deserialize AcceptInviteReq");
+        assert_eq!(req.recipient, "bob");
+        assert_eq!(req.sender, "alice");
+    }
+
+    #[test]
+    fn friend_list_req_deserializes() {
+        let json = r#"{"token":"tok","user":"alice","friend":"bob"}"#;
+        let req: FriendListReq = serde_json::from_str(json).expect("deserialize FriendListReq");
+        assert_eq!(req.user, "alice");
+        assert_eq!(req.friend, "bob");
+    }
+}

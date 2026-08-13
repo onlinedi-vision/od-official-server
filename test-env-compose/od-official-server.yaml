@@ -11,6 +11,7 @@ services:
         - SCYLLA_CASSANDRA_PASSWORD=cassandra
         - SCYLLA_DB_USER=cassandra
         - API_PORT=1313
+        - SCYLLA_PORT
         - SCYLLA_INET
         - RUN_UT
         - RUN_LINT
@@ -26,6 +27,7 @@ services:
       - API_PORT=1313
       - TOKEN_TTL=2
       - SCYLLA_INET
+      - SCYLLA_PORT
       - NO_OF_WORKERS
       - RUST_LOG=debug
   linter:
