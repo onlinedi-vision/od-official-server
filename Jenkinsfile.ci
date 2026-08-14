@@ -39,6 +39,11 @@ pipeline {
             withChecks(name: 'Linting') {
               sh 'COMPOSE_BAKE=true ./launch-test-env.sh -cLt 10 -T 10'
             }
+            script {
+              if (fileExists("test-env-compose/e2e/FAIL")) {
+                error "E2E TESTING FAILED"
+              }
+            }
           }
         }
         stage('ShellCheck') {
@@ -83,6 +88,9 @@ pipeline {
   }
   
   post {
+    always {
+      archiveArtifacts allowEmpty: true, artifacts: "test-env-compose/e2e/*.log"
+    }
     failure {
       emailext (
         from: 'jenkins@mail.onlinedi.vision',

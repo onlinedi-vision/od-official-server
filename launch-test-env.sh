@@ -161,7 +161,6 @@ if [[ -f test-env-compose/e2e/FAIL ]]; then
   cat test-env-compose/e2e/*.log
   echo "E2E TESTING FAILED BECAUSE OF: "
   cat test-env-compose/e2e/FAIL
-  docker buildx version
   exit 1
 fi
 
