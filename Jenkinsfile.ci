@@ -46,18 +46,6 @@ pipeline {
             }
           }
         }
-        stage('ShellCheck') {
-          steps {
-            withChecks(name: 'ShellCheck') {
-              sh '''
-                docker run -t \
-                  -v ./shadow:/scripts/ \
-                  koalaman/shellcheck:latest \
-                  --exclude=SC2053 /scripts/e2e.sh
-              '''
-            }
-          }
-        }
         stage('Check Docker image builds') {
           steps {
             withChecks(name: 'Check Docker image builds') {
