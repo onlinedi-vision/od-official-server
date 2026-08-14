@@ -89,7 +89,7 @@ pipeline {
   
   post {
     always {
-      archiveArtifacts allowEmpty: true, artifacts: "test-env-compose/e2e/*.log"
+      archiveArtifacts allowEmptyArchive: true, artifacts: "test-env-compose/e2e/*.log"
     }
     failure {
       emailext (
