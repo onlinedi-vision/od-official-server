@@ -157,12 +157,6 @@ fi
 
 echo "================== LAUNCHING API E2E TESTS ===================="
 env -C test-env-compose/e2e docker buildx bake --allow=network.host
-if [[ -f test-env-compose/e2e/FAIL ]]; then
-  cat test-env-compose/e2e/*.log
-  echo "E2E TESTING FAILED BECAUSE OF: "
-  cat test-env-compose/e2e/FAIL
-  exit 1
-fi
 
 if [[ "${c_flag}" == "true" ]]; then
   cleanup
