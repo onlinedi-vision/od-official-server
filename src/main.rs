@@ -37,12 +37,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     if let Ok(ssesh) = Box::pin(db::prelude::new_scylla_session(&format!("{scylla_inet}:{scylla_port}"))).await {
         let mcache = db::prelude::new_moka_cache(1_000);   
         let session = actix_web::web::Data::new(security::structures::ScyllaSession {
-            lock: tokio::sync::Mutex::new(ssesh)
+            session: ssesh
         });
 
-    
         let cache = actix_web::web::Data::new(security::structures::MokaCache {
-            lock: tokio::sync::Mutex::new(mcache)
+            cache: mcache
         });
 
         let rl_config = RateLimitConfig::default().max_requests(API_RATELIMIT_COUNT).window_secs(API_RATELIMIT_WINDOW_SECONDS);

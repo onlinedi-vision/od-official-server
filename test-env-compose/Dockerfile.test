@@ -1,40 +1,50 @@
 FROM clux/muslrust:1.93.1-stable AS base
-LABEL maintainer=kickhead13<ana.alexandru.gabriel@proton.me>
-WORKDIR /build
-ARG RUN_LINT
 ARG SALT_ENCRYPTION_KEY
 ARG SALT_ENCRYPTION_IV
 ARG SCYLLA_CASSANDRA_PASSWORD
-ARG RUN_UT
 ARG OUTPUT=output
+LABEL maintainer=kickhead13<ana.alexandru.gabriel@proton.me>
+WORKDIR /build
+RUN mkdir ${OUTPUT}
 
 FROM base AS requirements
+RUN --mount=type=cache,target=/usr/local/rustup \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    rustup component add clippy
 COPY --link --from=bare-repo . .
 COPY --link Cargo* .
+
+FROM requirements AS builder-bare
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo build --release --target x86_64-unknown-linux-musl
 
-FROM requirements AS workspace
+FROM builder-bare AS linter-bare
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+   cargo clippy --release --target x86_64-unknown-linux-musl 
+
+FROM linter-bare AS linter-run
 COPY --link src/ src/
 COPY --link Cargo* .
 RUN touch src/main.rs
-
-FROM workspace AS linter-run
-RUN mkdir ${OUTPUT}
-RUN rustup component add clippy
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo clippy --release --target x86_64-unknown-linux-musl \
    -- -D warnings \
-   |& tee ${OUTPUT}/linter.log || ${OUTPUT}/LINTER_FAIL
+   |& tee ${OUTPUT}/linter.log || touch ${OUTPUT}/LINTER_FAIL
 
 FROM scratch AS linter
 ARG OUTPUT=output
 COPY --from=linter-run /build/${OUTPUT}/ .
 
+
+FROM builder-bare AS workspace
+COPY --link src/ src/
+COPY --link Cargo* .
+RUN touch src/main.rs
+
 FROM workspace AS ut-run
-RUN mkdir ${OUTPUT}
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo test |& tee ${OUTPUT}/ut.log || touch ${OUTPUT}/UT_FAIL
+
 
 FROM scratch AS ut
 ARG OUTPUT=output

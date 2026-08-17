@@ -39,8 +39,8 @@ pub async fn get_channel_messages_migration(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -54,7 +54,7 @@ pub async fn get_channel_messages_migration(
     }
     
     if let Some(messages) = db::messages::fetch_server_channel_messages(
-        &scylla_session,
+        scylla_session,
         sid.clone(),
         channel_name,
         Some(limit),
@@ -85,13 +85,13 @@ pub async fn send_message(
 	
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let sid = param!(http, "sid", &scylla_session);
-    let channel_name = param!(http, "channel_name", &scylla_session, sid);
+    let sid = param!(http, "sid", scylla_session);
+    let channel_name = param!(http, "channel_name", scylla_session, sid);
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_permission(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -105,14 +105,14 @@ pub async fn send_message(
         return actix_web::HttpResponse::Forbidden().body("You do not have permission to send messages");
     }
     
-    let ttl = db::users::get_ttl(&scylla_session, req.username.clone())
+    let ttl = db::users::get_ttl(scylla_session, req.username.clone())
         .await;
 
     let (enc_message, enc_salt) =
         security::messages::encrypt(&req.m_content, &security::salt());
     
     if db::server::send_message(
-        &scylla_session,
+        scylla_session,
         sid.clone(),
         channel_name.clone(),
         enc_message,
@@ -147,8 +147,8 @@ pub async fn delete_message(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -171,7 +171,7 @@ pub async fn delete_message(
     let cql_datetime = scylla::value::CqlTimestamp(millis);
 
     if db::messages::verify_message_ownership(
-        &scylla_session,
+        scylla_session,
         sid.clone(),
         channel_name.clone(),
         cql_datetime,
@@ -179,11 +179,11 @@ pub async fn delete_message(
     )
     .await
         == Some(true)
-        || db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await
+        || db::server::check_user_is_owner(scylla_session, sid.clone(), req.username.clone()).await
             == Some(true)
     {
         if db::messages::delete_message(
-            &scylla_session,
+            scylla_session,
             sid.clone(),
             cql_datetime,
             channel_name.clone(),

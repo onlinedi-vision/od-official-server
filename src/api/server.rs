@@ -28,8 +28,8 @@ pub async fn create_server(
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -43,7 +43,7 @@ pub async fn create_server(
     
     let sid = security::sid();
     if db::server::create_server(
-        &scylla_session,
+        scylla_session,
         sid.clone(),
         &req.desc,
         &req.img_url,
@@ -58,14 +58,14 @@ pub async fn create_server(
     }
     
     let _ =
-        db::server::create_channel(&scylla_session, sid.clone(), "info".to_string()).await;
+        db::server::create_channel(scylla_session, sid.clone(), "info".to_string()).await;
     let mut server_created = structures::ServerCreatedResponse {
         token: security::token(),
         sid: sid.clone(),
     };
     if let Err(insert_err) = db::prelude::insert_user_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         db::structures::KeyUser {
             key: Some(security::armor_token(&server_created.token.clone())),
             username: Some(req.username.clone()),
@@ -76,7 +76,7 @@ pub async fn create_server(
         server_created.token = req.token.clone();
     } else {
         let _ = db::users::delete_token(
-            &scylla_session,
+            scylla_session,
             req.username.clone(),
             security::armor_token(&req.token),
         )
@@ -86,7 +86,7 @@ pub async fn create_server(
    
 
 
-    if db::server::add_user_to_server(&scylla_session, sid.clone(), req.username.clone())
+    if db::server::add_user_to_server(scylla_session, sid.clone(), req.username.clone())
         .await
         .is_some()
     {
@@ -104,8 +104,8 @@ pub async fn create_server(
         };
 
         
-        let _ = db::roles::insert_server_role(&scylla_session, sid.clone(), admin_role).await;
-        let _ = db::roles::insert_server_role(&scylla_session,sid.clone(), member_role).await;
+        let _ = db::roles::insert_server_role(scylla_session, sid.clone(), admin_role).await;
+        let _ = db::roles::insert_server_role(scylla_session,sid.clone(), member_role).await;
 
         let _ = scylla_session
             .query_unpaged(
@@ -134,8 +134,8 @@ pub async fn join_server(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -147,7 +147,7 @@ pub async fn join_server(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token");
     }
     
-    if db::server::add_user_to_server(&scylla_session, sid.clone(), req.username.clone())
+    if db::server::add_user_to_server(scylla_session, sid.clone(), req.username.clone())
         .await
         .is_none()
     {
@@ -169,8 +169,8 @@ pub async fn join_server(
         token: security::token(),
     };
     if let Err(insert_err) = db::prelude::insert_user_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         db::structures::KeyUser {
             key: Some(security::armor_token(&new_token_holder.token)),
             username: Some(req.username.clone()),
@@ -182,7 +182,7 @@ pub async fn join_server(
     }
 
     let _ = db::users::delete_token(
-        &scylla_session,
+        scylla_session,
         req.username.clone(),
         security::armor_token(&req.token),
     )
@@ -205,8 +205,8 @@ pub async fn get_server_users(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -218,7 +218,7 @@ pub async fn get_server_users(
         return actix_web::HttpResponse::Unauthorized().body("Invalid token or user not in server");
     }
     
-    if let Some(users) = db::server::fetch_server_users(&scylla_session, sid.clone()).await {
+    if let Some(users) = db::server::fetch_server_users(scylla_session, sid.clone()).await {
         return actix_web::HttpResponse::Ok().json(&structures::UsersList { u_list: users });
     }
     
@@ -232,7 +232,7 @@ pub async fn get_server_info(
 ) -> impl actix_web::Responder {
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
-    if let Some(server_info) = db::server::fetch_server_info(&scylla_session, sid.clone()).await {
+    if let Some(server_info) = db::server::fetch_server_info(scylla_session, sid.clone()).await {
         return actix_web::HttpResponse::Ok().json(&server_info);
     }
     actix_web::HttpResponse::NotFound().json(&structures::Status {
@@ -254,8 +254,8 @@ pub async fn delete_server(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -268,7 +268,7 @@ pub async fn delete_server(
 
     let sid: String = param!(http, "sid");
 
-    if db::server::check_user_is_owner(&scylla_session, sid.clone(), req.username.clone()).await
+    if db::server::check_user_is_owner(scylla_session, sid.clone(), req.username.clone()).await
         != Some(true)
     {
         logging::log("Unauthorized: not server owner", Some(function_name!()));
@@ -276,7 +276,7 @@ pub async fn delete_server(
             .body("You don't have permission to delete this server");
     }
 
-    if db::server::delete_server(&scylla_session, sid)
+    if db::server::delete_server(scylla_session, sid)
         .await
         .is_some()
     {
@@ -299,8 +299,8 @@ pub async fn am_i_in_server(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_user_is_in_server(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.sid.clone(),
         req.token.clone(),
         req.username.clone(),
