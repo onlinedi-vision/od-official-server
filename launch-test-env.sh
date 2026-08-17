@@ -156,7 +156,7 @@ if [[ "${s_flag}" == "true" ]] || [[ "${e_flag}" == "true" ]]; then
 fi
 
 echo "================== LAUNCHING API E2E TESTS ===================="
-./shadow/e2e.sh "http://localhost:${API_PORT}"
+env -C test-env-compose/e2e docker buildx bake --allow=network.host
 
 if [[ "${c_flag}" == "true" ]]; then
   cleanup

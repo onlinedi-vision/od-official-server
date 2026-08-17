@@ -39,17 +39,10 @@ pipeline {
             withChecks(name: 'Linting') {
               sh 'COMPOSE_BAKE=true ./launch-test-env.sh -cLt 10 -T 10'
             }
-          }
-        }
-        stage('ShellCheck') {
-          steps {
-            withChecks(name: 'ShellCheck') {
-              sh '''
-                docker run -t \
-                  -v ./shadow:/scripts/ \
-                  koalaman/shellcheck:latest \
-                  --exclude=SC2053 /scripts/e2e.sh
-              '''
+            script {
+              if (fileExists("test-env-compose/e2e/FAIL")) {
+                error "E2E TESTING FAILED"
+              }
             }
           }
         }
@@ -83,6 +76,9 @@ pipeline {
   }
   
   post {
+    always {
+      archiveArtifacts allowEmptyArchive: true, artifacts: "test-env-compose/e2e/*.log"
+    }
     failure {
       emailext (
         from: 'jenkins@mail.onlinedi.vision',
