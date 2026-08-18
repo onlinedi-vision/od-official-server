@@ -8,19 +8,29 @@ ARG SCYLLA_CASSANDRA_PASSWORD
 ARG RUN_UT
 ARG OUTPUT=output
 
-FROM base AS requirements
+FROM base AS bare-repo
 COPY --link --from=bare-repo . .
 COPY --link Cargo* .
+
+FROM bare-repo AS requirements
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo build --release --target x86_64-unknown-linux-musl
+
+FROM bare-repo AS ut-requirements
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    cargo test
 
 FROM requirements AS workspace
 COPY --link src/ src/
 COPY --link Cargo* .
 RUN touch src/main.rs
 
+FROM ut-requirements AS ut-workspace
+COPY --link src/ src/
+COPY --link Cargo* .
+RUN touch src/main.rs
+
 FROM workspace AS linter-run
-RUN mkdir ${OUTPUT}
 RUN rustup component add clippy
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo clippy --release --target x86_64-unknown-linux-musl \
@@ -30,8 +40,7 @@ FROM scratch AS linter
 ARG OUTPUT=output
 COPY --from=linter-run /build/${OUTPUT}/ .
 
-FROM workspace AS ut-run
-RUN mkdir ${OUTPUT}
+FROM ut-workspace AS ut-run
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo test
 
