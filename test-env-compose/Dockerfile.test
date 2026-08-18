@@ -30,13 +30,13 @@ COPY --link src/ src/
 COPY --link Cargo* .
 RUN touch src/main.rs
 
-FROM workspace AS linter-run
+FROM workspace AS linter
 RUN rustup component add clippy
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo clippy --release --target x86_64-unknown-linux-musl \
    -- -D warnings
 
-FROM ut-workspace AS ut-run
+FROM ut-workspace AS ut
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo test
 
