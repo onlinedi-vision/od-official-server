@@ -36,17 +36,9 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo clippy --release --target x86_64-unknown-linux-musl \
    -- -D warnings
 
-FROM scratch AS linter
-ARG OUTPUT=output
-COPY --from=linter-run /build/${OUTPUT}/ .
-
 FROM ut-workspace AS ut-run
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo test
-
-FROM scratch AS ut
-ARG OUTPUT=output
-COPY --from=ut-run /build/${OUTPUT}/ .
 
 FROM workspace AS builder
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
