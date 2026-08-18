@@ -8,15 +8,15 @@ ARG SCYLLA_CASSANDRA_PASSWORD
 ARG RUN_UT
 ARG OUTPUT=output
 
-FROM base AS bare-repo
+FROM base AS bare
 COPY --link --from=bare-repo . .
 COPY --link Cargo* .
 
-FROM bare-repo AS requirements
+FROM bare AS requirements
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo build --release --target x86_64-unknown-linux-musl
 
-FROM bare-repo AS ut-requirements
+FROM bare AS ut-requirements
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo test
 
