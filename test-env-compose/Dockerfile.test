@@ -24,8 +24,7 @@ RUN mkdir ${OUTPUT}
 RUN rustup component add clippy
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo clippy --release --target x86_64-unknown-linux-musl \
-   -- -D warnings \
-   |& tee ${OUTPUT}/linter.log || ${OUTPUT}/LINTER_FAIL
+   -- -D warnings
 
 FROM scratch AS linter
 ARG OUTPUT=output
@@ -34,7 +33,7 @@ COPY --from=linter-run /build/${OUTPUT}/ .
 FROM workspace AS ut-run
 RUN mkdir ${OUTPUT}
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
-   cargo test |& tee ${OUTPUT}/ut.log || touch ${OUTPUT}/UT_FAIL
+   cargo test
 
 FROM scratch AS ut
 ARG OUTPUT=output

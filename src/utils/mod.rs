@@ -1,2 +1,2 @@
-///! Module used for specific repo-wide utilities.
+//! Module used for specific repo-wide utilities.
 pub(crate) mod logging;
