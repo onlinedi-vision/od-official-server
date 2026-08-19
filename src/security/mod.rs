@@ -2,6 +2,8 @@ use rand::prelude::*;
 use sha2::Digest;
 use password_hash::{PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng};
 
+use ::function_name::named;
+
 pub mod aes;
 pub mod messages;
 pub mod structures;
@@ -41,11 +43,26 @@ pub fn token() -> String {
 }
 
 /// Obfuscates token before storage.
-pub fn armor_token(plain_token: &str) -> String {
-    sha256(aes::encrypt(&aes::encrypt_with_key(
+pub fn armor_token(plain_token: &str) -> Result<String, aes::AesError> {
+    let encrypted = aes::try_encrypt(&aes::try_encrypt_with_key(
         plain_token,
         &plain_token[..16],
-    )))
+    )?)?;
+    Ok(sha256(encrypted))
+}
+
+#[named]
+pub fn armor_token_logged(token: &str) -> Option<String> {
+    match armor_token(token) {
+        Ok(armored) => Some(armored),
+        Err(err) => {
+            crate::utils::logging::log(
+                &format!("Failed to armor token: {err}"),
+                Some(function_name!()),
+            );
+            None
+        }
+    }
 }
 
 /// Generates random server id.
@@ -81,9 +98,17 @@ mod tests {
 
     #[test]
     fn test_token_armor() {
+        const TEST_KEY: &str = "0123456789abcdef";
+        const TEST_IV: &str = "fedcba9876543210";
+        // SAFETY: tests run single-threaded; env is only read during AES calls.
+        unsafe {
+            std::env::set_var(crate::env::statics::OD_AES_KEY, TEST_KEY);
+            std::env::set_var(crate::env::statics::OD_AES_IV, TEST_IV);
+        }
+
         assert_eq!(
             "cadcfb296aab1c214b9b99fe01a649453efe18d41df4e3c6bb686fe71bb93695",
-            armor_token("token12345678901234567890")
+            armor_token("token12345678901234567890").expect("armor_token should succeed")
         );
     }
 

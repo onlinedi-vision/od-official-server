@@ -141,7 +141,10 @@ pub async fn create_channel(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(&new_token_holder.token)),
+            key: Some(armor_token_or!(
+                &new_token_holder.token,
+                actix_web::HttpResponse::InternalServerError().body("Failed to insert new token")
+            )),
             username: Some(req.username.clone()),
         },
     )
@@ -153,7 +156,10 @@ pub async fn create_channel(
     let _ = db::users::delete_token(
         &scylla_session,
         req.username.clone(),
-        security::armor_token(&req.token),
+        armor_token_or!(
+            &req.token,
+            actix_web::HttpResponse::InternalServerError().body("Failed to rotate token")
+        ),
     )
     .await;
 
