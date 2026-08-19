@@ -29,6 +29,7 @@ use ::function_name::named;
 ///     .send()
 ///     .await?;
 /// ```
+#[named]
 #[actix_web::post("/new_user")]
 pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
