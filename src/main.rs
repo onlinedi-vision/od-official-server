@@ -14,7 +14,6 @@ static API_RATELIMIT_WINDOW_SECONDS: u64 = 60;
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     let scylla_inet = match env::get_option_env_var("SCYLLA_INET") {

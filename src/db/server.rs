@@ -3,6 +3,12 @@ use crate::db::{roles, statics, structures, users};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// Creates a new server record.
+///
+/// # Example
+/// ```rs
+/// create_server(&session, "sid1".into(), &desc, &img_url, &name, "alice".into()).await;
+/// ```
 pub async fn create_server(
     session: &scylla::client::session::Session,
     sid: String,
@@ -23,6 +29,12 @@ pub async fn create_server(
     )
 }
 
+/// Adds a user to a server.
+///
+/// # Example
+/// ```rs
+/// add_user_to_server(&session, "sid1".into(), "alice".into()).await;
+/// ```
 pub async fn add_user_to_server(
     session: &scylla::client::session::Session,
     sid: String,
@@ -37,6 +49,12 @@ pub async fn add_user_to_server(
     )
 }
 
+/// Fetches public info for all users in a server.
+///
+/// # Example
+/// ```rs
+/// fetch_server_users(&session, "sid1".into()).await;
+/// ```
 pub async fn fetch_server_users(
     session: &scylla::client::session::Session,
     sid: String,
@@ -81,6 +99,12 @@ pub async fn fetch_server_users(
     if users.is_empty() { None } else { Some(users) }
 }
 
+/// Fetches basic info (name, description, image) for a server.
+///
+/// # Example
+/// ```rs
+/// fetch_server_info(&session, "sid1".into()).await;
+/// ```
 pub async fn fetch_server_info(
     session: &scylla::client::session::Session,
     sid: String,
@@ -132,6 +156,12 @@ pub async fn fetch_server_info(
     None
 }
 
+/// Sends a message to a server channel, optionally with a TTL.
+///
+/// # Example
+/// ```rs
+/// send_message(&session, "sid1".into(), "general".into(), "hi".into(), "alice".into(), salt, 0).await;
+/// ```
 pub async fn send_message(
     session: &scylla::client::session::Session,
     sid: String,
@@ -163,6 +193,12 @@ pub async fn send_message(
         .map_err(From::from)
 }
 
+/// Creates a new channel in a server.
+///
+/// # Example
+/// ```rs
+/// create_channel(&session, "sid1".into(), "general".into()).await;
+/// ```
 pub async fn create_channel(
     session: &scylla::client::session::Session,
     sid: String,
@@ -177,6 +213,12 @@ pub async fn create_channel(
     )
 }
 
+/// Fetches all server ids a user belongs to.
+///
+/// # Example
+/// ```rs
+/// fetch_user_servers(&session, "alice".into()).await;
+/// ```
 pub async fn fetch_user_servers(
     session: &scylla::client::session::Session,
     username: String,
@@ -202,6 +244,12 @@ pub async fn fetch_user_servers(
     if sids.is_empty() { None } else { Some(sids) }
 }
 
+/// Fetches all channels in a server.
+///
+/// # Example
+/// ```rs
+/// fetch_server_channels(&session, "sid1".into()).await;
+/// ```
 pub async fn fetch_server_channels(
     session: &scylla::client::session::Session,
     sid: String,
@@ -234,6 +282,12 @@ pub async fn fetch_server_channels(
     }
 }
 
+/// Deletes a server and all of its related data (channels, users, messages, roles).
+///
+/// # Example
+/// ```rs
+/// delete_server(&session, "sid1".into()).await;
+/// ```
 pub async fn delete_server(
     session: &scylla::client::session::Session,
     sid: String,
@@ -269,6 +323,12 @@ pub async fn delete_server(
     Some(Ok(()))
 }
 
+/// Checks whether `username` is the owner of server `sid`.
+///
+/// # Example
+/// ```rs
+/// check_user_is_owner(&session, "sid1".into(), "alice".into()).await;
+/// ```
 pub async fn check_user_is_owner(
     session: &scylla::client::session::Session,
     sid: String,
@@ -297,6 +357,12 @@ pub async fn check_user_is_owner(
     None
 }
 
+/// Deletes a channel and its messages from a server.
+///
+/// # Example
+/// ```rs
+/// delete_channel(&session, "sid1".into(), "general".into()).await;
+/// ```
 pub async fn delete_channel(
     session: &scylla::client::session::Session,
     sid: String,

@@ -10,6 +10,36 @@ use crate::metrics;
 
 use ::function_name::named;
 
+/// Creates a new server owned by the caller, along with a default "info" channel and default
+/// "admin"/"member" roles. The caller is automatically added as a member with the "admin" role,
+/// and a new session token is issued (the old one is invalidated).
+///
+/// ### Request JSON (`CreateServer`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "desc": "My cool server",
+///   "img_url": "https://example.com/img.png",
+///   "name": "My Server",
+///   "username": "alice"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/create_server")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "desc": "My cool server",
+///         "img_url": "https://example.com/img.png",
+///         "name": "My Server",
+///         "username": "alice"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/create_server")]
 pub async fn create_server(
@@ -119,6 +149,29 @@ pub async fn create_server(
     actix_web::HttpResponse::InternalServerError().body("Failed to add user to server")
 }
 
+/// Adds the caller to a server and assigns them the "member" role. Issues a new session token
+/// on success (the old one is invalidated).
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/join")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[named]
 #[actix_web::post("/servers/{sid}/join")]
 pub async fn join_server(
@@ -191,6 +244,29 @@ pub async fn join_server(
     actix_web::HttpResponse::Ok().json(&new_token_holder)
 }
 
+/// Fetches the public profile info (username, bio, image, roles) of every user in a server.
+/// The caller must be a member of that server.
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/get_server_users")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/servers/{sid}/get_server_users")]
 pub async fn get_server_users(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -225,6 +301,20 @@ pub async fn get_server_users(
     actix_web::HttpResponse::Ok().json(&structures::UsersList { u_list: Vec::new() })
 }
 
+/// Fetches public information about a server (e.g. name, description, image). This endpoint
+/// takes no request body — the server id (`sid`) is supplied as a URL path parameter.
+///
+/// ### Request JSON
+/// _None. This is a `GET` request with no body._
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .get("http://localhost:1313/servers/SID123/get_server_info")
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::get("/servers/{sid}/get_server_info")]
 pub async fn get_server_info(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -241,6 +331,28 @@ pub async fn get_server_info(
 }
 
 #[named]
+/// Deletes a server entirely. Only the server owner is allowed to perform this action.
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/servers/SID123/delete_server")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/servers/{sid}/delete_server")]
 pub async fn delete_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -287,6 +399,30 @@ pub async fn delete_server(
 
 }
 
+/// Checks whether the authenticated user is currently a member of the specified server.
+///
+/// ### Request JSON (`TokenUserServer`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123",
+///   "sid": "SID123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/am_i_in_server")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123",
+///         "sid": "SID123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/am_i_in_server")]
 pub async fn am_i_in_server(
     session: actix_web::web::Data<security::structures::ScyllaSession>,

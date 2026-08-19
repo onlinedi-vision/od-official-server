@@ -4,6 +4,12 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 
 
+/// Inserts a new role for a server.
+///
+/// # Example
+/// ```rs
+/// insert_server_role(&session, "sid1".into(), role).await;
+/// ```
 pub async fn insert_server_role(
     session: &scylla::client::session::Session,
     server_id: String,
@@ -18,6 +24,12 @@ pub async fn insert_server_role(
     res.map(|_| ()).map_err(From::from)
 }
 
+/// Assigns a role to a user in a server.
+///
+/// # Example
+/// ```rs
+/// assign_role(&session, "sid1".into(), "alice".into(), "admin".into()).await;
+/// ```
 pub async fn assign_role(
 session: &scylla::client::session::Session,
 server_id:String,
@@ -34,6 +46,12 @@ role_name:String,
     res.map(|_| ()).map_err(From::from)
 }
 
+/// Deletes a role from a server.
+///
+/// # Example
+/// ```rs
+/// delete_role(&session, "sid1".into(), "admin".into()).await;
+/// ```
 pub async fn delete_role(
     session: &scylla::client::session::Session,
     server_id:String,
@@ -46,6 +64,12 @@ pub async fn delete_role(
     res.map(|_| ()).map_err(From::from)
 }
 
+/// Removes a role assignment from a user in a server.
+///
+/// # Example
+/// ```rs
+/// remove_role(&session, "sid1".into(), "alice".into(), "admin".into()).await;
+/// ```
 pub async fn remove_role(
     session: &scylla::client::session::Session,
     server_id:String,
@@ -60,6 +84,11 @@ pub async fn remove_role(
 }
 
 /// Returns the list of role names a user has in a server (for display in `PublicInfoUser`).
+///
+/// # Example
+/// ```rs
+/// fetch_user_role_names(&session, "sid1".into(), "alice".into()).await;
+/// ```
 pub async fn fetch_user_role_names(
     session: &scylla::client::session::Session,
     server_id: String,
@@ -82,6 +111,11 @@ pub async fn fetch_user_role_names(
 }
 
 /// Returns the combined permission bits (OR of all role permissions) for a user in a server.
+///
+/// # Example
+/// ```rs
+/// fetch_user_permissions(&session, "sid1".into(), "alice".into()).await;
+/// ```
 pub async fn fetch_user_permissions(
     session: &scylla::client::session::Session,
     server_id: String,
@@ -109,6 +143,11 @@ pub async fn fetch_user_permissions(
 }
 
 /// Remove all user-role assignments for a deleted role in a server.
+///
+/// # Example
+/// ```rs
+/// remove_role_from_all_users(&session, "sid1".into(), "admin".into()).await;
+/// ```
 pub async fn remove_role_from_all_users(
     session: &scylla::client::session::Session,
     server_id: String,

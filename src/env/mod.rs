@@ -1,5 +1,6 @@
 pub mod statics;
 
+/// Gets ennvironment variable.
 pub fn get_env_var(
     env_var_name: &str
 ) -> String {

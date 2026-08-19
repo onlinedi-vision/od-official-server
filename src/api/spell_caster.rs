@@ -6,6 +6,27 @@ use crate::db;
 use crate::security;
 // use crate::metrics;
 
+/// Casts a "spell" for a user: generates a one-time key/spell pair and stores it server-side,
+/// to be later verified via `/spell/check`.
+///
+/// ### Request JSON (`SpellCaster`)
+/// ```json
+/// {
+///   "username": "alice"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/spell/cast")
+///     .json(&serde_json::json!({
+///         "username": "alice"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/spell/cast")]
 pub async fn spell_cast(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -35,6 +56,31 @@ pub async fn spell_cast(
 
 }
 
+/// Verifies a previously cast spell for a user using its `key`, and returns (then invalidates)
+/// the associated spell value. Requires a valid session token.
+///
+/// ### Request JSON (`SpellChecker`)
+/// ```json
+/// {
+///   "username": "alice",
+///   "token": "abc123",
+///   "key": "spell-key-xyz"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/spell/check")
+///     .json(&serde_json::json!({
+///         "username": "alice",
+///         "token": "abc123",
+///         "key": "spell-key-xyz"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/spell/check")]
 pub async fn spell_check(
     session: actix_web::web::Data<security::structures::ScyllaSession>,

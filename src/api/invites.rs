@@ -2,6 +2,31 @@ use crate::api::structures;
 use crate::db;
 use crate::security;
 
+/// Sends a direct-message invite from `sender` to `recipient`. If an invite between the two
+/// users already exists, its existing details are returned instead of creating a duplicate.
+///
+/// ### Request JSON (`SendInviteReq`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "sender": "alice",
+///   "recipient": "bob"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/send_dm_invite")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "sender": "alice",
+///         "recipient": "bob"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/send_dm_invite")]
 pub async fn send_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -68,6 +93,31 @@ pub async fn send_dm_invite(
     })
 }
 
+/// Accepts a pending direct-message invite. On success, creates a private DM server shared by
+/// both users, adds them both to it with a "dm" channel, makes them friends, and deletes the invite.
+///
+/// ### Request JSON (`AcceptInviteReq`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "recipient": "bob",
+///   "sender": "alice"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/accept_dm_invite")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "recipient": "bob",
+///         "sender": "alice"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/accept_dm_invite")]
 pub async fn accept_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -142,6 +192,30 @@ pub async fn accept_dm_invite(
 
 }
 
+/// Rejects (deletes) a pending direct-message invite between `sender` and `recipient`.
+///
+/// ### Request JSON (`RejectInviteReq`)
+/// ```json
+/// {
+///   "token": "abc123",
+///   "recipient": "bob",
+///   "sender": "alice"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/reject_dm_invite")
+///     .json(&serde_json::json!({
+///         "token": "abc123",
+///         "recipient": "bob",
+///         "sender": "alice"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/reject_dm_invite")]
 pub async fn reject_dm_invite(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -188,6 +262,28 @@ pub async fn reject_dm_invite(
 
 }
 
+/// Fetches all pending direct-message invites addressed to the authenticated user.
+///
+/// ### Request JSON (`TokenUser`)
+/// ```json
+/// {
+///   "username": "bob",
+///   "token": "abc123"
+/// }
+/// ```
+///
+/// ### Example (reqwest)
+/// ```rust
+/// let client = reqwest::Client::new();
+/// let res = client
+///     .post("http://localhost:1313/fetch_pending_dm_invites")
+///     .json(&serde_json::json!({
+///         "username": "bob",
+///         "token": "abc123"
+///     }))
+///     .send()
+///     .await?;
+/// ```
 #[actix_web::post("/fetch_pending_dm_invites")]
 pub async fn fetch_pending_dm_invites(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
