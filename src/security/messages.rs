@@ -19,9 +19,6 @@ mod tests {
     #[allow(unused_imports)]
     use super::*;
 
-    const TEST_KEY: &str = "0123456789abcdef";
-    const TEST_IV: &str = "fedcba9876543210";
-
     fn set_test_aes_env() {
         // SAFETY: tests run single-threaded; env is only read during AES calls.
         unsafe {
