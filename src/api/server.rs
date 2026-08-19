@@ -93,24 +93,31 @@ pub async fn create_server(
         token: security::token(),
         sid: sid.clone(),
     };
-    if let Err(insert_err) = db::prelude::insert_user_token(
-        &scylla_session,
-        &cache,
-        db::structures::KeyUser {
-            key: Some(security::armor_token(&server_created.token.clone())),
-            username: Some(req.username.clone()),
-        },
-    )
-    .await {
-        logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+    let armored_new_token = security::armor_token_logged(&server_created.token);
+    if armored_new_token.is_none() {
         server_created.token = req.token.clone();
-    } else {
-        let _ = db::users::delete_token(
+    }
+    if let Some(armored_new_token) = armored_new_token {
+        if let Err(insert_err) = db::prelude::insert_user_token(
             &scylla_session,
-            req.username.clone(),
-            security::armor_token(&req.token),
+            &cache,
+            db::structures::KeyUser {
+                key: Some(armored_new_token),
+                username: Some(req.username.clone()),
+            },
         )
-        .await;
+        .await
+        {
+            logging::log(&format!("Failed to insert token due to error:\n {insert_err}"), Some(function_name!()));
+            server_created.token = req.token.clone();
+        } else if let Some(armored_old_token) = security::armor_token_logged(&req.token) {
+            let _ = db::users::delete_token(
+                &scylla_session,
+                req.username.clone(),
+                armored_old_token,
+            )
+            .await;
+        }
     }
 
    
@@ -225,7 +232,10 @@ pub async fn join_server(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(&new_token_holder.token)),
+            key: Some(armor_token_or!(
+                &new_token_holder.token,
+                actix_web::HttpResponse::InternalServerError().body("Failed to insert new token")
+            )),
             username: Some(req.username.clone()),
         },
     )
@@ -237,7 +247,10 @@ pub async fn join_server(
     let _ = db::users::delete_token(
         &scylla_session,
         req.username.clone(),
-        security::armor_token(&req.token),
+        armor_token_or!(
+            &req.token,
+            actix_web::HttpResponse::InternalServerError().body("Failed to rotate token")
+        ),
     )
     .await;
 
