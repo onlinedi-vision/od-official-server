@@ -17,6 +17,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
+    if let Err(err) = security::aes::validate_config() {
+        eprintln!("AES configuration invalid: {err}");
+        std::process::exit(1);
+    }
+
     let scylla_inet = match env::get_option_env_var("SCYLLA_INET") {
         Some(inet) => inet,
         None => "onlinedi.vision".to_string()
