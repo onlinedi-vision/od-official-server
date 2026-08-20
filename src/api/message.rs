@@ -160,9 +160,18 @@ pub async fn send_message(
     let ttl = db::users::get_ttl(&scylla_session, req.username.clone())
         .await;
 
-    let (enc_message, enc_salt) =
-        security::messages::encrypt(&req.m_content, &security::salt());
-    
+    let (enc_message, enc_salt) = match security::messages::encrypt(&req.m_content, &security::salt())
+    {
+        Ok(encrypted) => encrypted,
+        Err(err) => {
+            logging::log(
+                &format!("Failed to encrypt message: {err}"),
+                Some(function_name!()),
+            );
+            return actix_web::HttpResponse::InternalServerError().body("Failed to send message");
+        }
+    };
+
     if db::server::send_message(
         &scylla_session,
         sid.clone(),

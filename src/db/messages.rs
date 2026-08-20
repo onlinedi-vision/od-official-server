@@ -1,5 +1,8 @@
 use crate::db;
 use crate::security;
+use crate::utils::logging;
+
+use ::function_name::named;
 
 /// Fetches all messages in a server channel without a limit.
 ///
@@ -57,6 +60,7 @@ pub async fn fetch_server_channel_messages_unlimited(
 /// ```rs
 /// fetch_server_channel_messages_limited(&session, "sid1".into(), "general".into(), 20, 0).await;
 /// ```
+#[named]
 pub async fn fetch_server_channel_messages_limited(
     session: &scylla::client::session::Session,
     sid: String,
@@ -88,11 +92,21 @@ pub async fn fetch_server_channel_messages_limited(
         if idx >= offset {
             match row.ok()? {
                 (Some(un), Some(dt), Some(mc), Some(_), Some(salt)) => {
-                    messages.push(db::structures::Message {
-                        username: Some(un.to_string()),
-                        datetime: Some(format!("{:?}", dt.0)),
-                        m_content: Some(security::messages::decrypt(mc, salt)),
-                    });
+                    match security::messages::decrypt(mc, salt) {
+                        Ok(content) => {
+                            messages.push(db::structures::Message {
+                                username: Some(un.to_string()),
+                                datetime: Some(format!("{:?}", dt.0)),
+                                m_content: Some(content),
+                            });
+                        }
+                        Err(err) => {
+                            logging::log(
+                                &format!("Skipping message with undecryptable content: {err}"),
+                                Some(function_name!()),
+                            );
+                        }
+                    }
                 }
                 (Some(un), Some(dt), Some(mc), None, _) => {
                     messages.push(db::structures::Message {

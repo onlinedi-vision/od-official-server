@@ -98,7 +98,7 @@ pub async fn check_token(
     }
 
     let query_rows: scylla::response::query_result::QueryRowsResult;
-    let crypted_token = security::armor_token(&token);
+    let crypted_token = security::armor_token_logged(&token)?;
 
     if let Some(username) = un.clone() {
         if let Some(cache_token) = cache.get(&username.clone()).await

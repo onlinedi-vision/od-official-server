@@ -114,24 +114,6 @@ pub fn try_decrypt(ciphertext: &str) -> Result<String, AesError> {
     try_decrypt_with_key(ciphertext, &env::get_env_var(env::statics::OD_AES_KEY))
 }
 
-pub fn encrypt_with_key(plaintext: &str, key: &str) -> String {
-    try_encrypt_with_key(plaintext, key)
-        .expect("Failed to load cipher for encrypt_with_key.")
-}
-
-pub fn encrypt(plaintext: &str) -> String {
-    try_encrypt(plaintext).expect("Failed to encrypt.")
-}
-
-pub fn decrypt_with_key(ciphertext: &str, key: &str) -> String {
-    try_decrypt_with_key(ciphertext, key)
-        .expect("Failed to load cipher for decrypt_with_key.")
-}
-
-pub fn decrypt(ciphertext: &str) -> String {
-    try_decrypt(ciphertext).expect("Failed to decrypt.")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
