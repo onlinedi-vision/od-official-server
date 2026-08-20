@@ -31,5 +31,5 @@ pub mod metrics;
 ///     .await?;
 /// ```
 pub async fn get_api_version() -> impl actix_web::Responder {
-    actix_web::HttpResponse::Ok().body("v0.0.9".to_string())
+    actix_web::HttpResponse::Ok().body("v0.1.0".to_string())
 }
