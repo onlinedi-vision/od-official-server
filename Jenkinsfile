@@ -12,9 +12,8 @@ pipeline {
 			}
 		}
 		stage ('Deploying to K8S') {
-			def version="v" + sh(script:'echo ${GIT_BRANCH} | cut -d/ -f3- | xargs echo -n', returnStdout: true)
 			steps {
-		    build job: 'PROD/K8S-INFRA/DEPLOY', parameters: [[$class: 'StringParameterValue', name: 'DEPLOYMENT', value: 'od-official-server'], [$class: 'StringParameterValue', name: 'NEW_VERSION', value: version]]
+		    build job: 'PROD/K8S-INFRA/DEPLOY', parameters: [[$class: 'StringParameterValue', name: 'DEPLOYMENT', value: 'od-official-server'], [$class: 'StringParameterValue', name: 'NEW_VERSION', value: "v0.1.0"]]
 			}
 		}	
   }
