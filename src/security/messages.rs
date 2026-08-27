@@ -19,7 +19,10 @@ mod tests {
     #[allow(unused_imports)]
     use super::*;
 
+    #[test]
     fn set_test_aes_env() {
+        const TEST_KEY: &str = "0123456789abcdef";
+        const TEST_IV: &str = "fedcba9876543210";
         // SAFETY: tests run single-threaded; env is only read during AES calls.
         unsafe {
             std::env::set_var(crate::env::statics::OD_AES_KEY, TEST_KEY);
