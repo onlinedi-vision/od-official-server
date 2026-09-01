@@ -4,7 +4,13 @@ pub static DEFAULT_TOKEN_TTL: u64 = 604_800;
 pub static TOKEN_TTL: std::sync::LazyLock<i32> = std::sync::LazyLock::new(|| {
     env::var("TOKEN_TTL").unwrap_or_else(|_| "604800".to_string())
         .parse::<i32>()
-        .unwrap_or(604_800)
+        .unwrap_or(DEFAULT_TOKEN_TTL as i32)
+});
+pub static DEFAULT_CACHE_TOKEN_TTL: u64 = 600;
+pub static CACHE_TOKEN_TTL: std::sync::LazyLock<i32> = std::sync::LazyLock::new(|| {
+    env::var("CACHE_TOKEN_TTL").unwrap_or_else(|_| "604800".to_string())
+        .parse::<i32>()
+        .unwrap_or(DEFAULT_CACHE_TOKEN_TTL as i32)
 });
 pub static DEFAULT_MESSAGE_LIMIT: i32 = 100;
 

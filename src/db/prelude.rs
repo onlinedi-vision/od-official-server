@@ -72,8 +72,8 @@ pub fn new_moka_cache(cache_size: u64) -> moka::future::Cache<String, String> {
         .max_capacity(cache_size)
         .time_to_live(
             std::time::Duration::from_secs(
-                u64::try_from(*db::statics::TOKEN_TTL)
-                    .unwrap_or(db::statics::DEFAULT_TOKEN_TTL)
+                u64::try_from(*db::statics::CACHE_TOKEN_TTL)
+                    .unwrap_or(db::statics::DEFAULT_CACHE_TOKEN_TTL)
             )
         )
         .build()
