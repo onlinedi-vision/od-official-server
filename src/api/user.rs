@@ -29,6 +29,7 @@ use ::function_name::named;
 ///     .send()
 ///     .await?;
 /// ```
+#[named]
 #[actix_web::post("/new_user")]
 pub async fn new_user_login(
     session: actix_web::web::Data<security::structures::ScyllaSession>,
@@ -42,16 +43,56 @@ pub async fn new_user_login(
     }
     let user_salt = security::salt();
     let password_salt = security::salt();
-    let password_hash = security::argon(
-        &security::aes::encrypt(
-            &security::aes::encrypt_with_key(
-                &format!("{}{}", user_salt.clone(), req.password.clone()),
-                &password_salt,
-            )
-        )
-    );
+    let password_plain = match security::aes::try_encrypt_with_key(
+        &format!("{}{}", user_salt.clone(), req.password.clone()),
+        &password_salt,
+    ) {
+        Ok(inner) => match security::aes::try_encrypt(&inner) {
+            Ok(encrypted) => encrypted,
+            Err(err) => {
+                logging::log(
+                    &format!("Failed to encrypt password for new user: {err}"),
+                    Some(function_name!()),
+                );
+                return actix_web::HttpResponse::InternalServerError()
+                    .body("Failed to create user");
+            }
+        },
+        Err(err) => {
+            logging::log(
+                &format!("Failed to encrypt password for new user: {err}"),
+                Some(function_name!()),
+            );
+            return actix_web::HttpResponse::InternalServerError().body("Failed to create user");
+        }
+    };
+    let password_hash = security::argon(&password_plain);
     let token_holder = structures::TokenHolder {
         token: security::token(),
+    };
+    let armored_token = armor_token_or!(
+        &token_holder.token,
+        actix_web::HttpResponse::InternalServerError().body("Failed to create user")
+    );
+    let enc_user_salt = match security::aes::try_encrypt(&user_salt) {
+        Ok(salt) => salt,
+        Err(err) => {
+            logging::log(
+                &format!("Failed to encrypt user salt for new user: {err}"),
+                Some(function_name!()),
+            );
+            return actix_web::HttpResponse::InternalServerError().body("Failed to create user");
+        }
+    };
+    let enc_password_salt = match security::aes::try_encrypt(&password_salt) {
+        Ok(salt) => salt,
+        Err(err) => {
+            logging::log(
+                &format!("Failed to encrypt password salt for new user: {err}"),
+                Some(function_name!()),
+            );
+            return actix_web::HttpResponse::InternalServerError().body("Failed to create user");
+        }
     };
     let user_instance = db::structures::User::new(
         req.username.clone(),
@@ -59,9 +100,9 @@ pub async fn new_user_login(
         password_hash.clone().expect(
             "Argon2 failed to create a proper hash. Check src/security/mod.rs:argon()"
         ),
-        security::armor_token(&token_holder.token),
-        security::aes::encrypt(&user_salt),
-        security::aes::encrypt(&password_salt),
+        armored_token,
+        enc_user_salt,
+        enc_password_salt,
     );
 
     let scylla_session = scylla_session!(session);
@@ -297,7 +338,10 @@ pub async fn get_user_servers(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
-                key: Some(security::armor_token(&new_token_holder.token)),
+                key: Some(armor_token_or!(
+                    &new_token_holder.token,
+                    actix_web::HttpResponse::InternalServerError().body("Failed to insert new token")
+                )),
                 username: Some(req.username.clone()),
             },
         )
@@ -310,7 +354,10 @@ pub async fn get_user_servers(
         let _ = db::users::delete_token(
             &scylla_session,
             req.username.clone(),
-            security::armor_token(&req.token),
+            armor_token_or!(
+                &req.token,
+                actix_web::HttpResponse::InternalServerError().body("Failed to rotate token")
+            ),
         )
         .await;
 
@@ -380,7 +427,10 @@ pub async fn get_user_pfp(
             &scylla_session,
             &cache,
             db::structures::KeyUser {
-                key: Some(security::armor_token(&new_token_holder.token)),
+                key: Some(armor_token_or!(
+                    &new_token_holder.token,
+                    actix_web::HttpResponse::InternalServerError().body("Failed to insert new token")
+                )),
                 username: Some(req.username.clone()),
             },
         )
@@ -392,7 +442,10 @@ pub async fn get_user_pfp(
         let _ = db::users::delete_token(
             &scylla_session,
             req.username.clone(),
-            security::armor_token(&req.token),
+            armor_token_or!(
+                &req.token,
+                actix_web::HttpResponse::InternalServerError().body("Failed to rotate token")
+            ),
         )
         .await;
 
@@ -472,7 +525,10 @@ pub async fn set_user_pfp(
         &scylla_session,
         &cache,
         db::structures::KeyUser {
-            key: Some(security::armor_token(&new_token_holder.token)),
+            key: Some(armor_token_or!(
+                &new_token_holder.token,
+                actix_web::HttpResponse::InternalServerError().body("Failed to insert new token")
+            )),
             username: Some(req.username.clone()),
         },
     )
@@ -484,7 +540,10 @@ pub async fn set_user_pfp(
     let _ = db::users::delete_token(
         &scylla_session,
         req.username.clone(),
-        security::armor_token(&req.token),
+        armor_token_or!(
+            &req.token,
+            actix_web::HttpResponse::InternalServerError().body("Failed to rotate token")
+        ),
     )
     .await;
 
