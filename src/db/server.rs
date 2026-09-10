@@ -241,7 +241,7 @@ pub async fn fetch_user_servers(
         }
     }
 
-    if sids.is_empty() { None } else { Some(sids) }
+    Some(sids)
 }
 
 /// Fetches all channels in a server.
