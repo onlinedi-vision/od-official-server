@@ -1,7 +1,7 @@
 from base import BaseAPITestCase
 
 class UserTest(BaseAPITestCase):
-    def check_user_servers_list(self):
+    def test_empty_user_servers_list(self):
         response = self._post("/get_user_servers", {
             "username": self.username,
             "token": self.token
