@@ -129,6 +129,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 .service(v1::api::server::get_info)
                 .service(v1::api::server::get_frontend)
                 .service(v1::api::server::patch_frontend)
+                .service(v1::api::server::create_server)
         })
         .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
         .workers(no_of_workers)
