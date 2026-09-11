@@ -57,8 +57,12 @@ class BaseAPITestCase(unittest.TestCase):
     def _patch(self, endpoint: str, data: dict) -> dict:
         return self._request("PATCH", endpoint, data)
 
-    def create_test_server(self, name="QA_TEST_SERVER", desc="L", img_url="L"):
-        response = self._post("/create_server", {
+    def create_test_server(
+            self, 
+            name="QA_TEST_SERVER", desc="L", img_url="L",
+            create_server_endpoint="/create_server"
+    ):
+        response = self._post(create_server_endpoint, {
             "username": self.username,
             "token": self.token,
             "desc": desc,

@@ -261,6 +261,15 @@ pub async fn check_permission(
     collector: &metrics::prelude::MetricsCollector,
 ) -> Option<()> {
     check_user_is_in_server(session, cache, sid.clone(), token, username.clone(), collector).await?;
+ 
+    // Let's add this in v0 also... since owner should be able to do whatever regardless...
+    // And keep it below `check_user_is_in_server` since this check... is UN-AUTHENTICATED.........
+    if let Some(is_owner) = db::server::check_user_is_owner(session, sid.clone(), username.clone()).await
+       && is_owner 
+    {
+        return Some(())
+    }
+
     let perms = db::roles::fetch_user_permissions(session, sid, username).await;
     if (perms & required) == required {
         Some(())

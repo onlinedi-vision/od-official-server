@@ -298,6 +298,7 @@ pub async fn delete_server(
 }
 
 /// Checks whether `username` is the owner of server `sid`.
+/// THIS FUNCTION DOES NOT VALIDATE WHETHER AN USER IS PROPERLY LOGGED IN OR NOT.
 ///
 /// # Example
 /// ```rs
