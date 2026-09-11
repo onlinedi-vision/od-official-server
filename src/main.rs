@@ -5,6 +5,7 @@ mod db;
 mod env;
 mod utils;
 mod metrics;
+mod v1;
 
 use actix_web::{middleware::Logger};
 use actix_web_ratelimit::{config::RateLimitConfig, store::MemoryStore, RateLimit};
@@ -74,7 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
             actix_web::App::new()
                 .wrap(RateLimit::new(rl_config.clone(), rl_store.clone()))
-                .wrap(Logger::new("%a %{User-Agent}i %U"))
+                .wrap(Logger::new("|  %r  | %a %{User-Agent}i (done in %D ms)"))
                 .wrap(metrics_middleware)
 
                 .app_data(app_state.clone())
@@ -84,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 .service(api::metrics::metrics)
 
                 .service(api::get_api_version)
-                .service(api::user::new_user_login)                     // API route for signing up
+                .service(api::user::new_user_login)
                 .service(api::user::try_login)
                 .service(api::user::get_user_servers)
                 .service(api::user::token_login)
@@ -93,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 .service(api::user::patch_user_ttl)
  
                 .service(api::server::create_server)                
-                .service(api::server::join_server)                      // change token !!
+                .service(api::server::join_server)
                 .service(api::server::get_server_users)                 
                 .service(api::server::get_server_info)
                 .service(api::server::delete_server)
@@ -122,6 +123,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
                 .service(api::spell_caster::spell_cast)
                 .service(api::spell_caster::spell_check)
+
+
+                // NOTE: v1 endpoints:
+                .service(v1::api::server::get_info)
+                .service(v1::api::server::get_frontend)
+                .service(v1::api::server::patch_frontend)
         })
         .bind(("0.0.0.0", env::get_env_var("API_PORT").parse()?))?
         .workers(no_of_workers)
