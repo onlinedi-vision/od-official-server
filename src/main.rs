@@ -5,6 +5,7 @@ mod db;
 mod env;
 mod utils;
 mod metrics;
+mod auth;
 
 use actix_web::{middleware::Logger};
 use actix_web_ratelimit::{config::RateLimitConfig, store::MemoryStore, RateLimit};
@@ -73,10 +74,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             let metrics_middleware = std::sync::Arc::new(metrics::prelude::MetricsMiddleware::new(metrics_collector.clone()));
 
             actix_web::App::new()
+                .wrap(actix_web::middleware::from_fn(auth::authenticate))
                 .wrap(RateLimit::new(rl_config.clone(), rl_store.clone()))
                 .wrap(Logger::new("%a %{User-Agent}i %U"))
                 .wrap(metrics_middleware)
 
+                .app_data(actix_web::web::PayoadConfig::new(2 * 1024 * 1024))
                 .app_data(app_state.clone())
                 .app_data(session.clone())
                 .app_data(cache.clone())

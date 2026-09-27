@@ -95,3 +95,100 @@ fn is_server_info_path(path: &str) -> bool {
 
 
 //commpatibity from here
+struct Credentials{
+    token: String,
+    username: Option<String>,
+    sender: Option<String>,
+    recipient: Option<String>,
+    user: Option<String>,
+}
+
+impl Credentials {
+    fn caller(&self, field: CallerField) -> Result<&str, Error> {
+        let caller = match field {
+            CallerField::Username => self.username.as_deref(),
+            CallerField::Sender => self.sender.as_deref(),
+            CallerField::Recipient => self.recipient.as_deref(),
+            CallerField::User => self.user.as_deref(),
+        };
+
+        caller
+            .filter(|name| !name.is_empty())
+            .ok_or_else(|| ErrorBadRequest("Missing caller identity"))
+    }
+}
+pub async fn authenticate(
+    mut req: ServiceRequest,
+    next Next<impl MessageBody>,
+) -> Result<ServiceResponse<impl MessageBody>, Error> {
+    let caller_field = math policy(req.method().as_str(), req.path()) {
+        AuthPolicy::Public => return next.call(req).await,
+        AuthPolicy::Token(field) => field,
+    };
+
+
+    let body = req.extract::<web::bytes().await?;
+
+
+    let credentials: Credentials = serde_json::from_slice(&body)
+        .map_err(|_| ErrorBadRequest("Invalid authentication payload"))?;
+
+
+    let username = credentials.caller(caller_field)?.to_owned();
+
+
+    if credentials.token.len() < 16
+        || !credentials.token.is_char_boundary(16)
+    {
+        return Err(ErrorUnauthorized("Invalid token"));
+
+    }
+
+    let session = req
+        .app_data::<web::Data<ScyllaSession>>()
+        .cloned()
+        .ok_or_else(|| ErrorInternalServerError("Missing database state"))?;
+
+
+    let cache = req
+        .app_data::<web::Data<MokaCache>>()
+        .cloned()
+        .ok_or_else(|| ErrorInternalServerError("Missing token cache"))?;
+
+    let state = req
+        .app_data::<web::Data<MokaCache>>()
+        .cloned()
+        .ok_or_else(|| ErrorInternalServerError("Missing token cache"))?;
+
+    //You need to release both locks before entering the handler
+    
+    let valid = {
+        let session = session.lock.lock().await;
+        let cache = cache.lock.lock().await;
+
+        db::prelude::check_token(
+            &session,
+            &cache,
+            credentials.token,
+            Some(username.clone()),
+            &state.metrics_collector,
+        )
+        .await
+        .is_some()
+    };
+
+    if !valid {
+        return Err(ErrorUnauthorized("Invalid token"));
+
+    }
+
+    req.extensions_mut()
+        .insert(AuthenticatedUser { username });
+
+
+    req.set_payload(body.into());
+
+
+    next.call(req).await
+
+    }
