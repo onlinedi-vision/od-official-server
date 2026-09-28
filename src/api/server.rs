@@ -43,10 +43,10 @@ use ::function_name::named;
 #[named]
 #[actix_web::post("/create_server")]
 pub async fn create_server(
+    user: crate::auth::AuthenticatedUser,
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::CreateServer>,
-    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     if req.name.len() > statics::MAX_SERVER_LENGTH {
         return actix_web::HttpResponse::LengthRequired().body(format!(
@@ -56,21 +56,8 @@ pub async fn create_server(
     }
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = cache_metrics!(shared_collector);
-    if db::prelude::check_token(
-        &scylla_session,
-        &cache,
-        req.token.clone(),
-        Some(req.username.clone()),
-        &collector,
-    )
-    .await
-    .is_none()
-    {
-        logging::log("SERVERS FAIL: invalid token in create_server", Some(function_name!()));
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
-    }
-    
+    let username = user.username().to_owned();
+
     let sid = security::sid();
     if db::server::create_server(
         &scylla_session,
@@ -78,7 +65,7 @@ pub async fn create_server(
         &req.desc,
         &req.img_url,
         &req.name,
-        req.username.clone(),
+        username.clone(),
     )
     .await
     .is_none()
@@ -103,7 +90,7 @@ pub async fn create_server(
             &cache,
             db::structures::KeyUser {
                 key: Some(armored_new_token),
-                username: Some(req.username.clone()),
+                username: Some(username.clone()),
             },
         )
         .await
@@ -113,7 +100,7 @@ pub async fn create_server(
         } else if let Some(armored_old_token) = security::armor_token_logged(&req.token) {
             let _ = db::users::delete_token(
                 &scylla_session,
-                req.username.clone(),
+                username,
                 armored_old_token,
             )
             .await;
@@ -123,7 +110,7 @@ pub async fn create_server(
    
 
 
-    if db::server::add_user_to_server(&scylla_session, sid.clone(), req.username.clone())
+    if db::server::add_user_to_server(&scylla_session, sid.clone(), username.clone())
         .await
         .is_some()
     {
@@ -147,7 +134,7 @@ pub async fn create_server(
         let _ = scylla_session
             .query_unpaged(
                 db::statics::ASSIGN_ROLE_TO_USER,
-                (sid.clone(), req.username.clone(), "admin".to_string()),
+                (sid.clone(), username.clone(), "admin".to_string()),
             )
             .await;
         return actix_web::HttpResponse::Ok().json(&server_created);
@@ -182,32 +169,19 @@ pub async fn create_server(
 #[named]
 #[actix_web::post("/servers/{sid}/join")]
 pub async fn join_server(
+    user: crate::auth::AuthenticatedUser,
     session: actix_web::web::Data<security::structures::ScyllaSession>,
     shared_cache: actix_web::web::Data<security::structures::MokaCache>,
     req: actix_web::web::Json<structures::TokenUser>,
     http: actix_web::HttpRequest,
-    shared_collector: actix_web::web::Data<structures::AppState>,
 ) -> impl actix_web::Responder {
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
     let cache = cache!(shared_cache);
-    let collector = cache_metrics!(shared_collector);
-
-    if db::prelude::check_token(
-        &scylla_session,
-        &cache,
-        req.token.clone(),
-        Some(req.username.clone()),
-        &collector,
-    )
-    .await
-    .is_none()
-    {
-        logging::log("SERVERS FAIL: invalid token in create_server", Some(function_name!()));
-        return actix_web::HttpResponse::Unauthorized().body("Invalid token");
-    }
     
-    if db::server::add_user_to_server(&scylla_session, sid.clone(), req.username.clone())
+    let username = user.username().to_owned();
+
+    if db::server::add_user_to_server(&scylla_session, sid.clone(), username.clone())
         .await
         .is_none()
     {

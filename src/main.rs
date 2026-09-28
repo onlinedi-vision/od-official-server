@@ -79,7 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 .wrap(Logger::new("%a %{User-Agent}i %U"))
                 .wrap(metrics_middleware)
 
-                .app_data(actix_web::web::PayoadConfig::new(2 * 1024 * 1024))
+                .app_data(actix_web::web::PayloadConfig::new(2 * 1024 * 1024))
                 .app_data(app_state.clone())
                 .app_data(session.clone())
                 .app_data(cache.clone())
