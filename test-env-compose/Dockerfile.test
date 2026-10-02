@@ -1,4 +1,4 @@
-FROM clux/muslrust:1.93.1-stable AS base
+FROM clux/muslrust:1.99.0-stable AS base
 LABEL maintainer=kickhead13<ana.alexandru.gabriel@proton.me>
 WORKDIR /build
 ARG RUN_LINT
@@ -30,15 +30,24 @@ COPY --link src/ src/
 COPY --link Cargo* .
 RUN touch src/main.rs
 
-FROM workspace AS linter
+FROM workspace AS linter-run
 RUN rustup component add clippy
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo clippy --release --target x86_64-unknown-linux-musl \
    -- -D warnings
 
-FROM ut-workspace AS ut
+FROM ut-workspace AS ut-run
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
    cargo test
+
+# These two stages are meant to keep linter/ut images tiny
+# but still keep them working... Maybe a better solution in
+# the future...
+FROM scratch AS linter
+COPY --link --from=linter-run /build/Cargo.toml .
+
+FROM scratch AS ut
+COPY --link --from=ut-run /build/Cargo.toml .
 
 FROM workspace AS builder
 RUN --mount=type=cache,target=/usr/local/cargo/registry \

@@ -34,7 +34,7 @@ services:
     extends:
       service: od-official-server
     build:
-        target: linter 
+      target: linter 
   ut:
     extends:
       service: od-official-server
