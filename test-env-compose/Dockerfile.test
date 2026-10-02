@@ -1,4 +1,4 @@
-FROM clux/muslrust:1.93.1-stable AS base
+FROM clux/muslrust:1.99.0-stable AS base
 LABEL maintainer=kickhead13<ana.alexandru.gabriel@proton.me>
 WORKDIR /build
 ARG RUN_LINT
