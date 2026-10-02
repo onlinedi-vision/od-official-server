@@ -44,10 +44,10 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # but still keep them working... Maybe a better solution in
 # the future...
 FROM scratch AS linter
-COPY --link --from=linter-run /build/clippy.toml .
+COPY --link --from=linter-run /build/Cargo.toml .
 
 FROM scratch AS ut
-COPY --link --from=ut-run /build/clippy.toml .
+COPY --link --from=ut-run /build/Cargo.toml .
 
 FROM workspace AS builder
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
