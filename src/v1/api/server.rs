@@ -292,7 +292,7 @@ pub async fn patch_frontend(
             &format!("Could not update server({}) frontend configuration... Got error: {:?}", sid.clone(), e),
             Some(function_name!()),
         );
-        return actix_web::HttpResponse::NotFound().json(&structures::Status {
+        return actix_web::HttpResponse::InternalServerError().json(&structures::Status {
             status: "Could not update frontend configuration for server.".to_string(),
         });
     }
