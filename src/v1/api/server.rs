@@ -1,9 +1,5 @@
-#![allow(unused_imports)]
-use scylla::client::session::Session;
-
 use crate::security;
 use crate::utils::logging;
-use crate::metrics;
 
 use ::function_name::named;
 

@@ -1,6 +1,3 @@
-#![allow(unused_imports)]
-use scylla::client::session::Session;
-
 use crate::api::structures;
 use crate::db;
 use crate::security;
