@@ -29,6 +29,13 @@ pipeline {
   }
 
   stages {
+    stage('Pre CI') {
+      script {
+        if (fileExists("test-env-compose/e2e/FAIL")) {
+          sh 'rm -f test-env-compose/e2e/FAIL'
+        }
+      }
+    }
     stage('Pull Request Checks') {
       when {
         changeRequest()
