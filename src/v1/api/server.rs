@@ -228,17 +228,28 @@ pub async fn get_frontend(
     })
 }
 
-/// Patches a server's frontend configuration. This endpoint takes no request
-/// body — the server id (`sid`) is supplied as a URL path parameter.
+/// Patches a server's frontend configuration. The server id (`sid`) is a URL path
+/// parameter; auth and the new config are sent in the JSON body.
 ///
-/// ### Request JSON
-/// _None. This is a `GET` request with no body._
+/// ### Request JSON (`UpdateServerFrontend`)
+/// ```json
+/// {
+///   "config": "{ ... }",
+///   "token": "abc123",
+///   "username": "alice"
+/// }
+/// ```
 ///
 /// ### Example (reqwest)
 /// ```rust
 /// let client = reqwest::Client::new();
 /// let res = client
 ///     .patch("http://localhost:1313/v1/servers/SID123/frontend")
+///     .json(&serde_json::json!({
+///         "config": "{}",
+///         "token": "abc123",
+///         "username": "alice"
+///     }))
 ///     .send()
 ///     .await?;
 /// ```
