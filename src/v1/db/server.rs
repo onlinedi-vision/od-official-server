@@ -65,7 +65,7 @@ pub async fn fetch_fe_config(
 ///
 /// # Example
 /// ```rs
-/// update_ttl(&session, "alice".into(), "d".into()).await;
+/// update_fe_config(&session, "sid1".into(), r#"{"theme":"dark"}"#.into()).await?;
 /// ```
 pub async fn update_fe_config(
     session: &scylla::client::session::Session,
