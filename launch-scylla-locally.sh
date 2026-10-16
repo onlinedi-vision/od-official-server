@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS division_online.o_servers (
     name text,
     owner text,
     settings text,
+    fe_config text,
     PRIMARY KEY (sid)
 ) WITH bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'ALL'}

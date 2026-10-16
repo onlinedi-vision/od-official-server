@@ -119,39 +119,12 @@ pub async fn fetch_server_info(
         .rows::<(Option<&str>, Option<&str>, Option<&str>)>()
         .ok()?).next()
     {
-        match row.ok()? {
-            (Some(name), Some(desc), Some(img_url)) => {
-                return Some(structures::ServerInfo {
-                    name: name.to_string(),
-                    desc: desc.to_string(),
-                    img_url: img_url.to_string(),
-                });
-            }
-            (Some(name), Some(desc), None) => {
-                return Some(structures::ServerInfo {
-                    name: name.to_string(),
-                    desc: desc.to_string(),
-                    img_url: String::new(),
-                });
-            }
-            (Some(name), None, None) => {
-                return Some(structures::ServerInfo {
-                    name: name.to_string(),
-                    desc: String::new(),
-                    img_url: String::new(),
-                });
-            }
-            (Some(name), None, Some(img_url)) => {
-                return Some(structures::ServerInfo {
-                    name: name.to_string(),
-                    desc: String::new(),
-                    img_url: img_url.to_string(),
-                });
-            }
-            _ => {
-                return None;
-            }
-        }
+        let (name, desc, img_url) = row.ok()?;
+        return Some(structures::ServerInfo {
+            name: name?.to_string(),
+            desc: desc.unwrap_or_default().to_string(),
+            img_url: img_url.unwrap_or_default().to_string(),
+        });
     }
     None
 }
@@ -212,6 +185,7 @@ pub async fn create_channel(
             .map_err(From::from),
     )
 }
+
 
 /// Fetches all server ids a user belongs to.
 ///
@@ -324,6 +298,7 @@ pub async fn delete_server(
 }
 
 /// Checks whether `username` is the owner of server `sid`.
+/// THIS FUNCTION DOES NOT VALIDATE WHETHER AN USER IS PROPERLY LOGGED IN OR NOT.
 ///
 /// # Example
 /// ```rs

@@ -1,12 +1,8 @@
-#![allow(unused_imports)]
-use scylla::client::session::Session;
-
 use crate::api::statics;
 use crate::api::structures;
 use crate::db;
 use crate::security;
 use crate::utils::logging;
-use crate::metrics;
 
 use ::function_name::named;
 
@@ -120,9 +116,6 @@ pub async fn create_server(
         }
     }
 
-   
-
-
     if db::server::add_user_to_server(&scylla_session, sid.clone(), req.username.clone())
         .await
         .is_some()
@@ -140,7 +133,6 @@ pub async fn create_server(
             permissions: db::structures::Permissions::SEND_MESSAGES.bits(),
         };
 
-        
         let _ = db::roles::insert_server_role(&scylla_session, sid.clone(), admin_role).await;
         let _ = db::roles::insert_server_role(&scylla_session,sid.clone(), member_role).await;
 
@@ -214,8 +206,6 @@ pub async fn join_server(
         logging::log("SERVERS FAIL: add_user_to_server", Some(function_name!()));
         return actix_web::HttpResponse::InternalServerError().body("Failed to add user to server");
     }
-
-    
 
     // give the member role to anyone that joins the server
     let _ = scylla_session
