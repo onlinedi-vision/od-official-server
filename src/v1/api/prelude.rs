@@ -7,13 +7,13 @@ macro_rules! cache_metrics {
 
 macro_rules! scylla_session {
     ($session:ident) => {
-        $session.lock.lock().await
+        &$session.session
     };
 }
 
 macro_rules! cache {
     ($shared_cache:ident) => {
-        $shared_cache.lock.lock().await
+        &$shared_cache.cache
     };
 }
 

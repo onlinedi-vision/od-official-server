@@ -26,6 +26,7 @@ services:
       - SCYLLA_DB_USER=cassandra
       - API_PORT=1313
       - TOKEN_TTL=2
+      - CACHE_TOKEN_TTL=2
       - SCYLLA_INET
       - SCYLLA_PORT
       - NO_OF_WORKERS
