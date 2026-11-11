@@ -80,7 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 .wrap(metrics_middleware)
                 .wrap(
                     Cors::default().allowed_origin_fn(|origin, req| {
-                        req.path() == "/version"
+                        req.uri.path() == "/version"
                             && matches!(
                                 origin.to_str(),
                                 Ok("https://landing.onlinedi.vision")
