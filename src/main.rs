@@ -83,8 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                         req.uri.path() == "/version"
                             && matches!(
                                 origin.to_str(),
-                                Ok("https://landing.onlinedi.vision")
-                                    | Ok("https://landing0.onlinedi.vision")
+                                Ok("https://landing.onlinedi.vision" | "https://landing0.onlinedi.vision")
                             )
                     }),
                 )
