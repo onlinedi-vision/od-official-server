@@ -7,6 +7,7 @@ mod utils;
 mod metrics;
 mod v1;
 
+use actix_cors::Cors;
 use actix_web::{middleware::Logger};
 use actix_web_ratelimit::{config::RateLimitConfig, store::MemoryStore, RateLimit};
 
@@ -77,6 +78,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 .wrap(RateLimit::new(rl_config.clone(), rl_store.clone()))
                 .wrap(Logger::new("|  %r  | %a %{User-Agent}i (done in %D ms)"))
                 .wrap(metrics_middleware)
+                .wrap(
+                    Cors::default().allowed_origin_fn(|origin, req| {
+                        req.uri.path() == "/version"
+                            && matches!(
+                                origin.to_str(),
+                                Ok("https://landing.onlinedi.vision" | "https://landing0.onlinedi.vision")
+                            )
+                    }),
+                )
 
                 .app_data(app_state.clone())
                 .app_data(session.clone())
