@@ -53,8 +53,8 @@ pub async fn spell_cast(
 
 }
 
-/// Verifies a previously cast spell for a user using its `key`, and returns (then invalidates)
-/// the associated spell value. Requires a valid session token.
+/// Consumes a previously cast spell for a user using its `key`, and returns
+/// the associated value only after deletion is confirmed. Requires a valid session token.
 ///
 /// ### Request JSON (`SpellChecker`)
 /// ```json
@@ -103,8 +103,6 @@ pub async fn spell_check(
             db::spell_caster::spell_check(scylla_session, req.key.clone(), req.username.clone())
                 .await
         {
-            let _ = db::spell_caster::spell_repel(scylla_session, req.key.clone()).await;
-
             return actix_web::HttpResponse::Ok().body(spell);
         }
         return actix_web::HttpResponse::InternalServerError().body("Could not find Spell...");

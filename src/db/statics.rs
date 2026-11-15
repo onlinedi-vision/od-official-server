@@ -297,7 +297,8 @@ pub static DELETE_TOKEN: &str = r"
 
 pub static DELETE_SPELL: &str = r"
     DELETE FROM division_online.o_spell_caster_secrets
-        WHERE key = ?; 
+        WHERE key = ? AND spell = ?
+        IF username = ?;
 ";
 
 pub static INSERT_SPELL: &str = r"

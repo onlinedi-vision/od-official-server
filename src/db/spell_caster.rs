@@ -25,7 +25,8 @@ pub async fn spell(
     
 }
 
-/// Fetches the stored spell value for `key` and `username`.
+/// Consumes the stored spell for `key` and `username` at most once.
+/// Returns the value only after its conditional deletion is confirmed.
 ///
 /// # Example
 /// ```rs
@@ -34,40 +35,31 @@ pub async fn spell(
 pub async fn spell_check(
     session: &scylla::client::session::Session,
     key: String,
-    username: String
+    username: String,
 ) -> Option<String> {
-    
     let query_rows = session
-        .query_unpaged(db::statics::SELECT_SPELL, (key,username))
+        .query_unpaged(db::statics::SELECT_SPELL, (&key, &username))
         .await
         .ok()?
         .into_rows_result()
         .ok()?;
 
-    if let Some(row) = (query_rows.rows::<(Option<&str>,)>().ok()?).next() {
-        return match row.ok()? {
-            (Some(spell),) => Some(spell.to_string()),
-            _ => None
-        }
-    }
-    None    
-}
+    let (spell,) = query_rows.first_row::<(Option<&str>,)>().ok()?;
+    let spell = spell?;
 
-/// Deletes the stored spell value under `key`.
-///
-/// # Example
-/// ```rs
-/// spell_repel(&session, "key1".into()).await;
-/// ```
-pub async fn spell_repel(
-    session: &scylla::client::session::Session,
-    key: String
-) -> Option<Result<()>> {
-    Some(
-        session
-            .query_unpaged(db::statics::DELETE_SPELL, (key,))
-            .await
-            .map(|_| ())
-            .map_err(From::from),
-    )
+    let claim_rows = session
+        .query_unpaged(db::statics::DELETE_SPELL, (key, spell, username))
+        .await
+        .ok()?
+        .into_rows_result()
+        .ok()?;
+
+    // This query returns [applied] and the previous username.
+    let (applied, _previous_username) = claim_rows.single_row::<(bool, Option<&str>)>().ok()?;
+
+    if applied {
+        Some(spell.to_string())
+    } else {
+        None
+    }
 }
