@@ -4,7 +4,13 @@ pub static DEFAULT_TOKEN_TTL: u64 = 604_800;
 pub static TOKEN_TTL: std::sync::LazyLock<i32> = std::sync::LazyLock::new(|| {
     env::var("TOKEN_TTL").unwrap_or_else(|_| "604800".to_string())
         .parse::<i32>()
-        .unwrap_or(604_800)
+        .unwrap_or(i32::try_from(DEFAULT_TOKEN_TTL).unwrap_or(604_800))
+});
+pub static DEFAULT_CACHE_TOKEN_TTL: u64 = 600;
+pub static CACHE_TOKEN_TTL: std::sync::LazyLock<i32> = std::sync::LazyLock::new(|| {
+    env::var("CACHE_TOKEN_TTL").unwrap_or_else(|_| "600".to_string())
+        .parse::<i32>()
+        .unwrap_or(i32::try_from(DEFAULT_CACHE_TOKEN_TTL).unwrap_or(600))
 });
 pub static DEFAULT_MESSAGE_LIMIT: i32 = 100;
 
@@ -291,7 +297,8 @@ pub static DELETE_TOKEN: &str = r"
 
 pub static DELETE_SPELL: &str = r"
     DELETE FROM division_online.o_spell_caster_secrets
-        WHERE key = ?; 
+        WHERE key = ? AND spell = ?
+        IF username = ?;
 ";
 
 pub static INSERT_SPELL: &str = r"

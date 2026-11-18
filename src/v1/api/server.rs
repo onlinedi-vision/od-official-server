@@ -61,8 +61,8 @@ pub async fn create_server(
     let cache = cache!(shared_cache);
     let collector = cache_metrics!(shared_collector);
     if db0::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -76,7 +76,7 @@ pub async fn create_server(
     
     let sid = security::sid();
     if db0::server::create_server(
-        &scylla_session,
+        scylla_session,
         sid.clone(),
         &req.desc,
         &req.img_url,
@@ -91,7 +91,7 @@ pub async fn create_server(
     }
     
     let _ =
-        db0::server::create_channel(&scylla_session, sid.clone(), "info".to_string()).await;
+        db0::server::create_channel(scylla_session, sid.clone(), "info".to_string()).await;
     let mut server_created = structures0::ServerCreatedResponse {
         token: security::token(),
         sid: sid.clone(),
@@ -102,8 +102,8 @@ pub async fn create_server(
     }
     if let Some(armored_new_token) = armored_new_token {
         if let Err(insert_err) = db0::prelude::insert_user_token(
-            &scylla_session,
-            &cache,
+            scylla_session,
+            cache,
             db0::structures::KeyUser {
                 key: Some(armored_new_token),
                 username: Some(req.username.clone()),
@@ -114,7 +114,7 @@ pub async fn create_server(
             server_created.token = req.token.clone();
         } else if let Some(armored_old_token) = security::armor_token_logged(&req.token) {
             let _ = db0::users::delete_token(
-                &scylla_session,
+                scylla_session,
                 req.username.clone(),
                 armored_old_token,
             )
@@ -122,7 +122,7 @@ pub async fn create_server(
         }
     }
 
-    if db0::server::add_user_to_server(&scylla_session, sid.clone(), req.username.clone())
+    if db0::server::add_user_to_server(scylla_session, sid.clone(), req.username.clone())
         .await
         .is_some()
     {
@@ -142,8 +142,8 @@ pub async fn create_server(
             permissions: db::structures::Permissions::SEND_MESSAGES.bits(),
         };
         
-        let _ = db0::roles::insert_server_role(&scylla_session, sid.clone(), admin_role).await;
-        let _ = db0::roles::insert_server_role(&scylla_session,sid.clone(), member_role).await;
+        let _ = db0::roles::insert_server_role(scylla_session, sid.clone(), admin_role).await;
+        let _ = db0::roles::insert_server_role(scylla_session,sid.clone(), member_role).await;
 
         let _ = scylla_session.query_unpaged(
                 db0::statics::ASSIGN_ROLE_TO_USER,
@@ -178,7 +178,7 @@ pub async fn get_info(
 ) -> impl actix_web::Responder {
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
-    if let Some(server_info) = db::server::fetch_info(&scylla_session, sid.clone()).await {
+    if let Some(server_info) = db::server::fetch_info(scylla_session, sid.clone()).await {
         return actix_web::HttpResponse::Ok().json(&server_info);
     }
     logging::log(
@@ -212,7 +212,7 @@ pub async fn get_frontend(
 ) -> impl actix_web::Responder {
     let sid: String = param!(http, "sid");
     let scylla_session = scylla_session!(session);
-    if let Some(server_info) = db::server::fetch_fe_config(&scylla_session, sid.clone()).await {
+    if let Some(server_info) = db::server::fetch_fe_config(scylla_session, sid.clone()).await {
         return actix_web::HttpResponse::Ok().json(&server_info);
     }
     logging::log(
@@ -265,8 +265,8 @@ pub async fn patch_frontend(
     let collector = cache_metrics!(shared_collector);
 
     if db0::prelude::check_permission(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         sid.clone(),
         req.token.clone(),
         req.username.clone(),
@@ -280,7 +280,7 @@ pub async fn patch_frontend(
     }
     
     if let Err(e) = db::server::update_fe_config(
-        &scylla_session,
+        scylla_session,
         sid.clone(),
         req.config.clone()
     ).await {

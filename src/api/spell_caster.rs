@@ -35,7 +35,7 @@ pub async fn spell_cast(
     let new_spell = security::token();
 
     if db::spell_caster::spell(
-        &scylla_session,
+        scylla_session,
         new_key.clone(),
         new_spell.clone(),
         req.username.clone(),
@@ -53,8 +53,8 @@ pub async fn spell_cast(
 
 }
 
-/// Verifies a previously cast spell for a user using its `key`, and returns (then invalidates)
-/// the associated spell value. Requires a valid session token.
+/// Consumes a previously cast spell for a user using its `key`, and returns
+/// the associated value only after deletion is confirmed. Requires a valid session token.
 ///
 /// ### Request JSON (`SpellChecker`)
 /// ```json
@@ -90,8 +90,8 @@ pub async fn spell_check(
     let collector = cache_metrics!(shared_collector);
 
     if db::prelude::check_token(
-        &scylla_session,
-        &cache,
+        scylla_session,
+        cache,
         req.token.clone(),
         Some(req.username.clone()),
         &collector,
@@ -100,11 +100,9 @@ pub async fn spell_check(
     .is_some()
     {
         if let Some(spell) =
-            db::spell_caster::spell_check(&scylla_session, req.key.clone(), req.username.clone())
+            db::spell_caster::spell_check(scylla_session, req.key.clone(), req.username.clone())
                 .await
         {
-            let _ = db::spell_caster::spell_repel(&scylla_session, req.key.clone()).await;
-
             return actix_web::HttpResponse::Ok().body(spell);
         }
         return actix_web::HttpResponse::InternalServerError().body("Could not find Spell...");
